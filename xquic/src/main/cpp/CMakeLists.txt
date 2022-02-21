@@ -5,8 +5,9 @@
 
 cmake_minimum_required(VERSION 3.10.2)
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/ev) # 头文件
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/include/xuqic) # 头文件
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/ev) # 头文件
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/xuqic) # 头文件
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/main/include) # 头文件
 
 add_compile_options(-fno-rtti -O3)
 

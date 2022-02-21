@@ -7,6 +7,11 @@ package com.lizhi.component.net.xquic.native
  * 创建日期: 2022/2/21.
  */
 object XquicNative {
+    init {
+        System.loadLibrary("xnet-lib")
+        System.loadLibrary("ev")
+        System.loadLibrary("xquic")
+    }
 
     /**
      * 初始化
