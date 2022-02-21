@@ -1,5 +1,5 @@
 plugins {
-    id 'com.android.application'
+    id 'com.android.library'
     id 'kotlin-android'
 }
 
@@ -8,7 +8,6 @@ android {
     buildToolsVersion "30.0.3"
 
     defaultConfig {
-        applicationId "com.lizhi.component.net.xquic"
         minSdkVersion 16
         targetSdkVersion 31
         versionCode 1
@@ -18,6 +17,7 @@ android {
         externalNativeBuild {
             cmake {
                 cppFlags ''
+                arguments "-DANDROID_STL=c++_shared"
             }
         }
         ndk {
@@ -47,6 +47,12 @@ android {
     }
     buildFeatures {
         viewBinding true
+    }
+
+    sourceSets {
+        main {
+            jniLibs.srcDirs = ['libs']
+        }
     }
 }
 

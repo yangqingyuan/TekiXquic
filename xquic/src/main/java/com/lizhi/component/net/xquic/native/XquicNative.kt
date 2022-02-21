@@ -9,8 +9,8 @@ package com.lizhi.component.net.xquic.native
 object XquicNative {
     init {
         System.loadLibrary("xnet-lib")
-        System.loadLibrary("ev")
         System.loadLibrary("xquic")
+        System.loadLibrary("ev")
     }
 
     /**

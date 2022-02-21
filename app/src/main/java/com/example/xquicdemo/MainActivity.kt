@@ -2,9 +2,8 @@ package com.example.xquicdemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-
-import com.example.xquicdemo.databinding.ActivityMainBinding
 import com.lizhi.component.net.xquic.native.XquicNative
+
 
 class MainActivity : AppCompatActivity() {
 

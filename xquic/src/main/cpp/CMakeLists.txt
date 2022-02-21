@@ -14,7 +14,8 @@ add_compile_options(-fno-rtti -O3)
 message(@@@${CMAKE_CURRENT_SOURCE_DIR})
 
 
-link_directories(share_libs/${CMAKE_ANDROID_ARCH_ABI}) # 链接库地址
+link_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/${CMAKE_ANDROID_ARCH_ABI}) # 链接库地址
+link_libraries(ev.so xquic.so)
 
 aux_source_directory(. SRC_LIST) # 搜索当前目录下的所有.cpp文件
 aux_source_directory(./main MAIN_SRC_LIST) # 搜索当前目录下的所有.cpp文件
@@ -48,7 +49,7 @@ find_library( # Sets the name of the path variable.
 
               # Specifies the name of the NDK library that
               # you want CMake to locate.
-              log )
+              log)
 
 # Specifies libraries CMake should link to your target library. You
 # can link multiple libraries, such as libraries you define in this
@@ -59,4 +60,4 @@ target_link_libraries( # Specifies the target library.
 
                        # Links the target library to the log library
                        # included in the NDK.
-                       ${log-lib} ev xquic)
+                       ${log-lib})
