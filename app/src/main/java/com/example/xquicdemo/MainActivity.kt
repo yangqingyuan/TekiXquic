@@ -10,7 +10,7 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        XquicNative.init("127.0.0.1", 152)
-        XquicNative.send("test")
+        val clientCtx: Long = XquicNative.xquicInit("127.0.0.1", 152,null,null)
+        XquicNative.xquicSend(clientCtx, "test")
     }
 }

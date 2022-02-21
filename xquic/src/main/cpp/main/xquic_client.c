@@ -1,86 +1,15 @@
 #include "xquic_client.h"
-#include "log.h"
-
-void xqc_keylog_cb(const char *line, void *user_data)
-{
-    DEBUG;
-    client_ctx_t *ctx = (client_ctx_t*)user_data;
-}
-
-void xqc_client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *engine_user_data)
-{
-    DEBUG;
-    client_ctx_t *ctx = (client_ctx_t*)engine_user_data;
-    switch(lvl){
-        case XQC_LOG_REPORT:
-        case XQC_LOG_FATAL:
-        case XQC_LOG_ERROR:
-            LOGE("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
-        case XQC_LOG_WARN:
-            LOGW("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
-        case XQC_LOG_INFO:
-        case XQC_LOG_STATS:
-            LOGI("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
-        case XQC_LOG_DEBUG:
-            LOGD("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
-    }
-}
-
-void xqc_client_set_event_timer(xqc_msec_t wake_after, void *user_data)
-{
-    DEBUG;
-    client_ctx_t *ctx = (client_ctx_t *) user_data;
-    //printf("xqc_engine_wakeup_after %llu us, now %llu\n", wake_after, now());
-    struct timeval tv;
-    tv.tv_sec = wake_after / 1000000;
-    tv.tv_usec = wake_after % 1000000;
-    //event_add(ctx->ev_engine, &tv);
-
-}
-
-ssize_t xqc_client_write_socket(const unsigned char *buf, size_t size,
-    const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user)
-{
-    DEBUG;
-}
-
-void xqc_client_save_token(const unsigned char *token, unsigned token_len, void *user_data)
-{
-    DEBUG;
-}
-
-void save_session_cb(const char * data, size_t data_len, void *user_data)
-{
-    DEBUG;
-}
-
-void save_tp_cb(const char * data, size_t data_len, void * user_data)
-{
-    DEBUG;
-}
-
-int xqc_client_cert_verify(const unsigned char *certs[],
-    const size_t cert_len[], size_t certs_len, void *conn_user_data)
-{
-    /* self-signed cert used in test cases, return >= 0 means success */
-    DEBUG;
-    return 0;
-}
+#include "engine_callbacks.h"
+#include "transport_callbacks.h"
+#include "h3_callbacks.h"
+#include "app_proto_callbacks.h"
 
 
 /**
 * 初始化引擎
 */
-long initEngine(){
+xqc_engine_t* init_engine(void *user_data){
     DEBUG;
-
-    //第一步：初始化clientCtx
-    client_ctx_t ctx;
-    memset(&ctx, 0, sizeof(ctx));
 
     //第二步：初始化ssl_config
     xqc_engine_ssl_config_t  engine_ssl_config;
@@ -116,20 +45,79 @@ long initEngine(){
     xqc_config_t config;
     if (xqc_engine_get_default_config(&config, XQC_ENGINE_CLIENT) < 0) {
         LOGE("get default config error fun:%s,line:%d \n",__FUNCTION__,__LINE__);
-        return -1;
+        return NULL;
     }
     config.cfg_log_level = XQC_LOG_DEBUG;//设置log级别
 
     //第六部：创建引擎
-    ctx.engine = xqc_engine_create(XQC_ENGINE_CLIENT, &config, &engine_ssl_config,&callback, &tcbs, &ctx);
+    return xqc_engine_create(XQC_ENGINE_CLIENT, &config, &engine_ssl_config,&callback, &tcbs,user_data);
+}
+
+int init_alpn_ctx(client_ctx_t* ctx){
+    DEBUG;
+    xqc_h3_callbacks_t h3_cbs = {
+        .h3c_cbs = {
+            .h3_conn_create_notify = xqc_client_h3_conn_create_notify,
+            .h3_conn_close_notify = xqc_client_h3_conn_close_notify,
+            .h3_conn_handshake_finished = xqc_client_h3_conn_handshake_finished,
+            .h3_conn_ping_acked = xqc_client_h3_conn_ping_acked_notify,
+        },
+        .h3r_cbs = {
+            .h3_request_close_notify = xqc_client_request_close_notify,
+            .h3_request_read_notify = xqc_client_request_read_notify,
+            .h3_request_write_notify = xqc_client_request_write_notify,
+        }
+    };
+
+    /* init http3 context */
+    int ret = xqc_h3_ctx_init(ctx->engine, &h3_cbs);
+    if (ret != XQC_OK) {
+        LOGE("init h3 context error, ret: %d fun:%s,line:%d \n", ret,__FUNCTION__,__LINE__);
+        return ret;
+    }
+
+    /* register transport callbacks */
+    xqc_app_proto_callbacks_t ap_cbs = {
+        .conn_cbs = {
+            .conn_create_notify = xqc_client_conn_create_notify,
+            .conn_close_notify = xqc_client_conn_close_notify,
+            .conn_handshake_finished = xqc_client_conn_handshake_finished,
+            .conn_ping_acked = xqc_client_conn_ping_acked_notify,
+        },
+        .stream_cbs = {
+            .stream_write_notify = xqc_client_stream_write_notify,
+            .stream_read_notify = xqc_client_stream_read_notify,
+            .stream_close_notify = xqc_client_stream_close_notify,
+        }
+    };
+
+    return xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
+}
+
+//初始化client端
+long init_client(){
+    DEBUG;
+    //第一步：初始化clientCtx
+    client_ctx_t ctx;
+    memset(&ctx, 0, sizeof(ctx));
+
+    //第二步：初始化引擎
+    ctx.engine = init_engine(&ctx);
+
+    //第三步：初始化h3跟注册应用层回调
+    init_alpn_ctx(&ctx);
 
     return &ctx;
 }
 
-int startEngine(){
+//开始client端
+int start_client(){
     DEBUG;
+    return 0;
 }
 
-int destroyEngine(){
+//销毁client
+int destroy_client(){
     DEBUG;
+    return 0;
 }

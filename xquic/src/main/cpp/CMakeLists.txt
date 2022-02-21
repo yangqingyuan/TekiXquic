@@ -12,7 +12,7 @@ SET(CMAKE_C_FLAGS_DEBUG "-g -std=c++11")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/ev) # 头文件
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/xquic) # 头文件
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/main/include) # 头文件
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/main/callback) # 头文件
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/main) # 头文件
 
 add_compile_options(-fno-rtti -O3)
@@ -25,6 +25,7 @@ link_libraries(ev.so xquic.so)
 
 aux_source_directory(. SRC_LIST) # 搜索当前目录下的所有.cpp文件
 aux_source_directory(./main MAIN_SRC_LIST) # 搜索当前目录下的所有.cpp文件
+aux_source_directory(./main/callback CALLBACK_SRC_LIST) # 搜索当前目录下的所有.cpp文件
 
 # Declares and names the project.
 
@@ -42,7 +43,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             ${SRC_LIST} ${MAIN_SRC_LIST})
+             ${SRC_LIST} ${MAIN_SRC_LIST} ${CALLBACK_SRC_LIST})
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
