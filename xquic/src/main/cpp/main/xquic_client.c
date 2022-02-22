@@ -94,30 +94,35 @@ int init_alpn_ctx(client_ctx_t* ctx){
     return xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
 }
 
+
 //初始化client端
-client_ctx_t * init_client(const char *host ,int port,const char *token,const char* session){
+client_ctx_t * client_init(){
     DEBUG;
     //第一步：初始化clientCtx
-    client_ctx_t ctx;
-    memset(&ctx, 0, sizeof(ctx));
+    client_ctx_t *ctx = calloc(1, sizeof(client_ctx_t));
+    //memset(ctx, 0, sizeof(ctx));
 
     //第二步：初始化引擎
-    ctx.engine = init_engine(&ctx);
+    ctx->engine = init_engine(ctx);
 
     //第三步：初始化h3跟注册应用层回调
-    init_alpn_ctx(&ctx);
+    init_alpn_ctx(ctx);
 
-    return &ctx;
+    return ctx;
 }
 
 //开始client端
-int start_client(){
+int client_connect(client_ctx_t * client,const char *host ,int port,const char *token,const char* session){
     DEBUG;
+
     return 0;
 }
 
 //销毁client
-int destroy_client(){
+int client_destroy(client_ctx_t * client){
     DEBUG;
+
+    xqc_engine_destroy(client->engine);
+    free(client);
     return 0;
 }

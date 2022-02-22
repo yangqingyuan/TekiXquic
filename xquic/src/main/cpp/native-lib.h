@@ -15,26 +15,31 @@ extern "C"{
 /**
 * xquic 初始化
 */
-JNIEXPORT jlong JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicInit
-        (JNIEnv* env,jobject obj ,jstring host ,int port,jstring token,jstring session);
+JNIEXPORT jlong JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicInit();
 
 /**
-* 开始
+* 链接
 */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicStart
-        (JNIEnv *env, jclass cls,jlong clientCtx,jstring content);
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicConnect
+        (JNIEnv *env, jclass cls,jlong clientCtx,jstring host ,jint port,jstring token,jstring session);
 
 /**
 * 发送数据
 */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicSend
-        (JNIEnv *env, jclass cls,jlong clientCtx,jint type,jstring content);
+        (JNIEnv *env, jclass cls,jlong clientCtx,jstring content);
+
+/**
+* H3的方式发送数据
+*/
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicH3Send
+        (JNIEnv *env, jclass cls,jlong clientCtx,jstring content);
 
 /**
 * 销毁
 */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicDestroy
-        (JNIEnv *env, jclass cls,jlong clientCtx,jstring content);
+        (JNIEnv *env, jclass cls,jlong clientCtx);
 
 #ifdef __cplusplus
 }
