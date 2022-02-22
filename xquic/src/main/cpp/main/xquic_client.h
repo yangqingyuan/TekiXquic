@@ -8,7 +8,7 @@
 extern "C"{
 #endif
 
-long init_client();
+client_ctx_t * init_client(const char *host ,int port,const char *token,const char* session);
 int start_client();
 int destroy_client();
 

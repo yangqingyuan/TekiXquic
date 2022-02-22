@@ -95,7 +95,7 @@ int init_alpn_ctx(client_ctx_t* ctx){
 }
 
 //初始化client端
-long init_client(){
+client_ctx_t * init_client(const char *host ,int port,const char *token,const char* session){
     DEBUG;
     //第一步：初始化clientCtx
     client_ctx_t ctx;

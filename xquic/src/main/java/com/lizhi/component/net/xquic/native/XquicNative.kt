@@ -13,6 +13,10 @@ object XquicNative {
         System.loadLibrary("ev")
     }
 
+    const val SEND_TYPE_H3:Int = 1 //发送方式，以H3的方式发送
+    const val SEND_TYPE_XQUIC:Int = 2 //以xquic，的方式透传
+
+
     /**
      * 初始化
      * host：所要链接发送数据的ip地址
@@ -34,7 +38,7 @@ object XquicNative {
      * 发送数据
      * 要先调用xquicStart，才能发送数据
      */
-    external fun xquicSend(clientCtx: Long, content: String): Int
+    external fun xquicSend(clientCtx: Long, type: Int, content: String): Int
 
     /**
      * 销毁

@@ -27,6 +27,9 @@
 
 #define DEBUG LOGI("fun:%s,line %d \n", __FUNCTION__, __LINE__);
 
+#define jlong_to_ptr(a) ((void*)(uintptr_t)(a))
+#define ptr_to_jlong(a) ((uintptr_t)(a))
+
 #define TAG    "LzXquic->jni"
 #define LOGW(...)    __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
 #define LOGE(...)    __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
