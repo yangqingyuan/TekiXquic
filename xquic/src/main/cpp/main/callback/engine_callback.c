@@ -32,12 +32,10 @@ void xqc_client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, vo
 
 void xqc_client_set_event_timer(xqc_msec_t wake_after, void *user_data)
 {
-    DEBUG;
+    //DEBUG;
     client_ctx_t *ctx = (client_ctx_t *) user_data;
-    //printf("xqc_engine_wakeup_after %llu us, now %llu\n", wake_after, now());
-    struct timeval tv;
-    tv.tv_sec = wake_after / 1000000;
-    tv.tv_usec = wake_after % 1000000;
-    //event_add(ctx->ev_engine, &tv);
+    LOGE("xqc_client_set_event_timer wake_after:%f  a",wake_after/1000000.0);
 
+    //ctx->ev_engine.repeat = 1;//单位秒
+    //ev_timer_again (ctx->loop, &ctx->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
 }

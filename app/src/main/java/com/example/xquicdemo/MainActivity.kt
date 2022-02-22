@@ -10,10 +10,10 @@ class MainActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
-        var clientCtx: Long  = XquicNative.xquicInit()
-        XquicNative.xquicSend(clientCtx, "test")
-        XquicNative.xquicConnect(clientCtx, "127.0.0.1", 122, null, null)
-        XquicNative.xquicDestroy(clientCtx)
+        var clientCtx: Long = XquicNative.xquicInit()
+        Thread {
+            XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
+        }.start()
 
         findViewById<TextView>(R.id.sample_text).setOnClickListener {
             XquicNative.xquicDestroy(clientCtx)

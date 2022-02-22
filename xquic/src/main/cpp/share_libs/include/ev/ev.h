@@ -324,6 +324,7 @@ typedef struct ev_io
 
   int fd;     /* ro */
   int events; /* ro */
+  void *user_data;
 } ev_io;
 
 /* invoked after a specific time, repeatable (based on monotonic clock) */
@@ -331,7 +332,7 @@ typedef struct ev_io
 typedef struct ev_timer
 {
   EV_WATCHER_TIME (ev_timer)
-
+  void *user_data;
   ev_tstamp repeat; /* rw */
 } ev_timer;
 

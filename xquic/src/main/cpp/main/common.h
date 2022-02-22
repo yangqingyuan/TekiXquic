@@ -49,13 +49,39 @@
 #define XQC_ALPN_TRANSPORT "transport"
 
 #define XQC_MAX_LOG_LEN 2048
+#define XQC_MAX_TOKEN_LEN 256
+#define XQC_PACKET_TMP_BUF_LEN 1500
 
 typedef struct client_ctx_s {
-    xqc_engine_t   *engine;
-    struct event   *ev_engine;
-    struct event   *ev_delay;
+    xqc_engine_t      *engine;
+    struct ev_loop    *loop;
+    struct ev_timer   ev_engine;
+    struct ev_timer   ev_delay;
 } client_ctx_t;
 
+typedef enum xqc_cli_alpn_type_s {
+    ALPN_HQ,
+    ALPN_H3,
+} xqc_cli_alpn_type_t;
 
+
+typedef struct user_conn_s {
+    int                 fd;
+    xqc_cid_t           cid;
+
+    struct sockaddr    *local_addr;
+    socklen_t           local_addrlen;
+    xqc_flag_t          get_local_addr;
+    struct sockaddr    *peer_addr;
+    socklen_t           peer_addrlen;
+
+    unsigned char      *token;
+    unsigned            token_len;
+
+    struct ev_io       ev_socket;
+    struct ev_timer    ev_timeout;
+
+    int                 h3;
+} user_conn_t;
 
 #endif /* _LZ_KEEPLIVE_COMMON_H */

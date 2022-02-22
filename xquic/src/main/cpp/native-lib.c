@@ -45,7 +45,7 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
 
     LOGI("xquicConnect host:%s, port:%d, token:%s, session:%s, client:%p, engine:%p\n",cHost,port,cToken,cSession,ctx_t,ctx_t->engine);
 
-    int ret = client_connect(ctx_t,cHost,port,cToken,cSession);//开始链接
+    int ret = client_connect(ctx_t,cHost,port,cToken,cSession,NULL);//开始链接
 
     (*env)->ReleaseStringUTFChars(env, host, cHost);
     (*env)->DeleteLocalRef(env, host);
@@ -82,7 +82,6 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
 
     LOGI("xquicSend clientCtx:%p,  engine:%p, content:%s,\n",clientCtx,ctx_t->engine,cContent);
 
-
     (*env)->ReleaseStringUTFChars(env, content, cContent);
     (*env)->DeleteLocalRef(env, content);
     return 0;
@@ -101,5 +100,8 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicDestroy(JNIEnv *env, jclass cls,jlong clientCtx){
     client_ctx_t*  ctx_t = (client_ctx_t* )jlong_to_ptr(clientCtx);
     LOGI("xquicDestroy clientCtx:%p,  engine:%p \n",clientCtx,ctx_t->engine);
+
+    ctx_t->ev_engine.repeat = 1;//单位秒
+    ev_timer_again (ctx_t->loop, &ctx_t->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
     return 0;
 }

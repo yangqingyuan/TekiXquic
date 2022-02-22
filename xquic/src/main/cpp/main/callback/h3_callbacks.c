@@ -4,6 +4,9 @@ int
 xqc_client_h3_conn_create_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data)
 {
      DEBUG;
+     user_conn_t *user_conn = (user_conn_t *) user_data;
+     int ret = xqc_h3_conn_is_ready_to_send_early_data(conn);
+     LOGI("xqc_h3_conn_is_ready_to_send_early_data:%d\n",ret );
      return 0;
 }
 
