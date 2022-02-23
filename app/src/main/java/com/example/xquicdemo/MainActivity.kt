@@ -15,6 +15,15 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        clientCtx = XquicNative.xquicInit()
+
+        isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
+
+        Thread {
+            XquicNative.xquicStart(clientCtx)
+        }.start()
+
+        /*
         findViewById<Button>(R.id.btn_init).setOnClickListener {
             if (clientCtx == 0L) {
                 clientCtx = XquicNative.xquicInit()
@@ -35,7 +44,7 @@ class MainActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_start).setOnClickListener {
 
-        }
+        }*/
 
         findViewById<Button>(R.id.btn_send_hq).setOnClickListener {
             if (isConnect < 0) {
