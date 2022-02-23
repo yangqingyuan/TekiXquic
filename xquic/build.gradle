@@ -49,9 +49,10 @@ android {
         viewBinding true
     }
 
+    //sourceSets.main.jniLibs.srcDirs = ['src/main/libs']
     sourceSets {
         main {
-            jniLibs.srcDirs = ['libs']
+            jniLibs.srcDirs = ['src/main/cpp/share_libs']
         }
     }
 }

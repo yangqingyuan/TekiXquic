@@ -63,11 +63,20 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
     return ret;
 }
 
+/**
+* 开始,其实就是开始looper，会阻塞线程，上层需要起一个线程来启动
+*/
+JNIEXPORT void JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicStart
+        (JNIEnv *env, jclass cls,jlong clientCtx){
+         client_ctx_t*  ctx_t = (client_ctx_t* )jlong_to_ptr(clientCtx);
+         client_start(ctx_t);
+}
+
 
 /**
 * 发送数据
 */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicSend(JNIEnv *env, jclass cls,jlong clientCtx,jstring content){
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicHQSend(JNIEnv *env, jclass cls,jlong clientCtx,jstring content){
     DEBUG;
     if(content == NULL){
         LOGE("xquicSend error content == NULL");
@@ -102,6 +111,6 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
     LOGI("xquicDestroy clientCtx:%p,  engine:%p \n",clientCtx,ctx_t->engine);
 
     ctx_t->ev_engine.repeat = 1;//单位秒
-    ev_timer_again (ctx_t->loop, &ctx_t->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
+    ev_timer_again (loop, &ctx_t->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
     return 0;
 }

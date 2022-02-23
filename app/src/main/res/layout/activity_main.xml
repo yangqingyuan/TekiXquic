@@ -6,14 +6,59 @@
     android:layout_height="match_parent"
     tools:context=".MainActivity">
 
-    <TextView
+    <LinearLayout
         android:id="@+id/sample_text"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:orientation="vertical"
         android:text="Hello World!"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintLeft_toLeftOf="parent"
         app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent" />
+        app:layout_constraintTop_toTopOf="parent">
+        <Button
+            android:id="@+id/btn_init"
+            android:layout_width="match_parent"
+            android:text="InitXquic"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btn_connect"
+            android:layout_width="match_parent"
+            android:text="ConnectXquic"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btn_start"
+            android:layout_width="match_parent"
+            android:text="StartXquic"
+            android:visibility="gone"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btn_send_h3"
+            android:layout_width="match_parent"
+            android:text="SendByH3"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btn_send_hq"
+            android:layout_width="match_parent"
+            android:text="SendByHQ"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
+
+        <Button
+            android:id="@+id/btn_destroy"
+            android:layout_width="match_parent"
+            android:text="DestroyXquic"
+            android:textAllCaps="false"
+            android:layout_height="wrap_content"/>
+
+    </LinearLayout>
 
 </androidx.constraintlayout.widget.ConstraintLayout>

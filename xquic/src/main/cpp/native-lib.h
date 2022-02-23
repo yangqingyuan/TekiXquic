@@ -24,9 +24,15 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
         (JNIEnv *env, jclass cls,jlong clientCtx,jstring host ,jint port,jstring token,jstring session);
 
 /**
+* 开始
+ */
+JNIEXPORT void JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicStart
+        (JNIEnv *env, jclass cls,jlong clientCtx);
+
+/**
 * 发送数据
 */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicSend
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicHQSend
         (JNIEnv *env, jclass cls,jlong clientCtx,jstring content);
 
 /**

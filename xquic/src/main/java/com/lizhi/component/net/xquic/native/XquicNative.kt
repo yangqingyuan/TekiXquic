@@ -38,13 +38,13 @@ object XquicNative {
     /**
      * 开始
      */
-    external fun xquicStart(clientCtx: Long): Int
+    external fun xquicStart(clientCtx: Long)
 
     /**
      * 发送数据
      * 要先调用xquicStart，才能发送数据
      */
-    external fun xquicSend(clientCtx: Long, content: String): Int
+    external fun xquicHqSend(clientCtx: Long, content: String): Int
 
     /**
      * 发送数据
