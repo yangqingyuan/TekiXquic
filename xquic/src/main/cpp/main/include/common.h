@@ -56,6 +56,10 @@
 //全局变量，整个xquic只用一个
 struct ev_loop *loop;
 
+typedef enum xqc_cli_alpn_type_s {
+    ALPN_HQ,
+    ALPN_H3,
+} xqc_cli_alpn_type_t;
 
 typedef struct user_conn_s {
     int                 fd;
@@ -76,18 +80,13 @@ typedef struct user_conn_s {
     int                 h3;
 } user_conn_t;
 
+
 typedef struct client_ctx_s {
     xqc_engine_t      *engine;
     user_conn_t        *user_conn;
     struct ev_timer   ev_engine;
     struct ev_timer   ev_delay;
 } client_ctx_t;
-
-typedef enum xqc_cli_alpn_type_s {
-    ALPN_HQ,
-    ALPN_H3,
-} xqc_cli_alpn_type_t;
-
 
 
 #endif /* _LZ_KEEPLIVE_COMMON_H */
