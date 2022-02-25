@@ -18,9 +18,9 @@ xqc_client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
     user_conn_t *user_conn = (user_conn_t *) user_data;
     LOGE("conn errno:%d\n", xqc_h3_conn_get_errno(conn));
 
-    xqc_conn_stats_t stats = xqc_conn_get_stats(ctx.engine, cid);
-    LOGE("send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%"PRIu64" early_data_flag:%d, conn_err:%d, ack_info:%s\n",
-           stats.send_count, stats.lost_count, stats.tlp_count, stats.recv_count, stats.srtt, stats.early_data_flag, stats.conn_err, stats.ack_info);
+    // xqc_conn_stats_t stats = xqc_conn_get_stats(ctx.engine, cid);
+    // LOGE("send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%"PRIu64" early_data_flag:%d, conn_err:%d, ack_info:%s\n",
+    //       stats.send_count, stats.lost_count, stats.tlp_count, stats.recv_count, stats.srtt, stats.early_data_flag, stats.conn_err, stats.ack_info);
     return 0;
 }
 
