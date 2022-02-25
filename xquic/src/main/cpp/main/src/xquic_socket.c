@@ -211,7 +211,7 @@ xqc_client_user_conn_create(client_ctx_t* ctx,const char *server_addr, int serve
     user_conn_t *user_conn = calloc(1, sizeof(user_conn_t));
 
     user_conn->ev_timeout.data = user_conn;
-    ev_timer_init(&user_conn->ev_timeout, xqc_client_timeout_callback, 0,1);//一秒后超时
+    ev_timer_init(&user_conn->ev_timeout, xqc_client_timeout_callback, -1,0);//一秒后超时
     ev_timer_start(loop,&user_conn->ev_timeout);
 
     int ip_type = AF_INET; //(g_ipv6 ? AF_INET6 : AF_INET);

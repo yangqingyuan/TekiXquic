@@ -62,6 +62,7 @@ typedef enum xqc_cli_alpn_type_s {
     ALPN_H3,
 } xqc_cli_alpn_type_t;
 
+
 typedef struct user_conn_s {
     int                 fd;
     xqc_cid_t           cid;
@@ -80,6 +81,27 @@ typedef struct user_conn_s {
 
     int                 h3;
 } user_conn_t;
+
+typedef struct user_stream_s {
+    xqc_stream_t       *stream;
+    xqc_h3_request_t   *h3_request;
+    user_conn_t        *user_conn;
+    uint64_t            send_offset;
+    int                 header_sent;
+    int                 header_recvd;
+    char               *send_body;
+    size_t              send_body_len;
+    size_t              send_body_max;
+    char               *recv_body;
+    size_t              recv_body_len;
+    FILE               *recv_body_fp;
+    int                 recv_fin;
+    xqc_msec_t          start_time;
+    xqc_msec_t          first_frame_time;   /* first frame download time */
+    xqc_msec_t          last_read_time;
+    int                 abnormal_count;
+    int                 body_read_notify_cnt;
+} user_stream_t;
 
 
 typedef struct client_ctx_s {

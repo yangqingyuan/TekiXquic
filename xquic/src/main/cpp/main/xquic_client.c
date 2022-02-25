@@ -11,11 +11,12 @@
 static void xqc_client_engine_time_out(struct ev_loop *main_loop,ev_timer*time_w,int what)
 {
     LOGE("timer wakeup %f\n", time_w->repeat);
-    //if(time_w->repeat>0){
-        client_ctx_t *ctx = (client_ctx_t *) ev_userdata(main_loop);
+    if(time_w->repeat>0){
+        client_ctx_t *ctx = (client_ctx_t *) time_w->data;
         LOGE("BBB %p",ctx);
-        //xqc_engine_main_logic(ctx->engine);
-    //}
+        xqc_engine_main_logic(ctx->engine);
+        //ev_timer_stop(loop,time_w);
+    }
 }
 
 /**
@@ -179,13 +180,33 @@ void client_start(client_ctx_t * client){
     LOGE("ev_run end");
 }
 
-//H3的方式发送内容
-int client_send_h3(client_ctx_t * client,xqc_http_headers_t* headers,const char *body){
-    return 0;
+/**
+* get的方式发送内容，只发送头信息
+*/
+int client_send_h3_get(client_ctx_t * client,xqc_http_headers_t* headers){
+    user_stream_t *user_stream = calloc(1, sizeof(user_stream_t));
+    user_stream->user_conn = client->user_conn;
+    user_stream->h3_request = xqc_h3_request_create(client->engine, &(client->user_conn->cid), user_stream);
+    if (user_stream->h3_request == NULL) {
+        LOGE("client_send_h3_get error: request_create fail");
+        return -1;
+    }
+    int ret = xqc_h3_request_send_headers(user_stream->h3_request, &headers, 1);//header_only
+    ret = xqc_h3_request_finish(user_stream->h3_request);
+    if (ret < XQC_OK) {
+        LOGE("xqc_h3_request_finish fail, error %zd\n", ret);
+    }
+    free(user_stream->send_body);
+    free(user_stream->recv_body);
+    free(user_stream);
+    return ret;
 }
 
-//HQ的方式返送内容
-int client_send_hq(client_ctx_t * client,const char *body){
+/**
+* post的方式发送内容，发送头跟内容
+*/
+int client_send_h3_post(client_ctx_t * client,xqc_http_headers_t* headers,const char *body){
+
     return 0;
 }
 

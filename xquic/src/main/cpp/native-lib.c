@@ -72,11 +72,11 @@ JNIEXPORT void JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
          client_start(ctx_t);
 }
 
-
+#define MAX_HEADER 100
 /**
 * 发送数据
 */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicHQSend(JNIEnv *env, jclass cls,jlong clientCtx,jstring content){
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicH3Get(JNIEnv *env, jclass cls,jlong clientCtx,jstring content){
     DEBUG;
     if(content == NULL){
         LOGE("xquicSend error content == NULL");
@@ -91,6 +91,51 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
 
     LOGI("xquicSend clientCtx:%p,  engine:%p, content:%s,\n",clientCtx,ctx_t->engine,cContent);
 
+    int header_size = 6;
+
+    xqc_http_header_t header[MAX_HEADER] = {
+        {
+            .name   = {.iov_base = ":method", .iov_len = 7},
+            .value  = {.iov_base = "POST", .iov_len = 4},
+            .flags  = 0,
+        },
+        {
+            .name   = {.iov_base = ":scheme", .iov_len = 7},
+            .value  = {.iov_base = "https", .iov_len = strlen("https")},
+            .flags  = 0,
+        },
+        {
+            .name   = {.iov_base = "host", .iov_len = 4},
+            .value  = {.iov_base = "com.xx", .iov_len = strlen("com.xx")},
+            .flags  = 0,
+        },
+        {
+            .name   = {.iov_base = ":path", .iov_len = 5},
+            .value  = {.iov_base = "test", .iov_len = strlen("test")},
+            .flags  = 0,
+        },
+        {
+            .name   = {.iov_base = "content-type", .iov_len = 12},
+            .value  = {.iov_base = "text/plain", .iov_len = 10},
+            .flags  = 0,
+        },
+        {
+            .name   = {.iov_base = "content-length", .iov_len = 14},
+            .value  = {.iov_base = 0, .iov_len = 0},
+            .flags  = 0,
+        },
+    };
+    xqc_http_headers_t headers = {
+            .headers = header,
+            .count  = header_size,
+        };
+
+
+    header[0].value.iov_base = "GET";
+    header[0].value.iov_len = sizeof("GET") - 1;
+
+    client_send_h3_get(ctx_t,&headers);//发送头
+
     (*env)->ReleaseStringUTFChars(env, content, cContent);
     (*env)->DeleteLocalRef(env, content);
     return 0;
@@ -99,7 +144,7 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
 /**
 * H3的方式发送数据
 */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicH3Send(JNIEnv *env, jclass cls,jlong clientCtx,jstring content){
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xquicH3Post(JNIEnv *env, jclass cls,jlong clientCtx,jstring content){
 
 }
 
@@ -110,7 +155,5 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicNative_xqu
     client_ctx_t*  ctx_t = (client_ctx_t* )jlong_to_ptr(clientCtx);
     LOGI("xquicDestroy clientCtx:%p,  engine:%p \n",clientCtx,ctx_t->engine);
 
-    ctx_t->ev_engine.repeat = 1;//单位秒
-    ev_timer_again (loop, &ctx_t->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
     return 0;
 }

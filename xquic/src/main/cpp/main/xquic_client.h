@@ -22,10 +22,10 @@ int client_connect(client_ctx_t * client,const char *host ,int port,const char *
 void client_start(client_ctx_t * client);
 
 //H3的方式发送内容
-int client_send_h3(client_ctx_t * client,xqc_http_headers_t* headers,const char *body);
+int client_send_h3_get(client_ctx_t * client,xqc_http_headers_t* headers);
 
-//HQ的方式返送内容
-int client_send_hq(client_ctx_t * client,const char *body);
+//H3的方式发送内容
+int client_send_h3_post(client_ctx_t * client,xqc_http_headers_t* headers,const char *body);
 
 //销毁
 int client_destroy(client_ctx_t * client);

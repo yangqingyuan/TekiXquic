@@ -43,14 +43,14 @@ object XquicNative {
      * 发送数据
      * 要先调用xquicStart，才能发送数据
      */
-    external fun xquicHqSend(clientCtx: Long, content: String): Int
+    external fun xquicH3Get(clientCtx: Long, content: String): Int
 
     /**
      * 发送数据
      * H3的方式发送数据
      * 要先调用xquicStart，才能发送数据
      */
-    external fun xquicH3Send(clientCtx: Long, content: String): Int
+    external fun xquicH3Post(clientCtx: Long, content: String): Int
 
     /**
      * 销毁

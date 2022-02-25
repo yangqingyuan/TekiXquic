@@ -49,7 +49,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(applicationContext, "请先connect", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            XquicNative.xquicHqSend(clientCtx, "Hello world hq")
+            XquicNative.xquicH3Get(clientCtx, "Hello world hq")
         }
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                 Toast.makeText(applicationContext, "请先connect", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
             }
-            XquicNative.xquicH3Send(clientCtx, "Hello world h3")
+            XquicNative.xquicH3Post(clientCtx, "Hello world h3")
         }
 
         findViewById<Button>(R.id.btn_destroy).setOnClickListener {
