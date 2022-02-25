@@ -15,11 +15,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        clientCtx = XquicNative.xquicInit()
-
-        isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
-
         Thread {
+            clientCtx = XquicNative.xquicInit()
+            isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
             XquicNative.xquicStart(clientCtx)
         }.start()
 

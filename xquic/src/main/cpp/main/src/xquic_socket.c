@@ -226,7 +226,7 @@ xqc_client_user_conn_create(client_ctx_t* ctx,const char *server_addr, int serve
     }
 
     user_conn->ev_socket.data = ctx;
-    ev_io_init(&user_conn->ev_socket,xqc_client_socket_event_callback,user_conn->fd,EV_READ | EV_PERSIST);
+    ev_io_init(&user_conn->ev_socket,xqc_client_socket_event_callback,user_conn->fd,EV_READ);
     ev_io_start(loop,&user_conn->ev_socket);
 
     return user_conn;

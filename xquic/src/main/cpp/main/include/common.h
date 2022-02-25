@@ -7,6 +7,7 @@
 #include <string.h>
 #include <memory.h>
 #include <sys/socket.h>
+#include <sys/syscall.h> /*必须引用这个文件 */
 #include <unistd.h>
 #include <errno.h>
 #include <signal.h>

@@ -21,7 +21,7 @@ message(@@@${CMAKE_CURRENT_SOURCE_DIR})
 
 
 link_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/${CMAKE_ANDROID_ARCH_ABI}) # 链接库地址
-link_libraries(ev.so xquic.so)
+link_libraries(xquic.so)
 
 aux_source_directory(. SRC_LIST) # 搜索当前目录下的所有.cpp文件
 aux_source_directory(./main MAIN_SRC_LIST) # 搜索当前目录下的所有.cpp文件
@@ -43,7 +43,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST})
+             ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST} share_libs/src/ev/ev.c share_libs/src/ev/event.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

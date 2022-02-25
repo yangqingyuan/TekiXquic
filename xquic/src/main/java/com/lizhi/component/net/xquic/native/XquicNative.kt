@@ -10,7 +10,6 @@ object XquicNative {
     init {
         System.loadLibrary("xnet-lib")
         System.loadLibrary("xquic")
-        System.loadLibrary("ev")
     }
 
     /**

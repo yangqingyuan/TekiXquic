@@ -36,6 +36,6 @@ void xqc_client_set_event_timer(xqc_msec_t wake_after, void *user_data)
     client_ctx_t *ctx = (client_ctx_t *) user_data;
     LOGE("xqc_client_set_event_timer wake_after:%f  a",wake_after/1000000.0);
 
-    //ctx->ev_engine.repeat = 1;//单位秒
-    //ev_timer_again (loop, &ctx->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
+    ctx->ev_engine.repeat = 1;//单位秒
+    ev_timer_again (loop, &ctx->ev_engine);//重新设置重复时间，每次调用会覆盖之前的时间，时间开始时间为当前时间
 }
