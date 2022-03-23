@@ -1,8 +1,8 @@
-package com.lizhi.component.net.xquic
+package com.lizhi.component.net.xquic.test
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import com.lizhi.component.net.xquic.native.XquicNative
+import com.lizhi.component.net.xquic.R
 
 class DemoActivity : AppCompatActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
