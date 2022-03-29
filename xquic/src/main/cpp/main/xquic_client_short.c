@@ -414,7 +414,8 @@ int client_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t
 
     if (args->quic_cfg.alpn_type == ALPN_H3) {
         const xqc_cid_t *cid = xqc_h3_connect(user_conn->ctx->engine, &conn_settings,
-                                              (const unsigned char *)args->quic_cfg.token, args->quic_cfg.token_len,
+                                              (const unsigned char *) args->quic_cfg.token,
+                                              args->quic_cfg.token_len,
                                               args->net_cfg.host, 0, &conn_ssl_config,
                                               (struct sockaddr *) &args->net_cfg.addr,
                                               args->net_cfg.addr_len, user_conn);
@@ -487,7 +488,7 @@ int client_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 
     /*socket event*/
     ev_io_init(&user_conn->ev_socket, client_socket_event_callback, user_conn->fd,
-               EV_READ | EV_PERSIST);
+               EV_READ);
     ev_io_start(ctx->eb, &user_conn->ev_socket);
 
     /*xquic timer */
@@ -580,16 +581,13 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
  * （2）环境配置
  * （3）quic配置
  */
-void client_init_args(xqc_cli_client_args_t *args, const char *host, int port, const char *token,
-                      const char *session,
-                      const char *content) {
+void client_init_args(xqc_cli_client_args_t *args, const char *url) {
     DEBUG;
     memset(args, 0, sizeof(xqc_cli_client_args_t));
 
     /*网络配置*/
     args->net_cfg.conn_timeout = 30;
-    strncpy(args->net_cfg.server_addr, host, sizeof(args->net_cfg.server_addr));
-    args->net_cfg.server_port = port;
+    client_parse_server_addr(&args->net_cfg,url);//根据url解析地址跟port
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
@@ -600,6 +598,18 @@ void client_init_args(xqc_cli_client_args_t *args, const char *host, int port, c
     args->quic_cfg.alpn_type = ALPN_H3;
     strncpy(args->quic_cfg.alpn, "hq-interop", sizeof(args->quic_cfg.alpn));
     args->quic_cfg.keyupdate_pkt_threshold = UINT16_MAX;
+}
+
+/**
+ * 解析参数
+ * @param args
+ * @param token
+ * @param session
+ * @param content
+ */
+void client_parse_args(xqc_cli_client_args_t *args, const char *token,
+                       const char *session,
+                       const char *content) {
     if (token != NULL) {
         int token_len = strlen(token);
         strcpy(args->quic_cfg.token, token);//拷贝token
@@ -617,8 +627,9 @@ void client_init_args(xqc_cli_client_args_t *args, const char *host, int port, c
         args->user_stream.send_body = malloc(content_len);
         strcpy(args->user_stream.send_body, content);//拷贝发送的内容
     }
-}
 
+
+}
 
 /**
  * 发送内容
@@ -629,12 +640,13 @@ void client_init_args(xqc_cli_client_args_t *args, const char *host, int port, c
  * @param content
  * @return
  */
-int client_send(const char *host, int port, const char *token, const char *session,
+int client_send(const char *url, const char *token, const char *session,
                 const char *content) {
 
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
-    client_init_args(args, host, port, token, session, content);
+    client_init_args(args, url);
+    client_parse_args(args, token, session, content);
 
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));

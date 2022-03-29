@@ -15,8 +15,7 @@ object XquicShortNative {
      * 发送数据
      */
     external fun send(
-        host: String,
-        port: Int,
+        url: String,
         token: String?,
         session: String?,
         content: String

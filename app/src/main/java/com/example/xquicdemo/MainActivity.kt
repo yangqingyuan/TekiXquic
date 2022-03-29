@@ -53,7 +53,8 @@ class MainActivity : AppCompatActivity() {
             }*/
             //XquicNative.xquicH3Get(clientCtx, "Hello world hq")
             Thread{
-                XquicShortNative.send("192.168.10.245",8443,null,null,"我是测试")
+                XquicShortNative.send("https://192.168.10.245:8443",null,null,"我是测试")
+                //XquicShortNative.send("https://test.xquic.com/path/resource",null,null,"我是测试")
             }.start()
         }
 

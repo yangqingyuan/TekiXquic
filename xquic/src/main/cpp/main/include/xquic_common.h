@@ -80,24 +80,24 @@ typedef enum xqc_cli_task_mode_s{
  */
 typedef struct xqc_cli_net_config_s{
     /* server addr info */
-    struct sockaddr_in6 addr;
-    int                 addr_len;
-    char                server_addr[64];
-    short               server_port;
-    char                host[256];
+    struct sockaddr_in6     addr;
+    socklen_t               addr_len;
+    char                    server_addr[64];
+    short                   server_port;
+    char                    host[256];
 
     /* ipv4 or ipv6 */
-    int                 ipv6;
+    int                     ip_type;
 
     /* congestion control algorithm */
-    CC_TYPE             cc;     /* congestion control algorithm */
-    int                 pacing; /* is pacing on */
+    CC_TYPE                 cc;     /* congestion control algorithm */
+    int                     pacing; /* is pacing on */
 
     /* idle persist timeout */
-    int                 conn_timeout;
+    int                     conn_timeout;
 
     /** 任务模式*/
-    xqc_cli_task_mode_t mode;
+    xqc_cli_task_mode_t     mode;
 } xqc_cli_net_config_t;
 
 

@@ -5,11 +5,11 @@ ssize_t write_socket(const unsigned char *buf, size_t size,
 {
     DEBUG;
 
-
+    /*
     user_conn_t *user_conn = (user_conn_t *) user;
     ssize_t res = 0;
     int fd = user_conn->fd;
-    /* COPY to run corruption test cases */
+    *//* COPY to run corruption test cases *//*
     unsigned char send_buf[XQC_PACKET_TMP_BUF_LEN];
     size_t send_buf_size = 0;
 
@@ -29,9 +29,9 @@ ssize_t write_socket(const unsigned char *buf, size_t size,
                 res = XQC_SOCKET_EAGAIN;
             }
         }
-    } while ((res < 0) && (errno == EINTR));
+    } while ((res < 0) && (errno == EINTR));*/
 
-    return res;
+    return -1;
 }
 
 void save_token(const unsigned char *token, unsigned token_len, void *user_data)

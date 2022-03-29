@@ -9,6 +9,52 @@ xqc_demo_now() {
     return ul;
 }
 
+/**
+ * 解析服务器地址
+ * @param cfg
+ * @return
+ */
+int client_parse_server_addr(xqc_cli_net_config_t *cfg,const char *url) {
+
+    /* get hostname and port */
+    char s_port[16] = {0};
+    sscanf(url, "%*[^://]://%[^:]:%[^/]", cfg->host, s_port);
+
+    /* parse port */
+    cfg->server_port = atoi(s_port);
+
+    /* set hit for hostname resolve */
+    struct addrinfo hints = {0};
+    memset(&hints, 0, sizeof(struct addrinfo));
+    hints.ai_family = AF_UNSPEC;        /* allow IPv4 or IPv6 */
+    hints.ai_socktype = SOCK_DGRAM;     /* datagram socket */
+    hints.ai_flags = AI_PASSIVE;        /* For wildcard IP address */
+    hints.ai_protocol = 0;              /* Any protocol */
+    hints.ai_canonname = NULL;
+    hints.ai_addr = NULL;
+    hints.ai_next = NULL;
+
+    /* resolve server's ip from hostname */
+    struct addrinfo *result = NULL;
+    int rv = getaddrinfo(cfg->host, s_port, &hints, &result);
+    if (rv != 0) {
+        LOGI("get addr info from hostname:%s\n", gai_strerror(rv));
+    }
+    memcpy(&cfg->addr, result->ai_addr, result->ai_addrlen);
+    cfg->addr_len = result->ai_addrlen;
+
+    /* convert to string */
+    if (result->ai_family == AF_INET6) {
+        inet_ntop(result->ai_family, &(((struct sockaddr_in6 *) result->ai_addr)->sin6_addr),
+                  cfg->server_addr, sizeof(cfg->server_addr));
+    } else {
+        inet_ntop(result->ai_family, &(((struct sockaddr_in *) result->ai_addr)->sin_addr),
+                  cfg->server_addr, sizeof(cfg->server_addr));
+    }
+
+    LOGI("server[%s] addr:%s:%d", cfg->host, cfg->server_addr, cfg->server_port);
+    freeaddrinfo(result);
+}
 
 /**
  * 创建socket 链接
@@ -22,7 +68,7 @@ int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *c
     int fd = 0;
     int ret;
 
-    struct sockaddr *addr = (struct sockaddr *) &cfg->addr;
+    struct sockaddr *addr = (struct sockaddr*)&cfg->addr;
     fd = socket(addr->sa_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         LOGE("create socket failed,erron:%d", errno);
@@ -49,10 +95,11 @@ int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *c
 
     return fd;
 
-err:
+    err:
     close(fd);
     return -1;
 }
+
 
 
 
@@ -74,31 +121,8 @@ err:
 //    return  ul;
 //}
 //
-//void
-//xqc_convert_addr_text_to_sockaddr(int type,
-//    const char *addr_text, unsigned int port,
-//    struct sockaddr **saddr, socklen_t *saddr_len)
-//{
-//    if (type == AF_INET6) {
-//        *saddr = calloc(1, sizeof(struct sockaddr_in6));
-//        memset(*saddr, 0, sizeof(struct sockaddr_in6));
-//        struct sockaddr_in6 *addr_v6 = (struct sockaddr_in6 *)(*saddr);
-//        inet_pton(type, addr_text, &(addr_v6->sin6_addr.s6_addr));
-//        addr_v6->sin6_family = type;
-//        addr_v6->sin6_port = htons(port);
-//        *saddr_len = sizeof(struct sockaddr_in6);
-//
-//    } else {
-//        *saddr = calloc(1, sizeof(struct sockaddr_in));
-//        memset(*saddr, 0, sizeof(struct sockaddr_in));
-//        struct sockaddr_in *addr_v4 = (struct sockaddr_in *)(*saddr);
-//        inet_pton(type, addr_text, &(addr_v4->sin_addr.s_addr));
-//        addr_v4->sin_family = type;
-//        addr_v4->sin_port = htons(port);
-//        *saddr_len = sizeof(struct sockaddr_in);
-//    }
-//}
-//
+
+
 //
 //static int
 //xqc_client_create_socket(int type,
@@ -148,27 +172,7 @@ err:
 //
 //
 //
-//void
-//xqc_client_init_addr(user_conn_t *user_conn,
-//    const char *server_addr, int server_port,int ip_type)
-//{
-//
-//    xqc_convert_addr_text_to_sockaddr(ip_type,
-//                                      server_addr, server_port,
-//                                      &user_conn->peer_addr,
-//                                      &user_conn->peer_addrlen);
-//
-//    if (ip_type == AF_INET6) {
-//        user_conn->local_addr = (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in6));
-//        memset(user_conn->local_addr, 0, sizeof(struct sockaddr_in6));
-//        user_conn->local_addrlen = sizeof(struct sockaddr_in6);
-//
-//    } else {
-//        user_conn->local_addr = (struct sockaddr *)calloc(1, sizeof(struct sockaddr_in));
-//        memset(user_conn->local_addr, 0, sizeof(struct sockaddr_in));
-//        user_conn->local_addrlen = sizeof(struct sockaddr_in);
-//    }
-//}
+
 //
 //
 //
