@@ -18,6 +18,8 @@ void xqc_client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *
 
 void xqc_client_h3_conn_update_cid_notify(xqc_h3_conn_t *conn, const xqc_cid_t *retire_cid, const xqc_cid_t *new_cid, void *user_data);
 
+int xqc_client_request_create_notify(xqc_h3_request_t *h3_request, void *user_data);
+
 int xqc_client_request_close_notify(xqc_h3_request_t *h3_request, void *user_data);
 
 int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_notify_flag_t flag, void *user_data);

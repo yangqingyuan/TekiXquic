@@ -1,4 +1,4 @@
-#include "common.h"
+#include "xquic_common.h"
 
 #ifndef _Hncluded_XQUIC_SOCKET
 #define _Hncluded_XQUIC_SOCKET
@@ -8,7 +8,7 @@
 extern "C"{
 #endif
 
-user_conn_t * xqc_client_user_conn_create(client_ctx_t* ctx,const char *server_addr, int server_port);
+int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *cfg);
 
 #ifdef __cplusplus
 }

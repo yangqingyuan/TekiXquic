@@ -22,10 +22,4 @@ object XquicShortNative {
         content: String
     ): Int
 
-    /**
-     * 销毁
-     */
-    external fun cancle(clientCtx: Long): Int
-
-
 }

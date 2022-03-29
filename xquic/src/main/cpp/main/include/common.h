@@ -57,11 +57,6 @@
 //全局变量，整个xquic只用一个
 struct ev_loop *loop;
 
-typedef enum xqc_cli_alpn_type_s {
-    ALPN_HQ,
-    ALPN_H3,
-} xqc_cli_alpn_type_t;
-
 
 typedef struct user_conn_s {
     int                 fd;

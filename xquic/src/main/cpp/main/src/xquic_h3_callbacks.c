@@ -1,5 +1,6 @@
 #include "xquic_h3_callbacks.h"
 
+
 int
 xqc_client_h3_conn_create_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data)
 {
@@ -36,12 +37,11 @@ xqc_client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, 
     DEBUG;
 }
 
-void
-xqc_client_h3_conn_update_cid_notify(xqc_h3_conn_t *conn, const xqc_cid_t *retire_cid, const xqc_cid_t *new_cid, void *user_data)
-{
-    DEBUG;
-}
 
+int xqc_client_request_create_notify(xqc_h3_request_t *h3_request, void *user_data){
+    DEBUG;
+    return 0;
+}
 
 int
 xqc_client_request_close_notify(xqc_h3_request_t *h3_request, void *user_data)

@@ -6,6 +6,7 @@ import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
 import com.lizhi.component.net.xquic.native.XquicNative
+import com.lizhi.component.net.xquic.native.XquicShortNative
 
 
 class MainActivity : AppCompatActivity() {
@@ -16,9 +17,10 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         Thread {
-            clientCtx = XquicNative.xquicInit()
-            isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
-            XquicNative.xquicStart(clientCtx)
+            //clientCtx = XquicNative.xquicInit()
+            //isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
+            //XquicNative.xquicStart(clientCtx)
+            //XquicShortNative.send("192.168.10.245",8443,null,null,"我是测试")
         }.start()
 
         /*
@@ -45,11 +47,14 @@ class MainActivity : AppCompatActivity() {
         }*/
 
         findViewById<Button>(R.id.btn_send_hq).setOnClickListener {
-            if (isConnect < 0) {
+            /*if (isConnect < 0) {
                 Toast.makeText(applicationContext, "请先connect", Toast.LENGTH_LONG).show()
                 return@setOnClickListener
-            }
-            XquicNative.xquicH3Get(clientCtx, "Hello world hq")
+            }*/
+            //XquicNative.xquicH3Get(clientCtx, "Hello world hq")
+            Thread{
+                XquicShortNative.send("192.168.10.245",8443,null,null,"我是测试")
+            }.start()
         }
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {

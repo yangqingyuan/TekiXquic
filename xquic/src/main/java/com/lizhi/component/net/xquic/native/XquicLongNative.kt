@@ -19,10 +19,10 @@ object XquicLongNative {
     /**
      * 发送数据
      */
-    external fun send(clientCtx: Long, content: String): Boolean
+    external fun send(clientCtx: Long, content: String): Int
 
     /**
      * 取消
      */
-    external fun cancel(clientCtx: Long): Boolean
+    external fun cancel(clientCtx: Long): Int
 }

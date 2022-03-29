@@ -4,7 +4,6 @@
 
 #include<jni.h>
 #include "common.h"
-#include "xquic_client.h"
 
 #ifndef _Hncluded_com_lizhi_component_net_xquic_native_XquicLongNative
 #define _Hncluded_com_lizhi_component_net_xquic_native_XquicLongNative
