@@ -83,7 +83,7 @@ void client_init_ctx(xqc_cli_ctx_t *pctx, xqc_cli_client_args_t *args) {
  * @param what
  */
 void client_engine_callback(struct ev_loop *main_loop, ev_timer *io_w, int what) {
-    DEBUG;
+    //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
     xqc_engine_main_logic(ctx->engine);
 }

@@ -1,5 +1,5 @@
 #include "xquic_h3_callbacks.h"
-
+#include "xquic_h3_ctrl.h"
 
 int xqc_client_h3_conn_create_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data) {
     DEBUG;
@@ -166,7 +166,6 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
 
 int xqc_client_request_write_notify(xqc_h3_request_t *h3_request, void *user_data) {
     DEBUG;
-    ssize_t ret = 0;
-
-    return ret;
+    xqc_cli_user_stream_t *user_stream = (xqc_cli_user_stream_t *) user_data;
+    return client_send_h3_content(user_stream);
 }
