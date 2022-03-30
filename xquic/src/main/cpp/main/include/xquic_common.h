@@ -23,6 +23,8 @@
 #include <string.h>
 #include "common.h"
 
+typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
+
 /* the congestion control types */
 typedef enum cc_type_s {
     CC_TYPE_BBR,
@@ -35,6 +37,7 @@ typedef enum cc_type_s {
  * 数据流
  */
 typedef struct xqc_cli_user_stream_s{
+    xqc_cli_user_conn_t         *user_conn;
 
     /* stat for IO */
     char                        *send_body;//发送内容
@@ -199,7 +202,6 @@ typedef struct xqc_cli_quic_config_s{
 #define AUTHORITY_LEN       128
 #define URL_LEN             512
 
-typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 #define XQC_INTEROP_TLS_GROUPS  "X25519:P-256:P-384:P-521"
 
 /* request method */

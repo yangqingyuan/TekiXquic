@@ -4,13 +4,11 @@
 void xqc_keylog_cb(const char *line, void *user_data)
 {
     DEBUG;
-    client_ctx_t *ctx = (client_ctx_t*)user_data;
 }
 
 void xqc_client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *engine_user_data)
 {
     DEBUG;
-    client_ctx_t *ctx = (client_ctx_t*)engine_user_data;
     switch(lvl){
         case XQC_LOG_REPORT:
         case XQC_LOG_FATAL:

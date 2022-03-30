@@ -336,7 +336,7 @@ void client_socket_event_callback(struct ev_loop *main_loop, ev_io *io_w, int wh
     } else if (what & EV_WRITE) {
         client_socket_write_handler(user_conn);
     } else {
-        LOGE("socket event callback error,unKnow what:%d",what);
+        LOGE("socket event callback error,unKnow what:%d", what);
     }
 }
 
@@ -491,9 +491,16 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
                           xqc_cli_request_t *reqs, int req_cnt) {
     DEBUG;
 
+    /*send request */
     for (int i = 0; i < req_cnt; i++) {
+        args->user_stream.user_conn = user_conn;
+
         if (args->quic_cfg.alpn_type == ALPN_H3) {
-            client_send_h3_requests(user_conn, &args->user_stream, reqs + i);
+            if (client_send_h3_requests(user_conn, &args->user_stream, reqs + i) < 0) {
+                LOGE("send h3 req blocked,will try later,total sent_cnt :%d",
+                     user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
+                return;
+            }
         } else {
             LOGE("支持者 h3发送");
         }
@@ -553,6 +560,7 @@ int client_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     client_task_start(user_conn, ctx->args, task->reqs, task->req_cnt);
 
     task->user_conn = user_conn;
+
     return 0;
 }
 
@@ -590,7 +598,7 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, in
 
     if (all_task_fin_flag) {
         LOGW("all tasks are finished,will break loop and exit!!");
-        ev_loop_destroy(ctx->eb);
+        ev_break(main_loop,EVBREAK_ALL);
         return;
     }
 

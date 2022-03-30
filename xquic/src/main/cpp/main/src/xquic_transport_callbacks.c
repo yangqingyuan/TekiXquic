@@ -3,7 +3,7 @@
 
 ssize_t write_socket(const unsigned char *buf, size_t size,
                      const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user) {
-    DEBUG;
+    //DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user;
     ssize_t res = 0;
     do {
