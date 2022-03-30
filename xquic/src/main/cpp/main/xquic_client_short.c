@@ -143,13 +143,14 @@ int client_init_alpn(xqc_cli_ctx_t *ctx) {
             .h3c_cbs={
                     .h3_conn_create_notify = xqc_client_h3_conn_create_notify,
                     .h3_conn_close_notify = xqc_client_h3_conn_close_notify,
-                    .h3_conn_handshake_finished = xqc_client_h3_conn_handshake_finished
+                    .h3_conn_handshake_finished = xqc_client_h3_conn_handshake_finished,
+                    .h3_conn_ping_acked =xqc_client_h3_conn_ping_acked_notify,
             },
             .h3r_cbs={
                     .h3_request_create_notify = xqc_client_request_create_notify,
                     .h3_request_close_notify = xqc_client_request_close_notify,
                     .h3_request_read_notify = xqc_client_request_read_notify,
-                    .h3_request_write_notify = xqc_client_request_write_notify
+                    .h3_request_write_notify = xqc_client_request_write_notify,
             }
     };
 
@@ -598,7 +599,7 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, in
 
     if (all_task_fin_flag) {
         LOGW("all tasks are finished,will break loop and exit!!");
-        ev_break(main_loop,EVBREAK_ALL);
+        ev_break(main_loop, EVBREAK_ALL);
         return;
     }
 
@@ -669,7 +670,8 @@ void client_init_args(xqc_cli_client_args_t *args, const char *url) {
     args->net_cfg.mode = MODE_SCMR;
     client_parse_server_addr(&args->net_cfg, url);//根据url解析地址跟port
 
-    args->req_cfg.request_cnt = 1;//一个url一个请求
+
+    args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
@@ -747,6 +749,6 @@ int client_send(const char *url, const char *token, const char *session,
     xqc_engine_destroy(ctx->engine);
     client_free_ctx(ctx);
 
-    LOGE("client send end(发送结束)");
+    LOGW("client send end(发送结束)");
     return XQC_OK;
 }
