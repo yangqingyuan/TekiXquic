@@ -710,6 +710,7 @@ void client_parse_args(xqc_cli_client_args_t *args, const char *token,
         int content_len = strlen(content);
         args->user_stream.send_body = malloc(content_len);
         strcpy(args->user_stream.send_body, content);//拷贝发送的内容
+        args->user_stream.send_body_len = content_len;
     }
 }
 

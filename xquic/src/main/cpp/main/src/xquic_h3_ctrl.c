@@ -60,12 +60,34 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
         }
 
         //TODO 这里模拟发送头，就结束了
-        ret = xqc_h3_request_send_headers(user_stream->h3_request, &user_stream->h3_hdrs, 1);
+        ret = xqc_h3_request_send_headers(user_stream->h3_request, &user_stream->h3_hdrs, 0);
         if (ret < 0) {
-            LOGI("client send h3 error size=%zd", ret);
+            LOGI("client send h3 headers error size=%zd", ret);
         } else {
-            LOGI("client send h3 success size=%zd", ret);
-            user_stream->hdr_sent = 1;
+            LOGI("client send h3 headers success size=%zd", ret);
+            if (user_stream->send_body == NULL) {
+                user_stream->hdr_sent = 1;
+                LOGW("client send h3 content warn,send body is NULL");
+                return ret;
+            }
+        }
+
+        if (user_stream->send_offset < user_stream->send_body_len) {
+            ret = xqc_h3_request_send_body(user_stream->h3_request,
+                                           user_stream->send_body + user_stream->send_offset,
+                                           user_stream->send_body_len -
+                                           user_stream->send_offset,
+                                           1);
+            if (ret < 0) {
+                LOGI("client send h3 body error size=%zd", ret);
+                return 0;
+            } else {
+                user_stream->send_offset += ret;
+                LOGI("client send h3 body success size=%zd", ret);
+                if (user_stream->send_offset >= user_stream->send_body_len) {
+                    user_stream->hdr_sent = 1;
+                }
+            }
         }
     }
     return ret;

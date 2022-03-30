@@ -89,7 +89,7 @@ int xqc_client_request_close_notify(xqc_h3_request_t *h3_request, void *user_dat
 
 int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_notify_flag_t flag,
                                    void *user_data) {
-    DEBUG;
+    //DEBUG;
     unsigned char fin = 0;
     xqc_cli_user_stream_t *user_stream = (xqc_cli_user_stream_t *) user_data;
 
@@ -109,6 +109,7 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
 
         if (fin) {
             user_stream->recv_fin = 1;
+            LOGW("xqc_client_request_read_notify fin");
             return 0;
         }
     }
@@ -136,7 +137,7 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
         read_sum += read;
         //char dataTemp[read];
         //memcpy(dataTemp, buff, read);
-        LOGI("xqc h3 request recv body length=%d, data=%s", read, buff);
+        //LOGI("xqc h3 request recv body length=%d, data=%s", read, buff);
 
         user_stream->recv_body_len += read;
 

@@ -42,6 +42,7 @@ typedef struct xqc_cli_user_stream_s{
     /* stat for IO */
     char                        *send_body;//发送内容
     size_t                      send_body_len;//发送的长度
+    uint64_t                    send_offset;//已经发送的内容坐标
 
 
     size_t                      recv_body_len;
