@@ -1,35 +1,36 @@
 #include "xquic_engine_callbacks.h"
 
 
-void xqc_keylog_cb(const char *line, void *user_data)
-{
+void xqc_keylog_cb(const char *line, void *user_data) {
     DEBUG;
 }
 
-void xqc_client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *engine_user_data)
-{
+void xqc_client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *engine_user_data) {
     DEBUG;
-    switch(lvl){
+    switch (lvl) {
         case XQC_LOG_REPORT:
         case XQC_LOG_FATAL:
         case XQC_LOG_ERROR:
-            LOGE("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
+            LOGE("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            break;
         case XQC_LOG_WARN:
-            LOGW("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
+            LOGW("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            break;
         case XQC_LOG_INFO:
         case XQC_LOG_STATS:
-            LOGI("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
+            LOGI("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            break;
         case XQC_LOG_DEBUG:
-            LOGD("fun:%s,line:%d,log:%s\n",__FUNCTION__,__LINE__,buf);
-        break;
+            LOGD("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            break;
     }
 }
 
-void xqc_client_set_event_timer(xqc_msec_t wake_after, void *user_data)
-{
+void xqc_client_set_event_timer(xqc_msec_t wake_after, void *user_data) {
     //DEBUG;
-    //LOGE("xqc_client_set_event_timer wake_after:%f",wake_after/1000000.0);
+    //LOGE("xqc_client_set_event_timer wake_after:%f", ctx->ev_engine.repeat);
+    xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) user_data;
+
+    ctx->ev_engine.repeat = wake_after / 1000000.0;
+    ev_timer_again(ctx->eb, &ctx->ev_engine);
 }

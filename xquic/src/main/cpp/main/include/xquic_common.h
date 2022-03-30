@@ -336,7 +336,7 @@ typedef struct xqc_cli_ctx_s{
     xqc_engine_t        *engine;
 
     /* libevent context */
-    struct ev_io        ev_engine;
+    struct ev_timer     ev_engine;
     struct ev_async     ev_task;
     struct ev_timer     ev_kill;
     struct ev_loop      *eb;  /* handle of libevent */

@@ -82,8 +82,8 @@ void client_init_ctx(xqc_cli_ctx_t *pctx, xqc_cli_client_args_t *args) {
  * @param io_w
  * @param what
  */
-void client_engine_callback(struct ev_loop *main_loop, ev_io *io_w, int what) {
-    //DEBUG;
+void client_engine_callback(struct ev_loop *main_loop, ev_timer *io_w, int what) {
+    DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
     xqc_engine_main_logic(ctx->engine);
 }
@@ -319,6 +319,9 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 
     /* close socket */
     close(user_conn->fd);
+
+    /* free send body */
+    free(ctx->args->user_stream.send_body);
 
     return 0;
 }
@@ -738,8 +741,8 @@ int client_send(const char *url, const char *token, const char *session,
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
     ctx->ev_engine.data = ctx;
-    ev_io_init(&ctx->ev_engine, client_engine_callback, 0, EV_READ);//EV_READ=1,EV_WRITE=2
-    ev_io_start(ctx->eb, &ctx->ev_engine);
+    ev_timer_init(&ctx->ev_engine, client_engine_callback,0,0);//EV_READ=1,EV_WRITE=2
+    ev_timer_start(ctx->eb, &ctx->ev_engine);
     client_init_engine(ctx, args);
 
     /* start task scheduler */
