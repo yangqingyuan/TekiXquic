@@ -1,4 +1,5 @@
 #include "common.h"
+#include "xquic_common.h"
 
 #ifndef _Hncluded_XQUIC_ENGINE_CALLBACKS
 #define _Hncluded_XQUIC_ENGINE_CALLBACKS

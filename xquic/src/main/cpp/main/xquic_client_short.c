@@ -77,7 +77,7 @@ void client_init_ctx(xqc_cli_ctx_t *pctx, xqc_cli_client_args_t *args) {
 }
 
 void client_engine_callback(struct ev_loop *main_loop, ev_io *io_w, int what) {
-    DEBUG;
+    //DEBUG;
 }
 
 /**
@@ -254,10 +254,11 @@ void client_init_tasks_scsr(xqc_cli_task_ctx_t *tctx, xqc_cli_client_args_t *arg
     tctx->task_cnt = args->req_cfg.request_cnt;
 
     /*init task list */
+    tctx->tasks = calloc(1,sizeof (xqc_cli_task_t) * tctx->task_cnt);
     for (int i = 0; i < tctx->task_cnt; i++) {
         tctx->tasks[i].task_idx = i;
         tctx->tasks[i].req_cnt = 1;
-        tctx->tasks[i].reqs = args->req_cfg.reqs + i;
+        tctx->tasks[i].reqs = (xqc_cli_request_t*)args->req_cfg.reqs + i;
     }
 
     /*init schedule 初始化调度器*/
@@ -317,7 +318,7 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
  * @param what
  */
 void client_socket_event_callback(struct ev_loop *main_loop, ev_io *io_w, int what) {
-    DEBUG;
+    //DEBUG;
 }
 
 
@@ -433,6 +434,7 @@ int client_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t
     return 0;
 }
 
+
 /**
  * 发送请求
  * @param user_conn
@@ -445,7 +447,13 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
     DEBUG;
 
     for (int i = 0; i < req_cnt; i++) {
+        if (args->quic_cfg.alpn_type == ALPN_H3) {
+            client_send_h3_requests(user_conn, &args->user_stream, reqs + i);
+        } else {
+            LOGE("支持者 h3发送");
+        }
 
+        user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
     }
 }
 
@@ -587,7 +595,10 @@ void client_init_args(xqc_cli_client_args_t *args, const char *url) {
 
     /*网络配置*/
     args->net_cfg.conn_timeout = 30;
-    client_parse_server_addr(&args->net_cfg,url);//根据url解析地址跟port
+    args->net_cfg.mode = MODE_SCMR;
+    client_parse_server_addr(&args->net_cfg, url);//根据url解析地址跟port
+
+    args->req_cfg.request_cnt = 1;//一个url一个请求
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
@@ -627,8 +638,6 @@ void client_parse_args(xqc_cli_client_args_t *args, const char *token,
         args->user_stream.send_body = malloc(content_len);
         strcpy(args->user_stream.send_body, content);//拷贝发送的内容
     }
-
-
 }
 
 /**

@@ -1,4 +1,4 @@
-#include "common.h"
+#include "xquic_common.h"
 
 #ifndef _Hncluded_XQUIC_H3_CTRL
 #define _Hncluded_XQUIC_H3_CTRL
@@ -8,9 +8,9 @@
 extern "C"{
 #endif
 
-int xqc_client_h3_init(client_ctx_t* ctx);
-int xqc_client_h3_conn(client_ctx_t* ctx,char *server_addr,xqc_conn_settings_t *conn_settings,xqc_conn_ssl_config_t *conn_ssl_config);
-int xqu_client_h3_send(client_ctx_t* ctx);
+
+int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
+                            xqc_cli_user_stream_t *user_stream, xqc_cli_request_t *req);
 
 #ifdef __cplusplus
 }

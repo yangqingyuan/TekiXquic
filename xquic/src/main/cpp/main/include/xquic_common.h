@@ -121,6 +121,20 @@ typedef enum xqc_cli_alpn_type_s{
     ALPN_H3
 } xqc_cli_alpn_type_t;
 
+typedef enum h3_hdr_type {
+    /* rsp */
+    H3_HDR_STATUS,
+    H3_HDR_CONTENT_TYPE,
+    H3_HDR_CONTENT_LENGTH,
+    H3_HDR_METHOD,
+    H3_HDR_SCHEME,
+    H3_HDR_HOST,
+    H3_HDR_PATH,
+
+    H3_HDR_CNT
+} H3_HDR_TYPE;
+
+
 /**
  *
  */
@@ -188,16 +202,24 @@ typedef struct xqc_cli_quic_config_s{
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 #define XQC_INTEROP_TLS_GROUPS  "X25519:P-256:P-384:P-521"
 
+/* request method */
+typedef enum request_method_e {
+    REQUEST_METHOD_GET,
+    REQUEST_METHOD_POST,
+} REQUEST_METHOD;
+
+
 /**
  * 单个请求
  */
 typedef struct xqc_cli_request_s{
     char            path[RESOURCE_LEN];         /* request path */
     char            scheme[8];                  /* request scheme, http/https */
-    //REQUEST_METHOD  method;
+    REQUEST_METHOD  method;
     char            auth[AUTHORITY_LEN];
     char            url[URL_LEN];               /* original url */
     // char            headers[MAX_HEADER][256];   /* field line of h3 */
+
 }xqc_cli_request_t;
 
 /**
@@ -349,5 +371,15 @@ typedef struct xqc_cli_user_conn_s{
     xqc_cli_task_t          *task;
 
 }xqc_cli_user_conn_t;
+
+
+inline uint64_t xqc_now() {
+    /* get microsecond unit time */
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    uint64_t ul = tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
+    return ul;
+}
+
 
 #endif //XQUICDEMO_XQUIC_COMMON_H

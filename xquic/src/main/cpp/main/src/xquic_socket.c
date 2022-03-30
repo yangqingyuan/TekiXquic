@@ -1,20 +1,11 @@
 #include "xquic_socket.h"
 
-static inline uint64_t
-xqc_demo_now() {
-    /* get microsecond unit time */
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    uint64_t ul = tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
-    return ul;
-}
-
 /**
  * 解析服务器地址
  * @param cfg
  * @return
  */
-int client_parse_server_addr(xqc_cli_net_config_t *cfg,const char *url) {
+void client_parse_server_addr(xqc_cli_net_config_t *cfg,const char *url) {
 
     /* get hostname and port */
     char s_port[16] = {0};
@@ -91,7 +82,7 @@ int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *c
         goto err;
     }
 
-    user_conn->last_sock_op_time = xqc_demo_now();
+    user_conn->last_sock_op_time = xqc_now();
 
     return fd;
 

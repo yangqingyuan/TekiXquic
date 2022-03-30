@@ -2,21 +2,16 @@
 
 
 int
-xqc_client_h3_conn_create_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data)
-{
-     DEBUG;
-     user_conn_t *user_conn = (user_conn_t *) user_data;
-     int ret = xqc_h3_conn_is_ready_to_send_early_data(conn);
-     LOGI("xqc_h3_conn_is_ready_to_send_early_data:%d\n",ret );
-     return 0;
+xqc_client_h3_conn_create_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data) {
+    DEBUG;
+    int ret = xqc_h3_conn_is_ready_to_send_early_data(conn);
+    LOGI("xqc_h3_conn_is_ready_to_send_early_data:%d\n", ret);
+    return 0;
 }
 
 int
-xqc_client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data)
-{
+xqc_client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data) {
     DEBUG;
-
-    user_conn_t *user_conn = (user_conn_t *) user_data;
     LOGE("conn errno:%d\n", xqc_h3_conn_get_errno(conn));
 
     // xqc_conn_stats_t stats = xqc_conn_get_stats(ctx.engine, cid);
@@ -26,48 +21,45 @@ xqc_client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
 }
 
 void
-xqc_client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data)
-{
+xqc_client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) {
     DEBUG;
 }
 
 void
-xqc_client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *ping_user_data, void *user_data)
-{
+xqc_client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
+                                     void *ping_user_data, void *user_data) {
     DEBUG;
 }
 
 
-int xqc_client_request_create_notify(xqc_h3_request_t *h3_request, void *user_data){
+int xqc_client_request_create_notify(xqc_h3_request_t *h3_request, void *user_data) {
     DEBUG;
     return 0;
 }
 
 int
-xqc_client_request_close_notify(xqc_h3_request_t *h3_request, void *user_data)
-{
+xqc_client_request_close_notify(xqc_h3_request_t *h3_request, void *user_data) {
     DEBUG;
     xqc_request_stats_t stats;
     stats = xqc_h3_request_get_stats(h3_request);
     LOGD("send_body_size:%zu, recv_body_size:%zu, send_header_size:%zu, recv_header_size:%zu, err:%d\n",
-           stats.send_body_size, stats.recv_body_size,
-           stats.send_header_size, stats.recv_header_size,
-            stats.stream_err);
+         stats.send_body_size, stats.recv_body_size,
+         stats.send_header_size, stats.recv_header_size,
+         stats.stream_err);
     return 0;
 }
 
 
 int
-xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_notify_flag_t flag, void *user_data)
-{
+xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_notify_flag_t flag,
+                               void *user_data) {
     DEBUG;
     return 0;
 }
 
 
 int
-xqc_client_request_write_notify(xqc_h3_request_t *h3_request, void *user_data)
-{
+xqc_client_request_write_notify(xqc_h3_request_t *h3_request, void *user_data) {
     DEBUG;
     ssize_t ret = 0;
     return ret;

@@ -1,46 +1,105 @@
 #include "xquic_h3_ctrl.h"
 #include "xquic_h3_callbacks.h"
 
-int xqc_client_h3_init(client_ctx_t* ctx){
-    xqc_h3_callbacks_t h3_cbs = {//注意：回调定义在H3_callback.h中
-        .h3c_cbs = {
-            .h3_conn_create_notify = xqc_client_h3_conn_create_notify,
-            .h3_conn_close_notify = xqc_client_h3_conn_close_notify,
-            .h3_conn_handshake_finished = xqc_client_h3_conn_handshake_finished,
-            .h3_conn_ping_acked = xqc_client_h3_conn_ping_acked_notify,
-        },
-        .h3r_cbs = {
-            .h3_request_close_notify = xqc_client_request_close_notify,
-            .h3_request_read_notify = xqc_client_request_read_notify,
-            .h3_request_write_notify = xqc_client_request_write_notify,
-        }
+char method_type[][16] = {
+        {"GET"},
+        {"POST"}
+};
+
+/**
+ * 格式化h3请求
+ * @return
+ */
+int client_format_h3_request(xqc_http_header_t *headers, size_t sz, xqc_cli_request_t *req) {
+    xqc_http_header_t req_hdr[] = {
+            {
+                    .name = {.iov_base = ":method", .iov_len = 7},
+                    .value = {.iov_base = method_type[req->method], .iov_len = strlen(
+                            method_type[req->method])},
+                    .flags = 0,
+            },
+            {
+                    .name = {.iov_base = ":scheme", .iov_len = 7},
+                    .value = {.iov_base = req->scheme, .iov_len = strlen(req->scheme)},
+                    .flags = 0,
+            },
+            {
+                    .name = {.iov_base = ":path", .iov_len = 5},
+                    .value = {.iov_base = req->path, .iov_len = strlen(req->path)},
+                    .flags = 0,
+            },
+            {
+                    .name = {.iov_base = ":authority", .iov_len = 10},
+                    .value = {.iov_base = req->auth, .iov_len = strlen(req->auth)},
+                    .flags = 0,
+            }
     };
 
-    /* init http3 context */
-    int ret = xqc_h3_ctx_init(ctx->engine, &h3_cbs);
-    if (ret != XQC_OK) {
-        LOGE("init h3 context error, ret: %d fun:%s,line:%d \n", ret,__FUNCTION__,__LINE__);
-        return ret;
+    size_t req_sz = sizeof(req_hdr) / sizeof(req_hdr[0]);
+    if (sz < req_sz) {
+        return -1;
+    }
+
+    for (size_t i = 0; i < req_sz; i++) {
+        headers[i] = req_hdr[i];
+    }
+
+    return req_sz;
+}
+
+/**
+ * 发送h3的内容
+ * @param user_stream
+ * @return
+ */
+ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
+    ssize_t ret = 0;
+    if (!user_stream->hdr_sent) {
+        if (user_stream->start_time == 0) {
+            user_stream->start_time = xqc_now();
+        }
+
+        //TODO 这里模拟发送头，就结束了
+        ret = xqc_h3_request_send_headers(user_stream->h3_request, &user_stream->h3_hdrs, 1);
+        if (ret < 0) {
+            LOGI("client send h3 error size=%zd", ret);
+        } else {
+            LOGI("client send h3 success size=%zd", ret);
+            user_stream->hdr_sent = 1;
+        }
     }
     return ret;
 }
 
-int xqc_client_h3_conn(client_ctx_t* ctx,char *server_addr,xqc_conn_settings_t *conn_settings,xqc_conn_ssl_config_t *conn_ssl_config){
-    user_conn_t *user_conn = ctx->user_conn;
-    const xqc_cid_t *cid;
-    cid = xqc_h3_connect(ctx->engine,
-                            conn_settings,
-                            user_conn->token, user_conn->token_len,/**token**/
-                            server_addr,
-                            0/**1是无密码**/,
-                            conn_ssl_config,
-                            user_conn->peer_addr,
-                            user_conn->peer_addrlen, user_conn);
-    if(cid == NULL){
-      LOGE("connect error: cid is NULL");
-     return -1;
+/**
+ * 发送h3请求
+ * @param user_conn
+ * @param args
+ * @return
+ */
+int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
+                            xqc_cli_user_stream_t *user_stream, xqc_cli_request_t *req) {
+    DEBUG;
+
+    /* 创建请求 */
+    user_stream->h3_request = xqc_h3_request_create(user_conn->ctx->engine, &user_conn->cid,
+                                                    user_stream);
+
+    if (user_stream->h3_request == NULL) {
+        LOGE("xqc h3 request create error");
+        return -1;
     }
-    memcpy(&user_conn->cid, cid, sizeof(*cid));//保存到user_conn中
+
+    /* format header */
+    xqc_http_header_t header[H3_HDR_CNT];
+    int hdr_cnt = client_format_h3_request(header, H3_HDR_CNT, req);
+
+    if (hdr_cnt > 0) {
+        user_stream->h3_hdrs.headers = header;
+        user_stream->h3_hdrs.count = hdr_cnt;
+
+        //发送h3内容
+        client_send_h3_content(user_stream);
+    }
     return 0;
 }
-
