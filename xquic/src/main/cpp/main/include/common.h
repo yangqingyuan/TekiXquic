@@ -54,10 +54,6 @@
 #define XQC_MAX_TOKEN_LEN 256
 #define XQC_PACKET_TMP_BUF_LEN 1500
 
-//全局变量，整个xquic只用一个
-struct ev_loop *loop;
-
-
 typedef struct user_conn_s {
     int                 fd;
     xqc_cid_t           cid;

@@ -330,20 +330,20 @@ typedef struct xqc_cli_task_ctx_s {
  */
 typedef struct xqc_cli_ctx_s{
     /* xquic engine context */
-    xqc_engine_t    *engine;
+    xqc_engine_t        *engine;
 
     /* libevent context */
-    struct ev_io    ev_engine;
-    struct ev_io    ev_task;
-    struct ev_io    *ev_kill;
-    struct ev_loop  *eb;  /* handle of libevent */
+    struct ev_io        ev_engine;
+    struct ev_async     ev_task;
+    struct ev_timer     ev_kill;
+    struct ev_loop      *eb;  /* handle of libevent */
 
     /* log context */
-    int             log_fd;
-    char            log_path[256];
+    int                 log_fd;
+    char                log_path[256];
 
     /* key log context */
-    int             keylog_fd;
+    int                 keylog_fd;
 
     /* client context */
     xqc_cli_client_args_t  *args;

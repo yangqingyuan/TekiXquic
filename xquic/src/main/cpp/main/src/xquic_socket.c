@@ -5,7 +5,7 @@
  * @param cfg
  * @return
  */
-void client_parse_server_addr(xqc_cli_net_config_t *cfg,const char *url) {
+void client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url) {
 
     /* get hostname and port */
     char s_port[16] = {0};
@@ -59,7 +59,7 @@ int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *c
     int fd = 0;
     int ret;
 
-    struct sockaddr *addr = (struct sockaddr*)&cfg->addr;
+    struct sockaddr *addr = (struct sockaddr *) &cfg->addr;
     fd = socket(addr->sa_family, SOCK_DGRAM, 0);
     if (fd < 0) {
         LOGE("create socket failed,erron:%d", errno);
@@ -91,12 +91,62 @@ int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *c
     return -1;
 }
 
+/**
+ * socket读取数据
+ * @param user_conn
+ */
+void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
+    //DEBUG;
+    ssize_t recv_size = 0;
+    ssize_t recv_sum = 0;
 
+    struct sockaddr addr;
+    socklen_t addr_len = 0;
+    unsigned char packet_buf[XQC_PACKET_TMP_BUF_LEN];
+    do {
+        recv_size = recvfrom(user_conn->fd, packet_buf, sizeof(packet_buf), 0, (
+                struct sockaddr *) &addr, &addr_len);
+        if (recv_size < 0 && errno == EAGAIN) {
+            //LOGE("recvfrom error recv_size=%d and errno == EAGAIN",recv_size);
+            break;
+        }
 
+        if (recv_size <= 0) {
+            LOGE("recvfrom error recv_size=%d",recv_size);
+            break;
+        }
 
+        user_conn->local_addrlen = sizeof(struct sockaddr_in6);
+        xqc_int_t ret = getsockname(user_conn->fd, (struct sockaddr *) &user_conn->local_addr,
+                                    &user_conn->local_addrlen);
+        if (ret != 0) {
+            LOGE("getsocketname error,erron:%d", errno);
+        }
 
+        recv_sum += recv_size;
+        uint64_t recv_time = xqc_now();
+        user_conn->last_sock_op_time = recv_time;
+        if (xqc_engine_packet_process(user_conn->ctx->engine, packet_buf, recv_size,
+                                      (struct sockaddr *) (&user_conn->local_addr),
+                                      user_conn->local_addrlen, (struct sockaddr *) (&addr),
+                                      addr_len, (xqc_msec_t) recv_time, user_conn) != XQC_OK) {
+            LOGE("xqc_engine_packet_process error");
+            return;
+        }
 
+    } while (recv_size > 0);
 
+finish_recv:
+    xqc_engine_finish_recv(user_conn->ctx->engine);
+}
+
+/**
+ * socket 写
+ * @param user_conn
+ */
+void client_socket_write_handler(xqc_cli_user_conn_t *user_conn) {
+
+}
 
 
 

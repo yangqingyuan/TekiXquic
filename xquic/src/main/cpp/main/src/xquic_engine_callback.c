@@ -33,5 +33,5 @@ void xqc_client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, vo
 void xqc_client_set_event_timer(xqc_msec_t wake_after, void *user_data)
 {
     //DEBUG;
-    LOGE("xqc_client_set_event_timer wake_after:%f",wake_after/1000000.0);
+    //LOGE("xqc_client_set_event_timer wake_after:%f",wake_after/1000000.0);
 }

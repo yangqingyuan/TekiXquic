@@ -76,8 +76,16 @@ void client_init_ctx(xqc_cli_ctx_t *pctx, xqc_cli_client_args_t *args) {
     client_open_keylog_file(pctx);
 }
 
+/**
+ * 客户端引擎回调
+ * @param main_loop
+ * @param io_w
+ * @param what
+ */
 void client_engine_callback(struct ev_loop *main_loop, ev_io *io_w, int what) {
     //DEBUG;
+    xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
+    xqc_engine_main_logic(ctx->engine);
 }
 
 /**
@@ -254,11 +262,11 @@ void client_init_tasks_scsr(xqc_cli_task_ctx_t *tctx, xqc_cli_client_args_t *arg
     tctx->task_cnt = args->req_cfg.request_cnt;
 
     /*init task list */
-    tctx->tasks = calloc(1,sizeof (xqc_cli_task_t) * tctx->task_cnt);
+    tctx->tasks = calloc(1, sizeof(xqc_cli_task_t) * tctx->task_cnt);
     for (int i = 0; i < tctx->task_cnt; i++) {
         tctx->tasks[i].task_idx = i;
         tctx->tasks[i].req_cnt = 1;
-        tctx->tasks[i].reqs = (xqc_cli_request_t*)args->req_cfg.reqs + i;
+        tctx->tasks[i].reqs = (xqc_cli_request_t *) args->req_cfg.reqs + i;
     }
 
     /*init schedule 初始化调度器*/
@@ -294,11 +302,14 @@ void client_init_tasks(xqc_cli_ctx_t *ctx) {
  * @param task
  */
 int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
+    DEBUG;
     xqc_cli_user_conn_t *user_conn = task->user_conn;
 
     /*close xquic conn*/
     if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
         xqc_h3_conn_close(ctx->engine, &user_conn->cid);
+    } else {
+        LOGE("client close task error: unKnow alpn type:%d", ctx->args->quic_cfg.alpn_type);
     }
 
     /* remove task event handle */
@@ -319,18 +330,52 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
  */
 void client_socket_event_callback(struct ev_loop *main_loop, ev_io *io_w, int what) {
     //DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) io_w->data;
+    if (what & EV_READ) {
+        client_socket_read_handler(user_conn);
+    } else if (what & EV_WRITE) {
+        client_socket_write_handler(user_conn);
+    } else {
+        LOGE("socket event callback error,unKnow what:%d",what);
+    }
 }
 
 
 /**
- * socket 超时
+ * socket 超时后关闭流
  * @param main_loop
  * @param io_t
  * @param what
  */
 void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
     DEBUG;
+    int rc = 0;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) io_t->data;
+    if (user_conn->ctx->args->quic_cfg.alpn_type == ALPN_H3) {
+        rc = xqc_h3_conn_close(user_conn->ctx->engine, &user_conn->cid);
+    } else {
+        LOGE("不支持其他协议");
+    }
 
+    if (rc != XQC_OK) {
+        LOGE("client idle callback,close conn error");
+        return;
+    }
+
+    LOGI("socket idle timeout, task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
+         user_conn->ctx->task_ctx.tasks[user_conn->task->task_idx].req_cnt,
+         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
+         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
+         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
+
+    //修改为失败状态
+    user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FAILED;
+
+    LOGI("task failed, total task_req_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, "
+         "req_create_cnt: %d\n", user_conn->task->req_cnt,
+         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
+         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
+         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
 }
 
 /**
@@ -452,7 +497,6 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
         } else {
             LOGE("支持者 h3发送");
         }
-
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
     }
 }
@@ -482,7 +526,7 @@ void client_task_start(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *ar
  * @return
  */
 int client_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
-    DEBUG;
+    //DEBUG;
 
     /* create socket and connection callback user data*/
     xqc_cli_user_conn_t *user_conn = calloc(1, sizeof(xqc_cli_user_conn_t));
@@ -495,12 +539,14 @@ int client_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     }
 
     /*socket event*/
+    user_conn->ev_socket.data = user_conn;
     ev_io_init(&user_conn->ev_socket, client_socket_event_callback, user_conn->fd,
                EV_READ);
     ev_io_start(ctx->eb, &user_conn->ev_socket);
 
     /*xquic timer */
-    ev_timer_init(&user_conn->ev_timeout, client_idle_callback, 0, 1);
+    user_conn->ev_timeout.data = user_conn;
+    ev_timer_init(&user_conn->ev_timeout, client_idle_callback, ctx->args->net_cfg.conn_timeout, 0);
     ev_timer_start(ctx->eb, &user_conn->ev_timeout);
 
     /* start client */
@@ -516,8 +562,8 @@ int client_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
  * @param io_w
  * @param what
  */
-void client_task_schedule_callback(struct ev_loop *main_loop, ev_io *io_w, int what) {
-    DEBUG;
+void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
+    //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
     uint8_t all_task_fin_flag = 1;
     uint8_t idle_flag = 1;
@@ -540,11 +586,10 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_io *io_w, int w
             && ctx->task_ctx.schedule.schedule_info[i].status == TASK_STATUS_WAITTING) {
             idle_waiting_task_id = i;
         }
-
     }
 
     if (all_task_fin_flag) {
-        LOGI("all tasks are finished,will break loop and exit!!");
+        LOGW("all tasks are finished,will break loop and exit!!");
         ev_loop_destroy(ctx->eb);
         return;
     }
@@ -560,6 +605,20 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_io *io_w, int w
             ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
         }
     }
+
+    /* start next round 开始下一轮检查*/
+    ev_async_send(main_loop, io_w);
+}
+
+/**
+ * 生命时间过后，无论结果如何直接kill掉
+ * @param main_loop
+ * @param io_w
+ * @param what
+ */
+void client_kill_it_any_way_callback(struct ev_loop *main_loop, ev_timer *io_w, int what) {
+    DEBUG;
+    ev_break(main_loop, EVBREAK_ALL);
 }
 
 /**
@@ -571,14 +630,18 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
     /*init tasks */
     client_init_tasks(ctx);
 
-    /*init add arm task timer */
+    /*init add arm task timer 这里轮询检查是否任务状态*/
     ctx->ev_task.data = ctx;
-    ev_io_init(&ctx->ev_task, client_task_schedule_callback, 0, EV_READ);
+    ev_async_init(&ctx->ev_task, client_task_schedule_callback);
+    ev_async_start(ctx->eb, &ctx->ev_task);
 
     client_task_schedule_callback(ctx->eb, &ctx->ev_task, 0);
 
+    /* kill it anyway, to protect from endless task (如果设置了生命时长，并超时了生命时长，直接kill掉)*/
     if (ctx->args->env_cfg.life > 0) {
-        // struct
+        ctx->ev_kill.data = ctx;
+        ev_timer_init(&ctx->ev_kill, client_kill_it_any_way_callback, ctx->args->env_cfg.life, 0);
+        ev_timer_start(ctx->eb, &ctx->ev_kill);
     }
 }
 
@@ -663,7 +726,8 @@ int client_send(const char *url, const char *token, const char *session,
 
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
-    ev_io_init(&ctx->ev_engine, client_engine_callback, 0, EV_READ);
+    ctx->ev_engine.data = ctx;
+    ev_io_init(&ctx->ev_engine, client_engine_callback, 0, EV_READ);//EV_READ=1,EV_WRITE=2
     ev_io_start(ctx->eb, &ctx->ev_engine);
     client_init_engine(ctx, args);
 

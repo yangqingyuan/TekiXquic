@@ -53,7 +53,7 @@ xqc_client_request_close_notify(xqc_h3_request_t *h3_request, void *user_data) {
 int
 xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_notify_flag_t flag,
                                void *user_data) {
-    DEBUG;
+    //DEBUG;
     return 0;
 }
 
