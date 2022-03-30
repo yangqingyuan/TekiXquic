@@ -2,8 +2,8 @@ package com.example.xquicdemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.util.Log
 import android.widget.Button
-import android.widget.TextView
 import android.widget.Toast
 import com.lizhi.component.net.xquic.native.XquicNative
 import com.lizhi.component.net.xquic.native.XquicShortNative
@@ -52,9 +52,11 @@ class MainActivity : AppCompatActivity() {
                 return@setOnClickListener
             }*/
             //XquicNative.xquicH3Get(clientCtx, "Hello world hq")
-            Thread{
-                XquicShortNative.send("https://192.168.10.245:8443",null,null,"我是测试")
+            Thread {
+                val startTime = System.currentTimeMillis()
+                XquicShortNative.send("https://192.168.10.245:8443", null, null, "我是测试")
                 //XquicShortNative.send("https://test.xquic.com/path/resource",null,null,"我是测试")
+                Log.e("LzXquic->jni", "花费时间：" + (System.currentTimeMillis() - startTime))
             }.start()
         }
 
