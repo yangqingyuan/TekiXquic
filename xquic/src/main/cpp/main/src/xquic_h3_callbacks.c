@@ -153,9 +153,9 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
         user_stream->recv_fin = 1;
 
         /* call back to client */
-        user_stream->user_conn->ctx->args->user_callback.read_data_callback(0,
-                                                                            user_stream->recv_body,
-                                                                            read_sum);
+        xqc_cli_user_callback_t *user_callback = &user_stream->user_conn->ctx->args->user_callback;
+        user_callback->read_data_callback(user_callback->env_android, user_callback->object_android, 0,
+                                          user_stream->recv_body, read_sum);
 
         xqc_request_stats_t stats;
         stats = xqc_h3_request_get_stats(h3_request);

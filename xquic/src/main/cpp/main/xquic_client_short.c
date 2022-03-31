@@ -720,6 +720,10 @@ void client_parse_args(xqc_cli_client_args_t *args, const char *token,
     /* set callback */
     if (user_cfg != NULL){
         args->user_callback.read_data_callback = user_cfg->read_data_callback;
+
+        /* android */
+        args->user_callback.env_android = user_cfg->env_android;
+        args->user_callback.object_android = user_cfg->object_android;
     }
 }
 

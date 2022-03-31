@@ -238,14 +238,21 @@ typedef struct xqc_cli_requests_s {
 
 /**
  * rev service data back to client
+ * android
  */
-typedef int (*xqc_cli_read_data_callback)(int core, char *data, ssize_t len);
+typedef int (*xqc_cli_read_data_callback)(void *env,void * jclass,int core, char *data, ssize_t len);
 
 /**
  * user custom （要增加更多的回调给到jni层，可以再这里增加）
  */
 typedef struct xqc_cli_user_callback_s {
+    /* android */
+    void * env_android;
+    void * object_android;
     xqc_cli_read_data_callback read_data_callback;
+
+    /* ios */
+    //FIXME
 } xqc_cli_user_callback_t;
 
 /**

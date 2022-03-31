@@ -4,76 +4,60 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
-import android.widget.Toast
-import com.lizhi.component.net.xquic.native.XquicNative
+import com.lizhi.component.net.xquic.listener.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicShortNative
 
 
 class MainActivity : AppCompatActivity() {
-    var clientCtx: Long = 0
-    var isConnect: Int = -1
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
-        Thread {
-            //clientCtx = XquicNative.xquicInit()
-            //isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
-            //XquicNative.xquicStart(clientCtx)
-            //XquicShortNative.send("192.168.10.245",8443,null,null,"我是测试")
-        }.start()
 
-        /*
         findViewById<Button>(R.id.btn_init).setOnClickListener {
-            if (clientCtx == 0L) {
-                clientCtx = XquicNative.xquicInit()
-            }
+
         }
 
         findViewById<Button>(R.id.btn_connect).setOnClickListener {
-            if (clientCtx == 0L) {
-                Toast.makeText(applicationContext, "链接失败，请先Init", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
-            isConnect = XquicNative.xquicConnect(clientCtx, "192.168.23.10", 8443, "test", null)
 
-            Thread {
-                XquicNative.xquicStart(clientCtx)
-            }.start()
         }
 
         findViewById<Button>(R.id.btn_start).setOnClickListener {
 
-        }*/
+        }
 
         findViewById<Button>(R.id.btn_send_hq).setOnClickListener {
-            /*if (isConnect < 0) {
-                Toast.makeText(applicationContext, "请先connect", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }*/
-            //XquicNative.xquicH3Get(clientCtx, "Hello world hq")
+
             Thread {
                 val startTime = System.currentTimeMillis()
-                XquicShortNative.send("https://192.168.10.245:8443", null, null, "我是测试")
-                //XquicShortNative.send("https://test.xquic.com/path/resource",null,null,"我是测试")
-                Log.e("LzXquic->jni", "花费时间：" + (System.currentTimeMillis() - startTime))
+                XquicShortNative().send(
+                    "https://192.168.10.245:8443",
+                    null,
+                    null,
+                    "我是测试",
+                    object : XquicCallback {
+                        override fun callBack(ret: Int, data: ByteArray) {
+                            Log.e(
+                                "LzXquic->jni",
+                                "花费时间 ${(System.currentTimeMillis() - startTime)} ms ,ret=$ret , data:${
+                                    String(data)
+                                }"
+                            )
+                        }
+                    },
+                )
+                Log.e("LzXquic->jni", "整个过程花费时间：" + (System.currentTimeMillis() - startTime)+" ms")
             }.start()
         }
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
-            if (isConnect < 0) {
-                Toast.makeText(applicationContext, "请先connect", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
-            XquicNative.xquicH3Post(clientCtx, "Hello world h3")
+
         }
 
         findViewById<Button>(R.id.btn_destroy).setOnClickListener {
-            if (clientCtx == 0L) {
-                Toast.makeText(applicationContext, "链接失败，请先Init", Toast.LENGTH_LONG).show()
-                return@setOnClickListener
-            }
-            XquicNative.xquicDestroy(clientCtx)
+
         }
     }
 }

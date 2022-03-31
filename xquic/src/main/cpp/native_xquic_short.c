@@ -5,9 +5,37 @@
 #include "native_xquic_short.h"
 #include "xquic_client_short.h"
 
+/**
+ * callback data to java
+ * @param ev_android
+ * @param object_android
+ * @param ret
+ * @param data
+ * @param len
+ * @return
+ */
+int read_data_callback(void *ev_android, void *object_android, int ret, char *data, ssize_t len) {
+    JNIEnv *env = (JNIEnv *) ev_android;
 
-int read_data_callback(int core, char *data, ssize_t len) {
-    LOGE("回调：core=%d,data=%s,len=%ld", core, data, len);
+    /* find class and get method */
+    jclass callbackClass = (*env)->GetObjectClass(env, object_android);
+    jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
+    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBack", "(I[B)V");
+    if (!jmid) {
+        LOGE("call back error,can not find methodId callBack");
+        return -1;
+    }
+
+    /* data to byteArray*/
+    jbyteArray dataBuf = (*env)->NewByteArray(env, len);
+    (*env)->SetByteArrayRegion(env, dataBuf, 0, len, (jbyte *) data);
+
+    /* call back */
+    (*env)->CallVoidMethod(env, j_obj, jmid, ret, dataBuf);
+
+    /* free */
+    (*env)->DeleteGlobalRef(env, j_obj);
+    (*env)->DeleteLocalRef(env, dataBuf);
     return 0;
 }
 
@@ -17,21 +45,18 @@ int read_data_callback(int core, char *data, ssize_t len) {
  */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNative_send
         (JNIEnv *env, jclass cls, jstring url, jstring token, jstring session,
-         jstring content) {
-    if (url == NULL) {
-        LOGE("xquicConnect error host == NULL");
+         jstring content, jobject callback) {
+    if (url == NULL || content == NULL) {
+        LOGE("xquicConnect error url == NULL or content can not null");
         return -1;
     }
 
-    if (content == NULL) {
-        LOGE("content can not null");
-        return -1;
-    }
     const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
+    const char *cContent = (*env)->GetStringUTFChars(env, content, 0);
 
     const char *cToken = NULL;
     if (token != NULL) {
-        cToken = (*env)->GetStringUTFChars(env, token, 0);
+        (*env)->GetStringUTFChars(env, token, 0);
     }
 
     const char *cSession = NULL;
@@ -39,33 +64,15 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNativ
         cSession = (*env)->GetStringUTFChars(env, session, 0);
     }
 
-    const char *cContent = NULL;
-    if (content != NULL) {
-        cContent = (*env)->GetStringUTFChars(env, content, 0);
-    }
-
-    /* 设置请求回调 */
+    /* user custom callback */
     xqc_cli_user_callback_t user_cfg = {
+            .env_android = env,//use to read_data_callback
+            .object_android = callback, //use to read_data_callback
             .read_data_callback =read_data_callback
     };
 
-    /* 开始发送数据 */
+    /* start to send data */
     client_send(cUrl, cToken, cSession, cContent, &user_cfg);
 
-    (*env)->ReleaseStringUTFChars(env, url, cUrl);
-    (*env)->DeleteLocalRef(env, url);
-
-    (*env)->ReleaseStringUTFChars(env, content, cContent);
-    (*env)->DeleteLocalRef(env, content);
-
-    if (session != NULL) {
-        (*env)->ReleaseStringUTFChars(env, session, cSession);
-        (*env)->DeleteLocalRef(env, session);
-    }
-
-    if (token != NULL) {
-        (*env)->ReleaseStringUTFChars(env, token, cToken);
-        (*env)->DeleteLocalRef(env, token);
-    }
     return 0;
 }

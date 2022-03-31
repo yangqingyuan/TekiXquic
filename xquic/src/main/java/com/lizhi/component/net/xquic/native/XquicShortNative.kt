@@ -1,14 +1,22 @@
 package com.lizhi.component.net.xquic.native
 
+import com.lizhi.component.net.xquic.listener.XquicCallback
 
 /**
  * 短链接
  */
-object XquicShortNative {
+class XquicShortNative {
+
+    companion object {
+
+        fun loadLib() {
+            System.loadLibrary("xnet-lib")
+            System.loadLibrary("xquic")
+        }
+    }
 
     init {
-        System.loadLibrary("xnet-lib")
-        System.loadLibrary("xquic")
+        loadLib()
     }
 
     /**
@@ -18,7 +26,7 @@ object XquicShortNative {
         url: String,
         token: String?,
         session: String?,
-        content: String
+        content: String,
+        xquicCallback: XquicCallback,
     ): Int
-
 }
