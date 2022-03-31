@@ -665,16 +665,13 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
  * （2）环境配置
  * （3）quic配置
  */
-void client_init_args(xqc_cli_client_args_t *args, const char *url) {
+int client_init_args(xqc_cli_client_args_t *args) {
     DEBUG;
     memset(args, 0, sizeof(xqc_cli_client_args_t));
 
     /*网络配置*/
     args->net_cfg.conn_timeout = 30;
     args->net_cfg.mode = MODE_SCMR;
-    client_parse_server_addr(&args->net_cfg, url);//根据url解析地址跟port
-
-
     args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
 
     /*环境配置 */
@@ -686,6 +683,8 @@ void client_init_args(xqc_cli_client_args_t *args, const char *url) {
     args->quic_cfg.alpn_type = ALPN_H3;
     strncpy(args->quic_cfg.alpn, "hq-interop", sizeof(args->quic_cfg.alpn));
     args->quic_cfg.keyupdate_pkt_threshold = UINT16_MAX;
+
+    return 0;
 }
 
 /**
@@ -695,9 +694,9 @@ void client_init_args(xqc_cli_client_args_t *args, const char *url) {
  * @param session
  * @param content
  */
-void client_parse_args(xqc_cli_client_args_t *args, const char *token,
-                       const char *session,
-                       const char *content, xqc_cli_user_callback_t *user_cfg) {
+int client_parse_args(xqc_cli_client_args_t *args, const char *url, const char *token,
+                      const char *session,
+                      const char *content, xqc_cli_user_callback_t *user_cfg) {
     if (token != NULL) {
         int token_len = strlen(token);
         strcpy(args->quic_cfg.token, token);//拷贝token
@@ -718,13 +717,16 @@ void client_parse_args(xqc_cli_client_args_t *args, const char *token,
     }
 
     /* set callback */
-    if (user_cfg != NULL){
+    if (user_cfg != NULL) {
         args->user_callback.read_data_callback = user_cfg->read_data_callback;
 
         /* android */
         args->user_callback.env_android = user_cfg->env_android;
         args->user_callback.object_android = user_cfg->object_android;
     }
+
+    /* parse server addr */
+    return client_parse_server_addr(&args->net_cfg, url, &args->user_callback);//根据url解析地址跟port
 }
 
 /**
@@ -741,8 +743,8 @@ int client_send(const char *url, const char *token, const char *session,
 
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
-    client_init_args(args, url);
-    client_parse_args(args, token, session, content, user_cfg);
+    client_init_args(args);
+    client_parse_args(args, url, token, session, content, user_cfg);
 
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));

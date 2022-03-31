@@ -5,7 +5,8 @@
  * @param cfg
  * @return
  */
-void client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url) {
+int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
+                             xqc_cli_user_callback_t *user_callback) {
 
     /* get hostname and port */
     char s_port[16] = {0};
@@ -29,7 +30,15 @@ void client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url) {
     struct addrinfo *result = NULL;
     int rv = getaddrinfo(cfg->host, s_port, &hints, &result);
     if (rv != 0) {
-        LOGI("get addr info from hostname:%s\n", gai_strerror(rv));
+        char err_msg[124];
+        sprintf(err_msg, "get addr info from hostname:%s", gai_strerror(rv));
+        LOGE("%s\n", err_msg);
+        if (user_callback != NULL) {
+            user_callback->read_data_callback(user_callback->env_android,
+                                              user_callback->object_android, rv, err_msg,
+                                              strlen(err_msg));
+        }
+        return -1;
     }
     memcpy(&cfg->addr, result->ai_addr, result->ai_addrlen);
     cfg->addr_len = result->ai_addrlen;
@@ -43,8 +52,10 @@ void client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url) {
                   cfg->server_addr, sizeof(cfg->server_addr));
     }
 
-    LOGI("client parse server addr server[%s] addr:%s:%d", cfg->host, cfg->server_addr, cfg->server_port);
+    LOGI("client parse server addr server[%s] addr:%s:%d", cfg->host, cfg->server_addr,
+         cfg->server_port);
     freeaddrinfo(result);
+    return 0;
 }
 
 /**
@@ -112,7 +123,7 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
         }
 
         if (recv_size <= 0) {
-            LOGE("recvfrom error recv_size=%d",recv_size);
+            LOGE("recvfrom error recv_size=%d", recv_size);
             break;
         }
 
@@ -136,7 +147,7 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
 
     } while (recv_size > 0);
 
-finish_recv:
+    finish_recv:
     xqc_engine_finish_recv(user_conn->ctx->engine);
 }
 
