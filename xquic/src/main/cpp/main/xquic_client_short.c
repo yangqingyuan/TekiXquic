@@ -320,8 +320,9 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     /* close socket */
     close(user_conn->fd);
 
-    /* free send body */
+    /* free stream */
     free(ctx->args->user_stream.send_body);
+    free(ctx->args->user_stream.recv_body);
 
     return 0;
 }
@@ -696,7 +697,7 @@ void client_init_args(xqc_cli_client_args_t *args, const char *url) {
  */
 void client_parse_args(xqc_cli_client_args_t *args, const char *token,
                        const char *session,
-                       const char *content) {
+                       const char *content, xqc_cli_user_callback_t *user_cfg) {
     if (token != NULL) {
         int token_len = strlen(token);
         strcpy(args->quic_cfg.token, token);//拷贝token
@@ -715,6 +716,11 @@ void client_parse_args(xqc_cli_client_args_t *args, const char *token,
         strcpy(args->user_stream.send_body, content);//拷贝发送的内容
         args->user_stream.send_body_len = content_len;
     }
+
+    /* set callback */
+    if (user_cfg != NULL){
+        args->user_callback.read_data_callback = user_cfg->read_data_callback;
+    }
 }
 
 /**
@@ -727,12 +733,12 @@ void client_parse_args(xqc_cli_client_args_t *args, const char *token,
  * @return
  */
 int client_send(const char *url, const char *token, const char *session,
-                const char *content) {
+                const char *content, xqc_cli_user_callback_t *user_cfg) {
 
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
     client_init_args(args, url);
-    client_parse_args(args, token, session, content);
+    client_parse_args(args, token, session, content, user_cfg);
 
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
@@ -741,7 +747,7 @@ int client_send(const char *url, const char *token, const char *session,
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
     ctx->ev_engine.data = ctx;
-    ev_timer_init(&ctx->ev_engine, client_engine_callback,0,0);//EV_READ=1,EV_WRITE=2
+    ev_timer_init(&ctx->ev_engine, client_engine_callback, 0, 0);//EV_READ=1,EV_WRITE=2
     ev_timer_start(ctx->eb, &ctx->ev_engine);
     client_init_engine(ctx, args);
 

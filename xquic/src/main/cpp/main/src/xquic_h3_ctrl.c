@@ -53,6 +53,7 @@ int client_format_h3_request(xqc_http_header_t *headers, size_t sz, xqc_cli_requ
  * @return
  */
 ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
+    LOGI(">>>>>>>> start send h3 content <<<<<<<<");
     ssize_t ret = 0;
     if (!user_stream->hdr_sent) {
         if (user_stream->start_time == 0) {

@@ -121,10 +121,12 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
     char buff[4096] = {0};
     size_t buff_size = 4096;
 
+    //TODO 最好根据后端返回动态的调整
+    user_stream->recv_body = malloc(1024 * 1242);
+
     ssize_t read = 0;
     ssize_t read_sum = 0;
     do {
-
         /* read body */
         read = xqc_h3_request_recv_body(h3_request, buff, buff_size, &fin);
         if (read == -XQC_EAGAIN) {
@@ -134,11 +136,10 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
             return 0;
         }
 
-        read_sum += read;
-        //char dataTemp[read];
-        //memcpy(dataTemp, buff, read);
-        //LOGI("xqc h3 request recv body length=%d, data=%s", read, buff);
+        //将内容拷贝到缓存中
+        memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
 
+        read_sum += read;
         user_stream->recv_body_len += read;
 
     } while (read > 0 && !fin);
@@ -150,6 +151,11 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
     /* finish */
     if (fin) {
         user_stream->recv_fin = 1;
+
+        /* call back to client */
+        user_stream->user_conn->ctx->args->user_callback.read_data_callback(0,
+                                                                            user_stream->recv_body,
+                                                                            read_sum);
 
         xqc_request_stats_t stats;
         stats = xqc_h3_request_get_stats(h3_request);

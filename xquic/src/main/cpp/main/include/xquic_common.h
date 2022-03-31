@@ -36,23 +36,24 @@ typedef enum cc_type_s {
 /**
  * 数据流
  */
-typedef struct xqc_cli_user_stream_s{
-    xqc_cli_user_conn_t         *user_conn;
+typedef struct xqc_cli_user_stream_s {
+    xqc_cli_user_conn_t *user_conn;
 
     /* stat for IO */
-    char                        *send_body;//发送内容
-    size_t                      send_body_len;//发送的长度
-    uint64_t                    send_offset;//已经发送的内容坐标
+    char *send_body;//发送内容
+    size_t send_body_len;//发送的长度
+    uint64_t send_offset;//已经发送的内容坐标
 
 
-    size_t                      recv_body_len;
-    int                         recv_fin;
-    xqc_msec_t                  start_time;
+    size_t recv_body_len;
+    char * recv_body;
+    int recv_fin;
+    xqc_msec_t start_time;
 
     /* h3 request content */
-    xqc_h3_request_t           *h3_request;
-    xqc_http_headers_t          h3_hdrs;
-    uint8_t                     hdr_sent;
+    xqc_h3_request_t *h3_request;
+    xqc_http_headers_t h3_hdrs;
+    uint8_t hdr_sent;
 } xqc_cli_user_stream_t;
 
 
@@ -68,7 +69,7 @@ typedef struct xqc_cli_user_stream_s{
 /**
  * 任务模式
  */
-typedef enum xqc_cli_task_mode_s{
+typedef enum xqc_cli_task_mode_s {
     /* send multi requests in single connection with multi streams */
     MODE_SCMR,
 
@@ -82,26 +83,26 @@ typedef enum xqc_cli_task_mode_s{
 /**
  * 网络配置
  */
-typedef struct xqc_cli_net_config_s{
+typedef struct xqc_cli_net_config_s {
     /* server addr info */
-    struct sockaddr_in6     addr;
-    socklen_t               addr_len;
-    char                    server_addr[64];
-    short                   server_port;
-    char                    host[256];
+    struct sockaddr_in6 addr;
+    socklen_t addr_len;
+    char server_addr[64];
+    short server_port;
+    char host[256];
 
     /* ipv4 or ipv6 */
-    int                     ip_type;
+    int ip_type;
 
     /* congestion control algorithm */
-    CC_TYPE                 cc;     /* congestion control algorithm */
-    int                     pacing; /* is pacing on */
+    CC_TYPE cc;     /* congestion control algorithm */
+    int pacing; /* is pacing on */
 
     /* idle persist timeout */
-    int                     conn_timeout;
+    int conn_timeout;
 
     /** 任务模式*/
-    xqc_cli_task_mode_t     mode;
+    xqc_cli_task_mode_t mode;
 } xqc_cli_net_config_t;
 
 
@@ -120,7 +121,7 @@ typedef struct xqc_cli_net_config_s{
 /**
  * 协议类型
  */
-typedef enum xqc_cli_alpn_type_s{
+typedef enum xqc_cli_alpn_type_s {
     ALPN_HQ,
     ALPN_H3
 } xqc_cli_alpn_type_t;
@@ -142,17 +143,17 @@ typedef enum h3_hdr_type {
 /**
  *
  */
-typedef struct xqc_cli_quic_config_s{
+typedef struct xqc_cli_quic_config_s {
     /*协议类型 */
-    xqc_cli_alpn_type_t  alpn_type;
+    xqc_cli_alpn_type_t alpn_type;
     char alpn[16];
 
     /* 0-rtt config */
-    int  st_len;                        /* session ticket len */
+    int st_len;                        /* session ticket len */
     char st[MAX_SESSION_TICKET_LEN];    /* session ticket buf */
-    int  tp_len;                        /* transport params len */
+    int tp_len;                        /* transport params len */
     char tp[MAX_TRANSPORT_PARAMS_LEN];  /* transport params buf */
-    int  token_len;                     /* token len */
+    int token_len;                     /* token len */
     char token[XQC_MAX_TOKEN_LEN];      /* token buf */
 
     char *cipher_suites;                /* cipher suites */
@@ -174,21 +175,21 @@ typedef struct xqc_cli_quic_config_s{
 /**
  * 环境配置
  */
- typedef struct xqc_cli_env_config_s{
-     /* log path */
-     char    log_path[256];
-     int     log_level;
+typedef struct xqc_cli_env_config_s {
+    /* log path */
+    char log_path[256];
+    int log_level;
 
-     /* out file */
-     char    out_file_dir[256];
+    /* out file */
+    char out_file_dir[256];
 
-     /* key export */
-     int     key_output_flag;
-     char    key_out_path[256];
+    /* key export */
+    int key_output_flag;
+    char key_out_path[256];
 
-     /* life cycle */
-     int     life;
- }xqc_cli_env_config_t;
+    /* life cycle */
+    int life;
+} xqc_cli_env_config_t;
 
 /**
 * ============================================================================
@@ -215,26 +216,37 @@ typedef enum request_method_e {
 /**
  * 单个请求
  */
-typedef struct xqc_cli_request_s{
-    char            path[RESOURCE_LEN];         /* request path */
-    char            scheme[8];                  /* request scheme, http/https */
-    REQUEST_METHOD  method;
-    char            auth[AUTHORITY_LEN];
-    char            url[URL_LEN];               /* original url */
+typedef struct xqc_cli_request_s {
+    char path[RESOURCE_LEN];         /* request path */
+    char scheme[8];                  /* request scheme, http/https */
+    REQUEST_METHOD method;
+    char auth[AUTHORITY_LEN];
+    char url[URL_LEN];               /* original url */
     // char            headers[MAX_HEADER][256];   /* field line of h3 */
 
-}xqc_cli_request_t;
+} xqc_cli_request_t;
 
 /**
  * 多个请求
  */
-typedef struct xqc_cli_requests_s{
+typedef struct xqc_cli_requests_s {
     /* requests */
-    char                    urls[MAX_REQUEST_CNT * MAX_REQUEST_LEN];
-    int                     request_cnt;    /* requests cnt in urls */
-    xqc_cli_request_t       reqs[MAX_REQUEST_CNT];
-}xqc_cli_requests_t;
+    char urls[MAX_REQUEST_CNT * MAX_REQUEST_LEN];
+    int request_cnt;    /* requests cnt in urls */
+    xqc_cli_request_t reqs[MAX_REQUEST_CNT];
+} xqc_cli_requests_t;
 
+/**
+ * rev service data back to client
+ */
+typedef int (*xqc_cli_read_data_callback)(int core, char *data, ssize_t len);
+
+/**
+ * user custom （要增加更多的回调给到jni层，可以再这里增加）
+ */
+typedef struct xqc_cli_user_callback_s {
+    xqc_cli_read_data_callback read_data_callback;
+} xqc_cli_user_callback_t;
 
 /**
  * ============================================================================
@@ -243,24 +255,28 @@ typedef struct xqc_cli_requests_s{
  * ============================================================================
  */
 
+
 /**
 * 参数，封装了配置
 */
 typedef struct xqc_cli_client_args_s {
     /* network args */
-    xqc_cli_net_config_t   net_cfg;
+    xqc_cli_net_config_t net_cfg;
 
     /* quic args */
-    xqc_cli_quic_config_t  quic_cfg;
+    xqc_cli_quic_config_t quic_cfg;
 
     /* environment args */
-    xqc_cli_env_config_t   env_cfg;
+    xqc_cli_env_config_t env_cfg;
 
     /* request args */
-    xqc_cli_requests_t     req_cfg;
+    xqc_cli_requests_t req_cfg;
 
     /* user stream*/
     xqc_cli_user_stream_t user_stream;
+
+    /* user callback*/
+    xqc_cli_user_callback_t user_callback;
 } xqc_cli_client_args_t;
 
 /**
@@ -277,11 +293,11 @@ typedef enum xqc_cli_task_status_s {
  * 任务调度信息
  */
 typedef struct xqc_cli_task_schedule_info_s {
-    xqc_cli_task_status_t       status;         /* task status */
-    int                         req_create_cnt; /* streams created */
-    int                         req_sent_cnt;
-    int                         req_fin_cnt;    /* the req cnt which have received FIN */
-    uint8_t                     fin_flag;       /* all reqs finished, need close */
+    xqc_cli_task_status_t status;         /* task status */
+    int req_create_cnt; /* streams created */
+    int req_sent_cnt;
+    int req_fin_cnt;    /* the req cnt which have received FIN */
+    uint8_t fin_flag;       /* all reqs finished, need close */
 } xqc_cli_task_schedule_info_t;
 
 /**
@@ -295,7 +311,7 @@ typedef struct xqc_cli_task_schedule_s {
     int idx;
 
     /* the task status, 0: not executed; 1: suc; -1: failed */
-    xqc_cli_task_schedule_info_t   *schedule_info;
+    xqc_cli_task_schedule_info_t *schedule_info;
 } xqc_cli_task_schedule_t;
 
 
@@ -304,9 +320,9 @@ typedef struct xqc_cli_task_schedule_s {
  * a task is strongly correlate to a net connection
  */
 typedef struct xqc_cli_task_s {
-    int         task_idx;
-    int         req_cnt;
-    xqc_cli_request_t   *reqs;      /* a task could contain multipule requests, which wil be sent  */
+    int task_idx;
+    int req_cnt;
+    xqc_cli_request_t *reqs;      /* a task could contain multipule requests, which wil be sent  */
     xqc_cli_user_conn_t *user_conn; /* user_conn handle */
 } xqc_cli_task_t;
 
@@ -315,65 +331,65 @@ typedef struct xqc_cli_task_s {
  */
 typedef struct xqc_cli_task_ctx_s {
     /* task mode */
-    xqc_cli_task_mode_t         mode;
+    xqc_cli_task_mode_t mode;
 
     /* total task cnt */
-    int                         task_cnt;
+    int task_cnt;
 
     /* task list */
-    xqc_cli_task_t              *tasks;
+    xqc_cli_task_t *tasks;
 
     /* current task schedule info */
-    xqc_cli_task_schedule_t     schedule; /* current task index */
+    xqc_cli_task_schedule_t schedule; /* current task index */
 } xqc_cli_task_ctx_t;
 
 
 /***
  * client 上下文
  */
-typedef struct xqc_cli_ctx_s{
+typedef struct xqc_cli_ctx_s {
     /* xquic engine context */
-    xqc_engine_t        *engine;
+    xqc_engine_t *engine;
 
     /* libevent context */
-    struct ev_timer     ev_engine;
-    struct ev_async     ev_task;
-    struct ev_timer     ev_kill;
-    struct ev_loop      *eb;  /* handle of libevent */
+    struct ev_timer ev_engine;
+    struct ev_async ev_task;
+    struct ev_timer ev_kill;
+    struct ev_loop *eb;  /* handle of libevent */
 
     /* log context */
-    int                 log_fd;
-    char                log_path[256];
+    int log_fd;
+    char log_path[256];
 
     /* key log context */
-    int                 keylog_fd;
+    int keylog_fd;
 
     /* client context */
-    xqc_cli_client_args_t  *args;
+    xqc_cli_client_args_t *args;
 
     /* task schedule context */
-    xqc_cli_task_ctx_t     task_ctx;
-}xqc_cli_ctx_t;
+    xqc_cli_task_ctx_t task_ctx;
+} xqc_cli_ctx_t;
 
 
 /***
  *
  */
-typedef struct xqc_cli_user_conn_s{
-    int                     fd;
-    xqc_cid_t               cid;
+typedef struct xqc_cli_user_conn_s {
+    int fd;
+    xqc_cid_t cid;
 
-    struct sockaddr_in6     local_addr;
-    socklen_t               local_addrlen;
+    struct sockaddr_in6 local_addr;
+    socklen_t local_addrlen;
 
-    struct ev_io            ev_socket;
-    struct ev_timer         ev_timeout;
+    struct ev_io ev_socket;
+    struct ev_timer ev_timeout;
 
-    xqc_cli_ctx_t           *ctx;
-    uint64_t                last_sock_op_time;
-    xqc_cli_task_t          *task;
+    xqc_cli_ctx_t *ctx;
+    uint64_t last_sock_op_time;
+    xqc_cli_task_t *task;
 
-}xqc_cli_user_conn_t;
+} xqc_cli_user_conn_t;
 
 
 inline uint64_t xqc_now() {
