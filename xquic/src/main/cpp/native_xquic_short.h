@@ -17,7 +17,7 @@ extern "C"{
 * 发送数据
  */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNative_send
-        (JNIEnv *env, jclass cls, jstring url, jstring token, jstring session, jstring content,
+        (JNIEnv *env, jclass cls,jobject params,
          jobject callback);
 
 

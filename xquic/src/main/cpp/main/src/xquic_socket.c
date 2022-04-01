@@ -6,7 +6,7 @@
  * @return
  */
 int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
-                             xqc_cli_user_callback_t *user_callback) {
+                             xqc_cli_user_data_params_t *user_callback) {
 
     /* get hostname and port */
     char s_port[16] = {0};
@@ -34,9 +34,10 @@ int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
         sprintf(err_msg, "get addr info from hostname:%s", gai_strerror(rv));
         LOGE("%s\n", err_msg);
         if (user_callback != NULL) {
-            user_callback->callback_read_data(user_callback->env_android,
-                                              user_callback->object_android, rv, err_msg,
-                                              strlen(err_msg));
+            user_callback->user_data_callback.callback_read_data(
+                    user_callback->user_data_callback.env_android,
+                    user_callback->user_data_callback.object_android, rv, err_msg,
+                    strlen(err_msg));
         }
         return -1;
     }

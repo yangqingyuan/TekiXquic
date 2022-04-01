@@ -25,6 +25,8 @@
 
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
+#define MAX_REC_DATA_LEN           1024*1024     /* recv data max len */
+
 /* the congestion control types */
 typedef enum cc_type_s {
     CC_TYPE_BBR,
@@ -47,6 +49,7 @@ typedef struct xqc_cli_user_stream_s {
 
     size_t recv_body_len;
     char *recv_body;
+    size_t recv_body_max_len;
     int recv_fin;
     xqc_msec_t start_time;
 
@@ -246,15 +249,12 @@ typedef int (*xqc_cli_callback_read_data)(void *env, void *jclass, int core, cha
 typedef void (*xcc_cli_callback_token)(void *env, void *jclass, const unsigned char *token,
                                        uint32_t token_len);
 
-typedef void (*xqc_cli_callback_pt)(void *env, void *jclass,const char *data, size_t data_len);
+typedef void (*xqc_cli_callback_pt)(void *env, void *jclass, const char *data, size_t data_len);
 
-typedef void (*xqc_cli_callback_session)(void *env, void *jclass,const char *data, size_t data_len);
+typedef void (*xqc_cli_callback_session)(void *env, void *jclass, const char *data,
+                                         size_t data_len);
 
-
-/**
- * user custom （要增加更多的回调给到jni层，可以再这里增加）
- */
-typedef struct xqc_cli_user_callback_s {
+typedef struct xqc_cli_user_data_callback_s {
     /* android */
     void *env_android;
     void *object_android;
@@ -281,7 +281,27 @@ typedef struct xqc_cli_user_callback_s {
 
     /* ios */
     //FIXME
-} xqc_cli_user_callback_t;
+} xqc_cli_user_data_callback_t;
+
+/**
+ * user custom （要增加更多的回调给到jni层，可以再这里增加）
+ */
+typedef struct xqc_cli_user_data_params_s {
+
+    xqc_cli_user_data_callback_t user_data_callback;
+
+    /* idle persist timeout */
+    int conn_timeout;
+
+    int max_recv_data_len;
+
+    char *token;
+    char *tp;
+    char *session;
+    char *url;
+    char *content;
+
+} xqc_cli_user_data_params_t;
 
 /**
  * ============================================================================
@@ -311,7 +331,7 @@ typedef struct xqc_cli_client_args_s {
     xqc_cli_user_stream_t user_stream;
 
     /* user callback*/
-    xqc_cli_user_callback_t *user_callback;
+    xqc_cli_user_data_params_t *user_callback;
 } xqc_cli_client_args_t;
 
 /**

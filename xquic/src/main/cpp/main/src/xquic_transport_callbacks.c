@@ -29,12 +29,13 @@ void save_token(const unsigned char *token, unsigned token_len, void *user_data)
         LOGE("save token error,user_conn is NULL");
         return;
     }
-    xqc_cli_user_callback_t *user_callback = user_conn->ctx->args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
 
     /* callback to client */
-    user_conn->ctx->args->user_callback->callback_token(user_callback->env_android,
-                                                        user_callback->object_android, token,
-                                                        token_len);
+    user_conn->ctx->args->user_callback->user_data_callback.callback_token(
+            user_callback->user_data_callback.env_android,
+            user_callback->user_data_callback.object_android, token,
+            token_len);
     //LOGI("token data:%s",token);
 }
 
@@ -45,12 +46,13 @@ void save_session_cb(const char *data, size_t data_len, void *user_data) {
         LOGE("save session error,user_conn is NULL");
         return;
     }
-    xqc_cli_user_callback_t *user_callback = user_conn->ctx->args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
 
     /* callback to client */
-    user_conn->ctx->args->user_callback->callback_session(user_callback->env_android,
-                                                          user_callback->object_android, data,
-                                                          data_len);
+    user_conn->ctx->args->user_callback->user_data_callback.callback_session(
+            user_callback->user_data_callback.env_android,
+            user_callback->user_data_callback.object_android, data,
+            data_len);
     //LOGI("session data:%s",data);
 
 }
@@ -62,11 +64,12 @@ void save_tp_cb(const char *data, size_t data_len, void *user_data) {
         LOGE("save tp cb error,user_conn is NULL");
         return;
     }
-    xqc_cli_user_callback_t *user_callback = user_conn->ctx->args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
 
     /* callback to client */
-    user_conn->ctx->args->user_callback->callback_pt(user_callback->env_android,
-                                                     user_callback->object_android, data, data_len);
+    user_conn->ctx->args->user_callback->user_data_callback.callback_pt(
+            user_callback->user_data_callback.env_android,
+            user_callback->user_data_callback.object_android, data, data_len);
     //LOGI("tp data:%s",data);
 }
 

@@ -61,17 +61,44 @@ int callback_read_data(void *ev_android, void *object_android, int ret, char *da
     return 0;
 }
 
+jstring getString(JNIEnv *env, jobject param, const char *field) {
+    jclass sendParamsClass = (*env)->GetObjectClass(env, param);
+    jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "Ljava/lang/String;");
+    if (!jfieldId) {
+        return NULL;
+    }
+    jstring string = (jstring) (*env)->GetObjectField(env, param, jfieldId);
+    return string;
+}
 
-/**
-* 发送数据
+jint getInt(JNIEnv *env, jobject param, const char *field) {
+    jclass sendParamsClass = (*env)->GetObjectClass(env, param);
+    jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "I");
+    if (!jfieldId) {
+        return 0;
+    }
+    jint data = (*env)->GetIntField(env, param, jfieldId);
+    return data;
+}
+
+
+/*
+ * get params
  */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNative_send
-        (JNIEnv *env, jclass cls, jstring url, jstring token, jstring session,
-         jstring content, jobject callback) {
+xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback) {
+
+    jstring url = getString(env, param, "url");
+    jstring content = getString(env, param, "content");
+
     if (url == NULL || content == NULL) {
         LOGE("xquicConnect error url == NULL or content can not null");
-        return -1;
+        return NULL;
     }
+
+    jstring token = getString(env, param, "token");
+    jstring session = getString(env, param, "session");
+    jint time_out = getInt(env, param, "timeOut");
+    jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
 
     const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
     const char *cContent = (*env)->GetStringUTFChars(env, content, 0);
@@ -80,24 +107,49 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNativ
     if (token != NULL) {
         (*env)->GetStringUTFChars(env, token, 0);
     }
-
     const char *cSession = NULL;
     if (session != NULL) {
         cSession = (*env)->GetStringUTFChars(env, session, 0);
     }
 
     /* user custom callback */
-    xqc_cli_user_callback_t *user_cfg = malloc(sizeof(xqc_cli_user_callback_t));
-    user_cfg->env_android = env;
-    user_cfg->object_android = callback;
-    user_cfg->callback_read_data = callback_read_data;
-    user_cfg->callback_token = callback_token;
-    user_cfg->callback_session = callback_session;
-    user_cfg->callback_pt = callback_tp;
+    xqc_cli_user_data_params_t *user_cfg = malloc(sizeof(xqc_cli_user_data_params_t));
+
+    /* key param */
+    user_cfg->url = cUrl;
+    user_cfg->content = cContent;
+
+    /* optional param */
+    user_cfg->token = cToken;
+    user_cfg->session = cSession;
+    user_cfg->conn_timeout = time_out;
+    user_cfg->max_recv_data_len = max_recv_data_len;
+
+    LOGE("user_cfg->conn_timeout=%d,dataLeng=%d", user_cfg->conn_timeout,
+         user_cfg->max_recv_data_len);
+
+    /* callback */
+    user_cfg->user_data_callback.env_android = env;
+    user_cfg->user_data_callback.object_android = callback;
+    user_cfg->user_data_callback.callback_read_data = callback_read_data;
+    user_cfg->user_data_callback.callback_token = callback_token;
+    user_cfg->user_data_callback.callback_session = callback_session;
+    user_cfg->user_data_callback.callback_pt = callback_tp;
+
+    return user_cfg;
+}
 
 
+/**
+* 发送数据
+ */
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNative_send
+        (JNIEnv *env, jclass cls, jobject param, jobject callback) {
+    xqc_cli_user_data_params_t *user_param = get_data_params(env, param, callback);
+    if (user_param == NULL) {
+        return -1;
+    }
     /* start to send data */
-    client_send(cUrl, cToken, cSession, cContent, user_cfg);
-
+    client_send(user_param);
     return 0;
 }

@@ -13,8 +13,7 @@ extern "C"{
 #endif
 
 //H3的方式发送内容
-int client_send(const char *url, const char *token, const char *session, const char *content,
-                xqc_cli_user_callback_t *user_cfg);
+int client_send(xqc_cli_user_data_params_t *user_cfg);
 
 #ifdef __cplusplus
 }

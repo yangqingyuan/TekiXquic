@@ -32,11 +32,19 @@ class MainActivity : AppCompatActivity() {
 
             Thread {
                 val startTime = System.currentTimeMillis()
+
+                val param =
+                    XquicShortNative.SendParams.Builder()
+                        .setUrl("https://192.168.10.245:8443")
+                        .setToken(null)
+                        .setSession(null)
+                        .setContent("我是测试")
+                        //.setTimeOut(1)
+                        //.setMaxRecvLenght(1)
+                        .build()
+
                 XquicShortNative().send(
-                    "https://192.168.10.245:8443",
-                    null,
-                    null,
-                    "我是测试",
+                    param,
                     object : XquicCallback {
                         override fun callBack(ret: Int, data: ByteArray) {
                             Log.e(
@@ -48,7 +56,10 @@ class MainActivity : AppCompatActivity() {
                         }
                     },
                 )
-                Log.e("LzXquic->jni", "整个过程花费时间：" + (System.currentTimeMillis() - startTime)+" ms")
+                Log.e(
+                    "LzXquic->jni",
+                    "整个过程花费时间：" + (System.currentTimeMillis() - startTime) + " ms"
+                )
             }.start()
         }
 

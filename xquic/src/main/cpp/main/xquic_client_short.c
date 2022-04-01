@@ -368,7 +368,7 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
         return;
     }
 
-    LOGI("socket idle timeout, task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
+    LOGW("socket idle timeout, task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
          user_conn->ctx->task_ctx.tasks[user_conn->task->task_idx].req_cnt,
          user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
          user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
@@ -377,7 +377,7 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
     //修改为失败状态
     user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FAILED;
 
-    LOGI("task failed, total task_req_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, "
+    LOGW("task failed, total task_req_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, "
          "req_create_cnt: %d\n", user_conn->task->req_cnt,
          user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
          user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
@@ -666,12 +666,16 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
  * （2）环境配置
  * （3）quic配置
  */
-int client_init_args(xqc_cli_client_args_t *args) {
+int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *user_param) {
     DEBUG;
     memset(args, 0, sizeof(xqc_cli_client_args_t));
 
     /*网络配置*/
-    args->net_cfg.conn_timeout = 30;
+    if (user_param->conn_timeout > 0) {
+        args->net_cfg.conn_timeout = user_param->conn_timeout;
+    } else {
+        args->net_cfg.conn_timeout = 30;
+    }
     args->net_cfg.mode = MODE_SCMR;
     args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
 
@@ -695,33 +699,37 @@ int client_init_args(xqc_cli_client_args_t *args) {
  * @param session
  * @param content
  */
-int client_parse_args(xqc_cli_client_args_t *args, const char *url, const char *token,
-                      const char *session,
-                      const char *content, xqc_cli_user_callback_t *user_cfg) {
-    if (token != NULL) {
-        int token_len = strlen(token);
-        strcpy(args->quic_cfg.token, token);//拷贝token
+int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *user_param) {
+    if (user_param->token != NULL) {
+        int token_len = strlen(user_param->token);
+        strcpy(args->quic_cfg.token, user_param->token);//拷贝token
         args->quic_cfg.token_len = token_len;
     }
-    if (session != NULL) {
-        int session_len = strlen(session);
-        strcpy(args->quic_cfg.st, session);//拷贝session
+    if (user_param->session != NULL) {
+        int session_len = strlen(user_param->session);
+        strcpy(args->quic_cfg.st, user_param->session);//拷贝session
         args->quic_cfg.st_len = session_len;
     }
 
     /* stream 配置 */
-    if (content != NULL) {
-        int content_len = strlen(content);
+    if (user_param->content != NULL) {
+        int content_len = strlen(user_param->content);
         args->user_stream.send_body = malloc(content_len);
-        strcpy(args->user_stream.send_body, content);//拷贝发送的内容
+        strcpy(args->user_stream.send_body, user_param->content);//拷贝发送的内容
         args->user_stream.send_body_len = content_len;
+        if (user_param->max_recv_data_len > 0) {
+            args->user_stream.recv_body_max_len = user_param->max_recv_data_len;
+        } else {
+            args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
+        }
     }
 
     /* set callback */
-    args->user_callback = user_cfg;
+    args->user_callback = user_param;
 
     /* parse server addr */
-    return client_parse_server_addr(&args->net_cfg, url, &args->user_callback);//根据url解析地址跟port
+    return client_parse_server_addr(&args->net_cfg, user_param->url,
+                                    &args->user_callback);//根据url解析地址跟port
 }
 
 /**
@@ -733,13 +741,12 @@ int client_parse_args(xqc_cli_client_args_t *args, const char *url, const char *
  * @param content
  * @return
  */
-int client_send(const char *url, const char *token, const char *session,
-                const char *content, xqc_cli_user_callback_t *user_cfg) {
+int client_send(xqc_cli_user_data_params_t *user_param) {
 
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
-    client_init_args(args);
-    client_parse_args(args, url, token, session, content, user_cfg);
+    client_init_args(args, user_param);
+    client_parse_args(args, user_param);
 
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
