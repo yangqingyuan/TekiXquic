@@ -5,16 +5,38 @@
 #include "native_xquic_short.h"
 #include "xquic_client_short.h"
 
+typedef enum client_msg_type {
+    MSG_TYPE_TOKEN,//token
+    MSG_TYPE_SESSION,//session
+    MSG_TYPE_TP,//tp
+    MSG_TYPE_DATA//service rev data
+} MSG_TYPE;
+
+void callback_token(void *ev_android, void *object_android, const unsigned char *token,
+                    unsigned token_len) {
+    DEBUG;
+
+    //LOGI("token data:%s",token);
+}
+
+void callback_session(void *ev_android, void *object_android, const char *data, size_t data_len) {
+    DEBUG;
+    //LOGI("session data:%s",data);
+
+}
+
+
+void callback_tp(void *ev_android, void *object_android, const char *data, size_t data_len) {
+    DEBUG;
+    //LOGI("tp data:%s",data);
+}
+
+
 /**
- * callback data to java
- * @param ev_android
- * @param object_android
- * @param ret
- * @param data
- * @param len
- * @return
+ *
+ * @return callback data to java
  */
-int read_data_callback(void *ev_android, void *object_android, int ret, char *data, ssize_t len) {
+int callback_read_data(void *ev_android, void *object_android, int ret, char *data, ssize_t len) {
     JNIEnv *env = (JNIEnv *) ev_android;
 
     /* find class and get method */
@@ -65,14 +87,17 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNativ
     }
 
     /* user custom callback */
-    xqc_cli_user_callback_t user_cfg = {
-            .env_android = env,//use to read_data_callback
-            .object_android = callback, //use to read_data_callback
-            .read_data_callback =read_data_callback
-    };
+    xqc_cli_user_callback_t *user_cfg = malloc(sizeof(xqc_cli_user_callback_t));
+    user_cfg->env_android = env;
+    user_cfg->object_android = callback;
+    user_cfg->callback_read_data = callback_read_data;
+    user_cfg->callback_token = callback_token;
+    user_cfg->callback_session = callback_session;
+    user_cfg->callback_pt = callback_tp;
+
 
     /* start to send data */
-    client_send(cUrl, cToken, cSession, cContent, &user_cfg);
+    client_send(cUrl, cToken, cSession, cContent, user_cfg);
 
     return 0;
 }

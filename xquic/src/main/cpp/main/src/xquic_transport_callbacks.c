@@ -13,7 +13,7 @@ ssize_t write_socket(const unsigned char *buf, size_t size,
             LOGE("write socket err %zd %s ,fd:%d, buf:%p, size:%zu, server_add:%s \n", res,
                  strerror(errno), user_conn->fd, buf, size,
                  user_conn->ctx->args->net_cfg.server_addr);
-            if(errno == EAGAIN){
+            if (errno == EAGAIN) {
                 res = XQC_SOCKET_EAGAIN;
             }
         }
@@ -24,16 +24,49 @@ ssize_t write_socket(const unsigned char *buf, size_t size,
 
 void save_token(const unsigned char *token, unsigned token_len, void *user_data) {
     DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    if (!user_conn) {
+        LOGE("save token error,user_conn is NULL");
+        return;
+    }
+    xqc_cli_user_callback_t *user_callback = user_conn->ctx->args->user_callback;
+
+    /* callback to client */
+    user_conn->ctx->args->user_callback->callback_token(user_callback->env_android,
+                                                        user_callback->object_android, token,
+                                                        token_len);
     //LOGI("token data:%s",token);
 }
 
 void save_session_cb(const char *data, size_t data_len, void *user_data) {
     DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    if (!user_conn) {
+        LOGE("save session error,user_conn is NULL");
+        return;
+    }
+    xqc_cli_user_callback_t *user_callback = user_conn->ctx->args->user_callback;
+
+    /* callback to client */
+    user_conn->ctx->args->user_callback->callback_session(user_callback->env_android,
+                                                          user_callback->object_android, data,
+                                                          data_len);
     //LOGI("session data:%s",data);
+
 }
 
 void save_tp_cb(const char *data, size_t data_len, void *user_data) {
     DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    if (!user_conn) {
+        LOGE("save tp cb error,user_conn is NULL");
+        return;
+    }
+    xqc_cli_user_callback_t *user_callback = user_conn->ctx->args->user_callback;
+
+    /* callback to client */
+    user_conn->ctx->args->user_callback->callback_pt(user_callback->env_android,
+                                                     user_callback->object_android, data, data_len);
     //LOGI("tp data:%s",data);
 }
 

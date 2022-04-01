@@ -46,7 +46,7 @@ typedef struct xqc_cli_user_stream_s {
 
 
     size_t recv_body_len;
-    char * recv_body;
+    char *recv_body;
     int recv_fin;
     xqc_msec_t start_time;
 
@@ -240,16 +240,44 @@ typedef struct xqc_cli_requests_s {
  * rev service data back to client
  * android
  */
-typedef int (*xqc_cli_read_data_callback)(void *env,void * jclass,int core, char *data, ssize_t len);
+typedef int (*xqc_cli_callback_read_data)(void *env, void *jclass, int core, char *data,
+                                          ssize_t len);
+
+typedef void (*xcc_cli_callback_token)(void *env, void *jclass, const unsigned char *token,
+                                       uint32_t token_len);
+
+typedef void (*xqc_cli_callback_pt)(void *env, void *jclass,const char *data, size_t data_len);
+
+typedef void (*xqc_cli_callback_session)(void *env, void *jclass,const char *data, size_t data_len);
+
 
 /**
  * user custom （要增加更多的回调给到jni层，可以再这里增加）
  */
 typedef struct xqc_cli_user_callback_s {
     /* android */
-    void * env_android;
-    void * object_android;
-    xqc_cli_read_data_callback read_data_callback;
+    void *env_android;
+    void *object_android;
+
+    /**
+     * callback to client to save
+     */
+    xqc_cli_callback_read_data callback_read_data;
+
+    /**
+     * callback to client to save
+     */
+    xcc_cli_callback_token callback_token;
+
+    /**
+     * callback to client to save
+     */
+    xqc_cli_callback_session callback_session;
+
+    /**
+     * callback to client to save
+     */
+    xqc_cli_callback_pt callback_pt;
 
     /* ios */
     //FIXME
@@ -283,7 +311,7 @@ typedef struct xqc_cli_client_args_s {
     xqc_cli_user_stream_t user_stream;
 
     /* user callback*/
-    xqc_cli_user_callback_t user_callback;
+    xqc_cli_user_callback_t *user_callback;
 } xqc_cli_client_args_t;
 
 /**

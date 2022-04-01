@@ -323,6 +323,7 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     /* free stream */
     free(ctx->args->user_stream.send_body);
     free(ctx->args->user_stream.recv_body);
+    free(ctx->args->user_callback);
 
     return 0;
 }
@@ -717,13 +718,7 @@ int client_parse_args(xqc_cli_client_args_t *args, const char *url, const char *
     }
 
     /* set callback */
-    if (user_cfg != NULL) {
-        args->user_callback.read_data_callback = user_cfg->read_data_callback;
-
-        /* android */
-        args->user_callback.env_android = user_cfg->env_android;
-        args->user_callback.object_android = user_cfg->object_android;
-    }
+    args->user_callback = user_cfg;
 
     /* parse server addr */
     return client_parse_server_addr(&args->net_cfg, url, &args->user_callback);//根据url解析地址跟port

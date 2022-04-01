@@ -17,6 +17,7 @@ int xqc_client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, v
          stats.tlp_count, stats.recv_count, stats.srtt, stats.early_data_flag, stats.conn_err,
          stats.ack_info);
 
+    /* chang status to finished */
     user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FINISHED;
 
     xqc_cli_ctx_t *ctx = user_conn->ctx;
@@ -153,8 +154,8 @@ int xqc_client_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_not
         user_stream->recv_fin = 1;
 
         /* call back to client */
-        xqc_cli_user_callback_t *user_callback = &user_stream->user_conn->ctx->args->user_callback;
-        user_callback->read_data_callback(user_callback->env_android, user_callback->object_android, 0,
+        xqc_cli_user_callback_t *user_callback = user_stream->user_conn->ctx->args->user_callback;
+        user_callback->callback_read_data(user_callback->env_android, user_callback->object_android, 0,
                                           user_stream->recv_body, read_sum);
 
         xqc_request_stats_t stats;
