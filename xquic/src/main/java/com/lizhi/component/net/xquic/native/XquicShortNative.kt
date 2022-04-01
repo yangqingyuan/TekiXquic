@@ -15,6 +15,9 @@ class XquicShortNative {
         }
     }
 
+    init {
+        loadLib()
+    }
 
     /**
      * 拥塞算法
@@ -26,13 +29,41 @@ class XquicShortNative {
     }
 
     open class SendParams {
-        var url: String? = null // key param
-        var token: String? = null // optional param
-        var session: String? = null // optional param
+        /**
+         * key param
+         */
+        var url: String? = null
+
+        /**
+         * optional param
+         */
+        var token: String? = null
+
+        /**
+         * optional param
+         */
+        var session: String? = null
+
+
         var content: String? = null //key param
-        var timeOut: Int = 30 //optional default: 30 second
-        var maxRecvDataLen: Int = 1024 * 1024 //optional default: 1M
-        var ccType: Int = CCType.BBR.ordinal//optional
+
+        /**
+         * optional param
+         * unit：second
+         */
+        var timeOut: Int = 30
+
+        /**
+         * optional param
+         * default: 1M
+         */
+        var maxRecvDataLen: Int = 1024 * 1024
+
+        /**
+         * optional param
+         * default: bbr
+         */
+        var ccType: Int = CCType.BBR.ordinal
 
         open class Builder {
             private val params = SendParams()
@@ -43,12 +74,16 @@ class XquicShortNative {
             }
 
             fun setToken(token: String?): Builder {
-                params.token = token
+                if (!token.isNullOrBlank()) {
+                    params.token = token
+                }
                 return this
             }
 
             fun setSession(session: String?): Builder {
-                params.session = session
+                if (!session.isNullOrBlank()) {
+                    params.session = session
+                }
                 return this
             }
 
@@ -76,11 +111,6 @@ class XquicShortNative {
                 return params
             }
         }
-    }
-
-
-    init {
-        loadLib()
     }
 
     /**

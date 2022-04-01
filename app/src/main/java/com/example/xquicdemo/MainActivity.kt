@@ -47,11 +47,19 @@ class MainActivity : AppCompatActivity() {
                 XquicShortNative().send(
                     param,
                     object : XquicCallback {
-                        override fun callBack(ret: Int, data: ByteArray) {
+                        override fun callBackReadData(ret: Int, data: ByteArray) {
                             Log.e(
                                 "LzXquic->jni",
-                                "花费时间 ${(System.currentTimeMillis() - startTime)} ms ,ret=$ret , data:${
+                                " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms ,ret=$ret , data:${
                                     String(data)
+                                }"
+                            )
+                        }
+
+                        override fun callBackMessage(msgType: Int, data: ByteArray) {
+                            Log.e(
+                                "LzXquic->jni", "java ,msgType=$msgType , data:${
+                                   String(data)
                                 }"
                             )
                         }
