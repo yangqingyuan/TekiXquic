@@ -677,6 +677,7 @@ int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *us
         args->net_cfg.conn_timeout = 30;
     }
     args->net_cfg.mode = MODE_SCMR;
+    args->net_cfg.cc = user_param->cc;
     args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
 
     /*环境配置 */

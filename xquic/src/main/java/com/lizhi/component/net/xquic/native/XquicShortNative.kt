@@ -15,6 +15,16 @@ class XquicShortNative {
         }
     }
 
+
+    /**
+     * 拥塞算法
+     */
+    enum class CCType {
+        BBR,
+        CUBIC,
+        RENO
+    }
+
     open class SendParams {
         var url: String? = null // key param
         var token: String? = null // optional param
@@ -22,6 +32,7 @@ class XquicShortNative {
         var content: String? = null //key param
         var timeOut: Int = 30 //optional default: 30 second
         var maxRecvDataLen: Int = 1024 * 1024 //optional default: 1M
+        var ccType: Int = CCType.BBR.ordinal//optional
 
         open class Builder {
             private val params = SendParams()
@@ -56,6 +67,10 @@ class XquicShortNative {
                 return this
             }
 
+            fun setCCType(ccType: CCType): Builder {
+                params.ccType = ccType.ordinal
+                return this
+            }
 
             fun build(): SendParams {
                 return params

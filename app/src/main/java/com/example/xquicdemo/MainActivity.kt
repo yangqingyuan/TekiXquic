@@ -41,6 +41,7 @@ class MainActivity : AppCompatActivity() {
                         .setContent("我是测试")
                         //.setTimeOut(1)
                         //.setMaxRecvLenght(1)
+                        //.setCCType(XquicShortNative.CCType.RENO)
                         .build()
 
                 XquicShortNative().send(

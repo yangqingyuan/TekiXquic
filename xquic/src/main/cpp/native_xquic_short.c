@@ -99,6 +99,8 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     jstring session = getString(env, param, "session");
     jint time_out = getInt(env, param, "timeOut");
     jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
+    jint cc_type = getInt(env, param, "ccType");
+
 
     const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
     const char *cContent = (*env)->GetStringUTFChars(env, content, 0);
@@ -125,8 +127,19 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     user_cfg->conn_timeout = time_out;
     user_cfg->max_recv_data_len = max_recv_data_len;
 
-    LOGE("user_cfg->conn_timeout=%d,dataLeng=%d", user_cfg->conn_timeout,
-         user_cfg->max_recv_data_len);
+    switch (cc_type) {
+        case 0:
+            user_cfg->cc = CC_TYPE_BBR;
+            break;
+        case 1:
+            user_cfg->cc = CC_TYPE_CUBIC;
+            break;
+        case 2:
+            user_cfg->cc = CC_TYPE_RENO;
+            break;
+        default:
+            user_cfg->cc = CC_TYPE_BBR;
+    }
 
     /* callback */
     user_cfg->user_data_callback.env_android = env;

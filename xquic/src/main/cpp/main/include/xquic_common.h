@@ -98,8 +98,10 @@ typedef struct xqc_cli_net_config_s {
     int ip_type;
 
     /* congestion control algorithm */
-    CC_TYPE cc;     /* congestion control algorithm */
-    int pacing; /* is pacing on */
+    CC_TYPE cc;
+
+    /* is pacing on */
+    int pacing;
 
     /* idle persist timeout */
     int conn_timeout;
@@ -300,6 +302,9 @@ typedef struct xqc_cli_user_data_params_s {
     char *session;
     char *url;
     char *content;
+
+    /* congestion control algorithm */
+    CC_TYPE cc;
 
 } xqc_cli_user_data_params_t;
 
