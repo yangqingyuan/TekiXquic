@@ -9,15 +9,16 @@
 （2）libev
 
 # 使用方式
- val xquicClient = XquicClient.Builder()
+
+ 
+          val xquicClient = XquicClient.Builder()
                 .connectTimeOut(13)
                 .setReadTimeOut(23)
                 .writeTimeout(15)
                 .pingInterval(15)
                 .build()
-
             val xRequest = XRequest.Builder()
-                .url("https://192.168.10.245:8442")
+                .url("https://192.168.10.245:8443")
                 .get() //Default
                 .build()
 
@@ -30,11 +31,9 @@
 
                 override fun onResponse(call: XCall, xResponse: XResponse) {
 
-                    XLogUtils.error(
+                    XLogUtils.info(
                         " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
                     )
-
-                    appendText(xResponse.xResponseBody?.getData())
                 }
             })
 
