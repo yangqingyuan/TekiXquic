@@ -2,7 +2,7 @@
 #define _LZ_XNET_COMMON_H
 
 #include <jni.h>
-#include <android/log.h>
+
 #include <time.h>
 #include <string.h>
 #include <memory.h>
@@ -37,14 +37,19 @@
 #define jlong_to_ptr(a) ((void*)(int)(a))
 #define ptr_to_jlong(a) ((jlong)(int)(a))
 #endif
+
+#ifdef ANDROID
 #define TAG    "LzXquic->jni"
+#include <android/log.h>
 #define LOGW(...)    __android_log_print(ANDROID_LOG_WARN, TAG, __VA_ARGS__)
 #define LOGE(...)    __android_log_print(ANDROID_LOG_ERROR, TAG, __VA_ARGS__)
 #define LOGI(...)    __android_log_print(ANDROID_LOG_INFO, TAG, __VA_ARGS__)
-#ifdef LIB_DEBUG
-#define LOGD(...)	__android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
+#define LOGD(...)    __android_log_print(ANDROID_LOG_DEBUG, TAG, __VA_ARGS__)
 #else
-#define LOGD(...)
+#define LOGD printf
+#define LOGW printf
+#define LOGE printf
+#define LOGI printf
 #endif
 
 #endif /* _LZ_KEEPLIVE_COMMON_H */

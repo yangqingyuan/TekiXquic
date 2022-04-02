@@ -175,8 +175,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
              stats.send_body_size, stats.recv_body_size);
 
         /* fin recv close request */
-        //int ret = xqc_h3_request_close(h3_request);
-        //LOGI(" xqc_h3_request_close ret=%d", ret);
+        int ret = xqc_h3_request_close(h3_request);
+        LOGI(" xqc_h3_request_close ret=%d", ret);
     }
     return 0;
 }

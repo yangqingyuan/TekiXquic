@@ -26,6 +26,7 @@
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
 #define MAX_REC_DATA_LEN           1024*1024     /* recv data max len */
+#define XQC_PACKET_TMP_BUF_LEN     1500
 
 /* the congestion control types */
 typedef enum cc_type_s {

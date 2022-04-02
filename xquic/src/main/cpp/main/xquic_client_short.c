@@ -508,7 +508,7 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
                 return;
             }
         } else {
-            LOGE("支持者 h3发送");
+            LOGE("只持者 h3发送");
         }
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
     }
