@@ -3,7 +3,7 @@ package com.lizhi.component.net.xquic.native
 /**
  * 长链接
  */
-object XquicLongNative {
+class XquicLongNative {
 
     /**
      * 链接

@@ -1,4 +1,4 @@
-package com.lizhi.component.net.xquic.listener
+package com.lizhi.component.net.xquic.native
 
 /**
  * 作用:
@@ -6,7 +6,7 @@ package com.lizhi.component.net.xquic.listener
  * 创建日期: 2022/4/1.
  */
 interface XquicCallback {
-
+    
     /**
      * 读取后端返回的数据
      */

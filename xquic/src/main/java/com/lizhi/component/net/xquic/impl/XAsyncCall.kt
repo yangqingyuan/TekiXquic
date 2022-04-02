@@ -1,14 +1,15 @@
 package com.lizhi.component.net.xquic.impl
 
-import android.util.Log
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
-import com.lizhi.component.net.xquic.listener.XquicCallback
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
+import com.lizhi.component.net.xquic.native.XquicCallback
+import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.native.XquicShortNative
+import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.io.InterruptedIOException
 import java.lang.Exception
 import java.util.*
@@ -22,8 +23,26 @@ class XAsyncCall(
     var responseCallback: XCallBack? = null
 ) : XNamedRunnable(), XquicCallback {
 
+    companion object {
+
+        /**
+         * token
+         */
+        val tokenMap by lazy { hashMapOf<String, String>() }
+
+        /**
+         * session
+         */
+        val sessionMap by lazy { hashMapOf<String, String>() }
+
+        /**
+         * tp
+         */
+        val tpMap by lazy { hashMapOf<String, String>() }
+    }
+
     init {
-        name = String.format(Locale.US, "Xquic %s", originalRequest?.url)
+        name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest?.url)
     }
 
     fun executeOn(executorService: ExecutorService?) {
@@ -42,8 +61,8 @@ class XAsyncCall(
         }
     }
 
-    fun host(): String? {
-        return originalRequest?.url
+    fun host(): String {
+        return originalRequest?.url!!
     }
 
     fun request(): XRequest? {
@@ -51,27 +70,31 @@ class XAsyncCall(
     }
 
     override fun execute() {
-        Log.e("LzXquic", "=========> execute <=========" + Thread.currentThread())
+        XLogUtils.debug("=======> execute <========")
+
+        val sendParams = XquicShortNative.SendParams.Builder()
+            .setUrl(host())
+            .setToken(tokenMap[host()])
+            .setSession(sessionMap[host()])
+            .setContent("我是测试")
+            //.setTimeOut(originalRequest.?.)
+            //.setMaxRecvLenght(1)
+            //.setCCType(XquicShortNative.CCType.RENO)
+            .build()
+
         XquicShortNative().send(
-            XquicShortNative.SendParams.Builder()
-                .setUrl(host()!!)
-                .setToken(null)
-                .setSession(null)
-                .setContent("我是测试")
-                //.setTimeOut(originalRequest.?.)
-                //.setMaxRecvLenght(1)
-                //.setCCType(XquicShortNative.CCType.RENO)
-                .build(), this
+            sendParams, this
         )
     }
 
     override fun callBackReadData(ret: Int, data: ByteArray) {
         if (ret == 0) {
             val xResponse = XResponse.Builder()
-                //.headers()
+                .headers(originalRequest?.headers?.build())
                 .responseBody(XResponseBody(data))
                 .request(originalRequest)
                 .build()
+            xResponse.code = ret
             responseCallback?.onResponse(xCall, xResponse)
         } else {
             val errMsg = String(data)
@@ -80,6 +103,19 @@ class XAsyncCall(
     }
 
     override fun callBackMessage(msgType: Int, data: ByteArray) {
-        Log.e("LzXquic", "callBackMessage msgType=$msgType")
+        XLogUtils.debug("callBackMessage msgType=$msgType")
+
+        when (msgType) {
+            XquicMsgType.TOKEN.ordinal -> {
+                tokenMap[host()] = String(data)
+            }
+            XquicMsgType.SESSION.ordinal -> {
+                sessionMap[host()] = String(data)
+            }
+            XquicMsgType.TP.ordinal -> {
+                tpMap[host()] = String(data)
+            }
+        }
+
     }
 }

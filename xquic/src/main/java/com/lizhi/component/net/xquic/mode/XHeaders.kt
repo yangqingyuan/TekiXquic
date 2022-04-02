@@ -8,6 +8,12 @@ package com.lizhi.component.net.xquic.mode
 class XHeaders {
 
     class Builder {
+        val xHeaders = XHeaders()
+
+        fun build(): XHeaders {
+            return xHeaders
+        }
+
         fun set(name: String, value: String) {
             TODO("Not yet implemented")
         }
@@ -18,8 +24,7 @@ class XHeaders {
     }
 
     fun newBuilder(): Builder {
-        val builder = Builder()
-        return builder
+        return Builder()
     }
 
 

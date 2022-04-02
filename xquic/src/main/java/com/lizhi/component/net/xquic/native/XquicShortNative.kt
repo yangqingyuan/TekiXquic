@@ -1,7 +1,5 @@
 package com.lizhi.component.net.xquic.native
 
-import com.lizhi.component.net.xquic.listener.XquicCallback
-
 /**
  * 短链接
  */
@@ -111,6 +109,11 @@ class XquicShortNative {
                 return params
             }
         }
+
+        override fun toString(): String {
+            return "SendParams(url=$url, token=$token, session=$session, content=$content, timeOut=$timeOut, maxRecvDataLen=$maxRecvDataLen, ccType=$ccType)"
+        }
+
     }
 
     /**

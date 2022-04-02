@@ -60,7 +60,6 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
             user_stream->start_time = xqc_now();
         }
 
-        //TODO 这里模拟发送头，就结束了
         ret = xqc_h3_request_send_headers(user_stream->h3_request, &user_stream->h3_hdrs, 0);
         if (ret < 0) {
             LOGI("client send h3 headers error size=%zd", ret);

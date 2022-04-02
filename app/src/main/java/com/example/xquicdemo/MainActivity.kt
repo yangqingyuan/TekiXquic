@@ -4,99 +4,79 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import android.widget.TextView
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
-import com.lizhi.component.net.xquic.listener.XquicCallback
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
-import com.lizhi.component.net.xquic.native.XquicShortNative
 import java.lang.Exception
+import java.text.SimpleDateFormat
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
 
+    private fun getData(): String {
+        return SimpleDateFormat("dd hh:mm:ss").format(Date())
+    }
 
-    fun get() {
+    fun appendText(context: String?) {
 
-        val xquicClient = XquicClient.Builder()
-            .connectTimeOut(13)
-            .setReadTimeOut(23)
-            .writeTimeout(15)
-            .pingInterval(15)
-            .build()
+        textView?.let {
 
-        val xRequest = XRequest.Builder()
-            .url("https://192.168.10.245:8443")
-            .get() //Default
-            .build()
-
-        val startTime = System.currentTimeMillis()
-        xquicClient.newCall(xRequest).enqueue(object : XCallBack {
-            override fun onFailure(call: XCall, exception: Exception) {
-                exception.printStackTrace()
-                Log.e("LzXquic->jni", exception.message ?: "")
+            runOnUiThread {
+                it.append(getData() + " : " + context)
+                val scrollAmount = it.layout?.getLineTop(it.lineCount)!! - it.height
+                if (scrollAmount > 0) {
+                    it.scrollTo(0, scrollAmount)
+                } else {
+                    it.scrollTo(0, 0)
+                }
             }
-
-            override fun onResponse(call: XCall, xResponse: XResponse) {
-                Log.e(
-                    "LzXquic->jni",
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
-                )
-            }
-        })
+        }
 
     }
+
+    var textView: TextView? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        textView = findViewById(R.id.tv_result)
+
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
 
-            get()
+            val xquicClient = XquicClient.Builder()
+                .connectTimeOut(13)
+                .setReadTimeOut(23)
+                .writeTimeout(15)
+                .pingInterval(15)
+                .build()
 
-            /*
-            Thread {
-                val startTime = System.currentTimeMillis()
+            val xRequest = XRequest.Builder()
+                .url("https://192.168.10.245:8443")
+                .get() //Default
+                .build()
 
-                val param =
-                    XquicShortNative.SendParams.Builder()
-                        .setUrl("https://192.168.10.245:8443")
-                        .setToken(null)
-                        .setSession(null)
-                        .setContent("我是测试")
-                        //.setTimeOut(1)
-                        //.setMaxRecvLenght(1)
-                        //.setCCType(XquicShortNative.CCType.RENO)
-                        .build()
+            val startTime = System.currentTimeMillis()
+            xquicClient.newCall(xRequest).enqueue(object : XCallBack {
+                override fun onFailure(call: XCall, exception: Exception) {
+                    exception.printStackTrace()
+                    Log.e("LzXquic->jni", exception.message ?: "")
+                }
 
-                XquicShortNative().send(
-                    param,
-                    object : XquicCallback {
-                        override fun callBackReadData(ret: Int, data: ByteArray) {
-                            Log.e(
-                                "LzXquic->jni",
-                                " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms ,ret=$ret , data:${
-                                    String(data)
-                                }"
-                            )
-                        }
+                override fun onResponse(call: XCall, xResponse: XResponse) {
 
-                        override fun callBackMessage(msgType: Int, data: ByteArray) {
-                            Log.e(
-                                "LzXquic->jni", "java ,msgType=$msgType , data:${
-                                    String(data)
-                                }"
-                            )
-                        }
-                    },
-                )
-                Log.e(
-                    "LzXquic->jni",
-                    "整个过程花费时间：" + (System.currentTimeMillis() - startTime) + " ms"
-                )
-            }.start()*/
+                    Log.e(
+                        "LzXquic->jni",
+                        " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
+                    )
+
+                    appendText(xResponse.xResponseBody?.getData())
+                }
+            })
         }
 
     }

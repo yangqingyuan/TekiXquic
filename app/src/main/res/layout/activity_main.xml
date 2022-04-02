@@ -30,6 +30,7 @@
             android:layout_height="wrap_content"
             android:text="CUBIC" />
 
+
         <RadioButton
             android:id="@+id/bbr_beon"
             android:layout_width="wrap_content"
@@ -58,6 +59,6 @@
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_margin="20dp"
-        android:text="返回结果" />
+        android:text="返回结果:\n" />
 
 </LinearLayout>

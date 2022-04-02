@@ -14,6 +14,10 @@ class XRequest {
     var headers: XHeaders.Builder? = null
     var body: XRequestBody? = null
 
+    init {
+        headers = XHeaders.Builder()
+    }
+
     class Builder() {
         val xRequest = XRequest()
 

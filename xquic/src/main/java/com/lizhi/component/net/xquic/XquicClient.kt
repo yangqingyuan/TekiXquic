@@ -32,12 +32,10 @@ class XquicClient {
      */
     var pingInterval: Int = 0
 
-
-    var dispatcher = XDispatcher()
+    private val dispatcher by lazy { XDispatcher() }
 
     class Builder {
         val xquicClient = XquicClient()
-
 
         fun build(): XquicClient {
             return xquicClient
