@@ -105,15 +105,17 @@ class XAsyncCall(
     override fun callBackMessage(msgType: Int, data: ByteArray) {
         XLogUtils.debug("callBackMessage msgType=$msgType")
 
-        when (msgType) {
-            XquicMsgType.TOKEN.ordinal -> {
-                tokenMap[host()] = String(data)
-            }
-            XquicMsgType.SESSION.ordinal -> {
-                sessionMap[host()] = String(data)
-            }
-            XquicMsgType.TP.ordinal -> {
-                tpMap[host()] = String(data)
+        synchronized(this) {
+            when (msgType) {
+                XquicMsgType.TOKEN.ordinal -> {
+                    tokenMap[host()] = String(data)
+                }
+                XquicMsgType.SESSION.ordinal -> {
+                    sessionMap[host()] = String(data)
+                }
+                XquicMsgType.TP.ordinal -> {
+                    tpMap[host()] = String(data)
+                }
             }
         }
 

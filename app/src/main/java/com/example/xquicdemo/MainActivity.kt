@@ -57,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
             val xRequest = XRequest.Builder()
-                .url("https://192.168.10.245:8442")
+                .url("https://192.168.10.245:8443")
                 .get() //Default
                 .build()
 
