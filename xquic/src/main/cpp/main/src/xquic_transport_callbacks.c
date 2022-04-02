@@ -1,8 +1,8 @@
 #include "xquic_transport_callbacks.h"
 
 
-ssize_t write_socket(const unsigned char *buf, size_t size,
-                     const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user) {
+ssize_t client_write_socket(const unsigned char *buf, size_t size,
+                            const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user) {
     //DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user;
     ssize_t res = 0;
@@ -22,7 +22,7 @@ ssize_t write_socket(const unsigned char *buf, size_t size,
     return res;
 }
 
-void save_token(const unsigned char *token, unsigned token_len, void *user_data) {
+void client_save_token(const unsigned char *token, unsigned token_len, void *user_data) {
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     if (!user_conn) {
@@ -39,7 +39,7 @@ void save_token(const unsigned char *token, unsigned token_len, void *user_data)
     //LOGI("token data:%s",token);
 }
 
-void save_session_cb(const char *data, size_t data_len, void *user_data) {
+void client_save_session_cb(const char *data, size_t data_len, void *user_data) {
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     if (!user_conn) {
@@ -57,7 +57,7 @@ void save_session_cb(const char *data, size_t data_len, void *user_data) {
 
 }
 
-void save_tp_cb(const char *data, size_t data_len, void *user_data) {
+void client_save_tp_cb(const char *data, size_t data_len, void *user_data) {
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     if (!user_conn) {
@@ -73,14 +73,14 @@ void save_tp_cb(const char *data, size_t data_len, void *user_data) {
     //LOGI("tp data:%s",data);
 }
 
-int cert_verify_cb(const unsigned char *certs[],
-                   const size_t cert_len[], size_t certs_len, void *conn_user_data) {
+int client_cert_verify_cb(const unsigned char **certs,
+                          const size_t *cert_len, size_t certs_len, void *conn_user_data) {
     /* self-signed cert used in test cases, return >= 0 means success */
     DEBUG;
     return 0;
 }
 
-void conn_update_cid_notify(xqc_connection_t *conn, const xqc_cid_t *retire_cid,
-                            const xqc_cid_t *new_cid, void *user_data) {
+void client_conn_update_cid_notify(xqc_connection_t *conn, const xqc_cid_t *retire_cid,
+                                   const xqc_cid_t *new_cid, void *user_data) {
     DEBUG;
 }

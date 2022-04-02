@@ -10,6 +10,7 @@ import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
 import java.text.SimpleDateFormat
 import java.util.*
@@ -56,7 +57,7 @@ class MainActivity : AppCompatActivity() {
                 .build()
 
             val xRequest = XRequest.Builder()
-                .url("https://192.168.10.245:8443")
+                .url("https://192.168.10.245:8442")
                 .get() //Default
                 .build()
 
@@ -64,13 +65,12 @@ class MainActivity : AppCompatActivity() {
             xquicClient.newCall(xRequest).enqueue(object : XCallBack {
                 override fun onFailure(call: XCall, exception: Exception) {
                     exception.printStackTrace()
-                    Log.e("LzXquic->jni", exception.message ?: "")
+                    XLogUtils.error(exception.message)
                 }
 
                 override fun onResponse(call: XCall, xResponse: XResponse) {
 
-                    Log.e(
-                        "LzXquic->jni",
+                    XLogUtils.error(
                         " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
                     )
 

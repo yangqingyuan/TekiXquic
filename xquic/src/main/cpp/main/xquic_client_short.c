@@ -112,20 +112,20 @@ client_init_engine_callback(xqc_engine_callback_t *cb, xqc_transport_callbacks_t
                             xqc_cli_client_args_t *arg) {
     static xqc_engine_callback_t callback = {
             .log_callbacks = {
-                    .xqc_log_write_err = xqc_client_write_log,
-                    .xqc_log_write_stat = xqc_client_write_log
+                    .xqc_log_write_err = client_write_log,
+                    .xqc_log_write_stat = client_write_log
             },
-            .keylog_cb = xqc_keylog_cb,
-            .set_event_timer =xqc_client_set_event_timer
+            .keylog_cb = client_keylog_cb,
+            .set_event_timer =client_set_event_timer
     };
 
     static xqc_transport_callbacks_t tcb = {
-            .write_socket = write_socket,
-            .save_token = save_token,
-            .save_session_cb = save_session_cb,
-            .save_tp_cb = save_tp_cb,
-            .cert_verify_cb = cert_verify_cb,
-            .conn_update_cid_notify = conn_update_cid_notify
+            .write_socket = client_write_socket,
+            .save_token = client_save_token,
+            .save_session_cb = client_save_session_cb,
+            .save_tp_cb = client_save_tp_cb,
+            .cert_verify_cb = client_cert_verify_cb,
+            .conn_update_cid_notify = client_conn_update_cid_notify
     };
 
     *cb = callback;
@@ -141,16 +141,16 @@ client_init_engine_callback(xqc_engine_callback_t *cb, xqc_transport_callbacks_t
 int client_init_alpn(xqc_cli_ctx_t *ctx) {
     xqc_h3_callbacks_t h3_cbs = {
             .h3c_cbs={
-                    .h3_conn_create_notify = xqc_client_h3_conn_create_notify,
-                    .h3_conn_close_notify = xqc_client_h3_conn_close_notify,
-                    .h3_conn_handshake_finished = xqc_client_h3_conn_handshake_finished,
-                    .h3_conn_ping_acked =xqc_client_h3_conn_ping_acked_notify,
+                    .h3_conn_create_notify = client_h3_conn_create_notify,
+                    .h3_conn_close_notify = client_h3_conn_close_notify,
+                    .h3_conn_handshake_finished = client_h3_conn_handshake_finished,
+                    .h3_conn_ping_acked =client_h3_conn_ping_acked_notify,
             },
             .h3r_cbs={
-                    .h3_request_create_notify = xqc_client_request_create_notify,
-                    .h3_request_close_notify = xqc_client_request_close_notify,
-                    .h3_request_read_notify = xqc_client_request_read_notify,
-                    .h3_request_write_notify = xqc_client_request_write_notify,
+                    .h3_request_create_notify = client_h3_request_create_notify,
+                    .h3_request_close_notify = client_h3_request_close_notify,
+                    .h3_request_read_notify = client_h3_request_read_notify,
+                    .h3_request_write_notify = client_h3_request_write_notify,
             }
     };
 
