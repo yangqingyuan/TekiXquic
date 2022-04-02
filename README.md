@@ -4,6 +4,12 @@
 基于 Xquic 进行二次封装的Android sdk库，使用了okhttp的封装方式
 
 # 环境
+工具
+
+（1）Android studio
+
+（2）ndk （本人用21）
+
 使用到的第三方sdk
 
 （1）xquic （https://github.com/alibaba/xquic)
