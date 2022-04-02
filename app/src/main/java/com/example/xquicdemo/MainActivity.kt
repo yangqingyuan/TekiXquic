@@ -4,32 +4,59 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
+import com.lizhi.component.net.xquic.XquicClient
+import com.lizhi.component.net.xquic.listener.XCall
+import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.listener.XquicCallback
+import com.lizhi.component.net.xquic.mode.XRequest
+import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.native.XquicShortNative
+import java.lang.Exception
 
 
 class MainActivity : AppCompatActivity() {
 
 
+    fun get() {
+
+        val xquicClient = XquicClient.Builder()
+            .connectTimeOut(13)
+            .setReadTimeOut(23)
+            .writeTimeout(15)
+            .pingInterval(15)
+            .build()
+
+        val xRequest = XRequest.Builder()
+            .url("https://192.168.10.245:8443")
+            .get() //Default
+            .build()
+
+        val startTime = System.currentTimeMillis()
+        xquicClient.newCall(xRequest).enqueue(object : XCallBack {
+            override fun onFailure(call: XCall, exception: Exception) {
+                exception.printStackTrace()
+                Log.e("LzXquic->jni", exception.message ?: "")
+            }
+
+            override fun onResponse(call: XCall, xResponse: XResponse) {
+                Log.e(
+                    "LzXquic->jni",
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
+                )
+            }
+        })
+
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
 
+        findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
 
-        findViewById<Button>(R.id.btn_init).setOnClickListener {
+            get()
 
-        }
-
-        findViewById<Button>(R.id.btn_connect).setOnClickListener {
-
-        }
-
-        findViewById<Button>(R.id.btn_start).setOnClickListener {
-
-        }
-
-        findViewById<Button>(R.id.btn_send_hq).setOnClickListener {
-
+            /*
             Thread {
                 val startTime = System.currentTimeMillis()
 
@@ -59,7 +86,7 @@ class MainActivity : AppCompatActivity() {
                         override fun callBackMessage(msgType: Int, data: ByteArray) {
                             Log.e(
                                 "LzXquic->jni", "java ,msgType=$msgType , data:${
-                                   String(data)
+                                    String(data)
                                 }"
                             )
                         }
@@ -69,15 +96,8 @@ class MainActivity : AppCompatActivity() {
                     "LzXquic->jni",
                     "整个过程花费时间：" + (System.currentTimeMillis() - startTime) + " ms"
                 )
-            }.start()
+            }.start()*/
         }
 
-        findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
-
-        }
-
-        findViewById<Button>(R.id.btn_destroy).setOnClickListener {
-
-        }
     }
 }

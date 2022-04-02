@@ -1,66 +1,63 @@
 <?xml version="1.0" encoding="utf-8"?>
-<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:layout_gravity="center"
+    android:orientation="vertical"
     tools:context=".MainActivity">
 
-    <LinearLayout
-        android:id="@+id/sample_text"
+
+    <RadioGroup
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:text="Hello World!"
-        app:layout_constraintBottom_toBottomOf="parent"
-        app:layout_constraintLeft_toLeftOf="parent"
-        app:layout_constraintRight_toRightOf="parent"
-        app:layout_constraintTop_toTopOf="parent">
-        <Button
-            android:id="@+id/btn_init"
-            android:layout_width="match_parent"
-            android:text="InitXquic"
-            android:textAllCaps="false"
-            android:enabled="false"
-            android:layout_height="wrap_content"/>
+        android:layout_gravity="center"
+        android:layout_margin="10dp"
+        android:orientation="horizontal">
 
-        <Button
-            android:id="@+id/btn_connect"
-            android:layout_width="match_parent"
-            android:text="ConnectXquic"
-            android:textAllCaps="false"
-            android:enabled="false"
-            android:layout_height="wrap_content"/>
+        <RadioButton
+            android:id="@+id/bbr_btn"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:checked="true"
+            android:text="BBR" />
 
-        <Button
-            android:id="@+id/btn_start"
-            android:layout_width="match_parent"
-            android:text="StartXquic"
-            android:visibility="gone"
-            android:textAllCaps="false"
-            android:layout_height="wrap_content"/>
 
-        <Button
-            android:id="@+id/btn_send_h3"
-            android:layout_width="match_parent"
-            android:text="SendByH3"
-            android:textAllCaps="false"
-            android:layout_height="wrap_content"/>
+        <RadioButton
+            android:id="@+id/bbr_cubic"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="CUBIC" />
 
-        <Button
-            android:id="@+id/btn_send_hq"
-            android:layout_width="match_parent"
-            android:text="SendByHQ"
-            android:textAllCaps="false"
-            android:layout_height="wrap_content"/>
+        <RadioButton
+            android:id="@+id/bbr_beon"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="RENO" />
 
-        <Button
-            android:id="@+id/btn_destroy"
-            android:layout_width="match_parent"
-            android:text="DestroyXquic"
-            android:textAllCaps="false"
-            android:layout_height="wrap_content"/>
+    </RadioGroup>
 
-    </LinearLayout>
+    <EditText
+        android:id="@+id/et_content"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="test" />
 
-</androidx.constraintlayout.widget.ConstraintLayout>
+    <Button
+        android:id="@+id/btn_send_h3"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="H3发送"
+        android:textAllCaps="false" />
+
+    <TextView
+        android:id="@+id/tv_result"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="20dp"
+        android:text="返回结果" />
+
+</LinearLayout>
