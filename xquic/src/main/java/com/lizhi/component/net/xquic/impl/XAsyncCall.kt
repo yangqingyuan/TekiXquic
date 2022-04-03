@@ -18,8 +18,8 @@ import java.util.concurrent.RejectedExecutionException
 
 class XAsyncCall(
     var xCall: XCall,
-    var xquicClient: XquicClient?,
-    var originalRequest: XRequest?,
+    var xquicClient: XquicClient,
+    var originalRequest: XRequest,
     var responseCallback: XCallBack? = null
 ) : XNamedRunnable(), XquicCallback {
 
@@ -42,11 +42,11 @@ class XAsyncCall(
     }
 
     init {
-        name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest?.url)
+        name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
     }
 
     fun executeOn(executorService: ExecutorService?) {
-        assert(!Thread.holdsLock(xquicClient?.dispatcher()))
+        assert(!Thread.holdsLock(xquicClient.dispatcher()))
         var success = false
         try {
             executorService!!.execute(this)
@@ -56,16 +56,16 @@ class XAsyncCall(
             ioException.initCause(e)
         } finally {
             if (!success) {
-                xquicClient?.dispatcher()?.finished(this) // This call is no longer running!
+                xquicClient.dispatcher().finished(this) // This call is no longer running!
             }
         }
     }
 
     fun host(): String {
-        return originalRequest?.url!!
+        return originalRequest.url
     }
 
-    fun request(): XRequest? {
+    fun request(): XRequest {
         return originalRequest
     }
 
@@ -76,10 +76,12 @@ class XAsyncCall(
             .setUrl(host())
             .setToken(tokenMap[host()])
             .setSession(sessionMap[host()])
-            .setContent("我是测试")
-            //.setTimeOut(originalRequest.?.)
-            //.setMaxRecvLenght(1)
-            //.setCCType(XquicShortNative.CCType.RENO)
+            .setContent("demo/tile")
+            .setTimeOut(xquicClient.connectTimeOut)
+            .setMethod(originalRequest.method)
+            .setMaxRecvLenght(1024 * 1024)
+            .setAuthority(xquicClient.authority)
+            .setCCType(xquicClient.ccType)
             .build()
 
         XquicShortNative().send(
@@ -90,7 +92,7 @@ class XAsyncCall(
     override fun callBackReadData(ret: Int, data: ByteArray) {
         if (ret == 0) {
             val xResponse = XResponse.Builder()
-                .headers(originalRequest?.headers?.build())
+                .headers(originalRequest.headers.build())
                 .responseBody(XResponseBody(data))
                 .request(originalRequest)
                 .build()

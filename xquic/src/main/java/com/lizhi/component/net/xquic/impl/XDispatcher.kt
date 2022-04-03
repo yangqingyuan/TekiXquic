@@ -24,10 +24,10 @@ class XDispatcher {
     private val runningAsyncCalls: Deque<XAsyncCall> = ArrayDeque()
 
     /** Running synchronous calls. Includes canceled calls that haven't finished yet.  */
-    private val runningSyncCalls: Deque<XRealCall> = ArrayDeque<XRealCall>()
+    private val runningSyncCalls: Deque<XRealCall> = ArrayDeque()
 
 
-    private fun threadFactory(name: String?, daemon: Boolean): ThreadFactory? {
+    private fun threadFactory(name: String?, daemon: Boolean): ThreadFactory {
         return ThreadFactory { runnable ->
             val result = Thread(runnable, name)
             result.isDaemon = daemon

@@ -9,17 +9,14 @@ import java.lang.NullPointerException
  */
 class XRequest {
 
-    var url: String? = null
-    var method: String = "GET"
-    var headers: XHeaders.Builder? = null
+    lateinit var url: String
     var body: XRequestBody? = null
 
-    init {
-        headers = XHeaders.Builder()
-    }
+    var method: String = "GET" // or POST
+    var headers: XHeaders.Builder = XHeaders.Builder()
 
-    class Builder() {
-        val xRequest = XRequest()
+    class Builder {
+        private val xRequest = XRequest()
 
         fun build(): XRequest {
             return xRequest
@@ -35,18 +32,18 @@ class XRequest {
 
 
         fun header(name: String, value: String): Builder {
-            xRequest.headers?.set(name, value)
+            xRequest.headers.set(name, value)
             return this
         }
 
         fun addHeader(name: String, value: String): Builder {
-            xRequest.headers?.add(name, value)
+            xRequest.headers.add(name, value)
             return this
         }
 
 
         fun removeHeader(name: String, value: String): Builder {
-            xRequest.headers?.set(name, value)
+            xRequest.headers.set(name, value)
             return this
         }
 

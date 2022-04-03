@@ -11,15 +11,15 @@ import com.lizhi.component.net.xquic.mode.XRequest
  * 创建日期: 2022/4/1.
  */
 class XRealCall : XCall {
-    var xquicClient: XquicClient? = null
-    var originalRequest: XRequest? = null
+    lateinit var xquicClient: XquicClient
+    lateinit var originalRequest: XRequest
 
     // Guarded by this.
     private var executed = false
-    
+
 
     companion object {
-        fun newCall(xquicClient: XquicClient?, xRequest: XRequest): XRealCall {
+        fun newCall(xquicClient: XquicClient, xRequest: XRequest): XRealCall {
             val xRealCall = XRealCall()
             xRealCall.xquicClient = xquicClient
             xRealCall.originalRequest = xRequest
@@ -32,8 +32,8 @@ class XRealCall : XCall {
             check(!executed) { "Already Executed" }
             executed = true
         }
-        xquicClient?.dispatcher()
-            ?.enqueue(XAsyncCall(this, xquicClient, originalRequest, xCallback))
+        xquicClient.dispatcher()
+            .enqueue(XAsyncCall(this, xquicClient, originalRequest, xCallback))
     }
 
 }

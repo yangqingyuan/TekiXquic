@@ -4,6 +4,7 @@ import com.lizhi.component.net.xquic.impl.XDispatcher
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.impl.XRealCall
 import com.lizhi.component.net.xquic.mode.XRequest
+import com.lizhi.component.net.xquic.native.CCType
 
 /**
  * 作用: 短链接
@@ -32,6 +33,16 @@ class XquicClient {
      */
     var pingInterval: Int = 0
 
+    /**
+     * 拥塞算法
+     */
+    var ccType = CCType.CUBIC
+
+    /**
+     * authority：鉴权
+     */
+    lateinit var authority: String
+
     private val dispatcher by lazy { XDispatcher() }
 
     class Builder {
@@ -56,8 +67,18 @@ class XquicClient {
             return this
         }
 
+        fun ccType(ccType: CCType): Builder {
+            xquicClient.ccType = ccType
+            return this
+        }
+
         fun pingInterval(pingInterval: Int): Builder {
             xquicClient.pingInterval = pingInterval
+            return this
+        }
+
+        fun authority(authority: String): Builder {
+            xquicClient.authority = authority
             return this
         }
     }

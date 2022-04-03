@@ -6,5 +6,5 @@ package com.lizhi.component.net.xquic.mode
  * 创建日期: 2022/4/1.
  */
 class XRequestBody {
-
+    lateinit var content: String
 }

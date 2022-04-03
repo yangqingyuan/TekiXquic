@@ -2,7 +2,6 @@ package com.example.xquicdemo
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import android.widget.Button
 import android.widget.TextView
 import com.lizhi.component.net.xquic.XquicClient
@@ -10,6 +9,7 @@ import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.native.CCType
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
 import java.text.SimpleDateFormat
@@ -54,10 +54,12 @@ class MainActivity : AppCompatActivity() {
                 .setReadTimeOut(23)
                 .writeTimeout(15)
                 .pingInterval(15)
+                .ccType(CCType.BBR)
+                .authority("test_authority")
                 .build()
 
             val xRequest = XRequest.Builder()
-                .url("https://192.168.10.245:8443")
+                .url("https://192.168.8.120:6121/demo/tile")//127.0.0.1:6121 //192.168.10.245:8443
                 .get() //Default
                 .build()
 

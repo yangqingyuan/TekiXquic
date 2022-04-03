@@ -17,14 +17,6 @@ class XquicShortNative {
         loadLib()
     }
 
-    /**
-     * 拥塞算法
-     */
-    enum class CCType {
-        BBR,
-        CUBIC,
-        RENO
-    }
 
     open class SendParams {
         /**
@@ -42,8 +34,10 @@ class XquicShortNative {
          */
         var session: String? = null
 
-
-        var content: String? = null //key param
+        /**
+         * post content
+         */
+        var content: String? = null
 
         /**
          * optional param
@@ -62,6 +56,22 @@ class XquicShortNative {
          * default: bbr
          */
         var ccType: Int = CCType.BBR.ordinal
+
+        /**
+         * GET/POST
+         */
+        var method: String = "GET"
+
+        /**
+         * authority
+         */
+        var authority: String = "authority_test"
+
+        /**
+         * common head
+         */
+        val commonHeads by lazy { hashMapOf<String, String>() }
+
 
         open class Builder {
             private val params = SendParams()
@@ -102,6 +112,21 @@ class XquicShortNative {
 
             fun setCCType(ccType: CCType): Builder {
                 params.ccType = ccType.ordinal
+                return this
+            }
+
+            fun setMethod(method: String): Builder {
+                params.method = method
+                return this
+            }
+
+            fun setAuthority(authority: String): Builder {
+                params.authority = authority
+                return this
+            }
+
+            fun setCommonHead(commonHeads: HashMap<String, String>): Builder {
+                params.commonHeads.putAll(commonHeads)
                 return this
             }
 
