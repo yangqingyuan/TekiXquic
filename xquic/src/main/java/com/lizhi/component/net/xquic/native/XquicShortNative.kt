@@ -70,7 +70,12 @@ class XquicShortNative {
         /**
          * common head
          */
-        val commonHeads by lazy { hashMapOf<String, String>() }
+        val headers = java.util.HashMap<String,String>()
+
+        /**
+         * commonHeaders size
+         */
+        var headersSize = 0
 
 
         open class Builder {
@@ -125,12 +130,13 @@ class XquicShortNative {
                 return this
             }
 
-            fun setCommonHead(commonHeads: HashMap<String, String>): Builder {
-                params.commonHeads.putAll(commonHeads)
+            fun setCommonHeaders(commonHeaders: HashMap<String, String>): Builder {
+                params.headers.putAll(commonHeaders)
                 return this
             }
 
             fun build(): SendParams {
+                params.headersSize = params.headers.size
                 return params
             }
         }

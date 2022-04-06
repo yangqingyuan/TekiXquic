@@ -28,7 +28,7 @@ callback_to_java(void *ev_android, void *object_android, int msg_type, const uns
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage","(I[B)V");
+    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(I[B)V");
     if (!jmid) {
         LOGE("call back java error,can not find methodId callBackMessage");
         return;
@@ -44,6 +44,7 @@ callback_to_java(void *ev_android, void *object_android, int msg_type, const uns
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
     (*env)->DeleteLocalRef(env, dataBuf);
+    (*env)->DeleteLocalRef(env, callbackClass);
 }
 
 void callback_token(void *ev_android, void *object_android, const unsigned char *data,
@@ -90,6 +91,7 @@ int callback_read_data(void *ev_android, void *object_android, int ret, char *da
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
     (*env)->DeleteLocalRef(env, dataBuf);
+    (*env)->DeleteLocalRef(env, callbackClass);
     return 0;
 }
 
@@ -100,6 +102,7 @@ jstring getString(JNIEnv *env, jobject param, const char *field) {
         return NULL;
     }
     jstring string = (jstring) (*env)->GetObjectField(env, param, jfieldId);
+    (*env)->DeleteLocalRef(env, sendParamsClass);
     return string;
 }
 
@@ -110,7 +113,70 @@ jint getInt(JNIEnv *env, jobject param, const char *field) {
         return 0;
     }
     jint data = (*env)->GetIntField(env, param, jfieldId);
+    (*env)->DeleteLocalRef(env, sendParamsClass);
     return data;
+}
+
+
+int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
+                              xqc_http_header_t *heards) {
+    jclass sendParamsClass = (*env)->GetObjectClass(env, param);
+    jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "Ljava/util/HashMap;");
+    if (!jfieldId) {
+        return -1;
+    }
+    jobject headersHashMapObject = (*env)->GetObjectField(env, param, jfieldId);
+    if (!headersHashMapObject) {
+        return -1;
+    }
+
+    jclass hashMapClass = (*env)->FindClass(env, "java/util/HashMap");
+    jmethodID entrySetMID = (*env)->GetMethodID(env, hashMapClass, "entrySet", "()Ljava/util/Set;");
+
+    jobject setObj = (*env)->CallObjectMethod(env, headersHashMapObject, entrySetMID);
+    jclass setClass = (*env)->FindClass(env, "java/util/Set");
+    jmethodID iteratorMID = (*env)->GetMethodID(env, setClass, "iterator",
+                                                "()Ljava/util/Iterator;");
+
+    jobject iteratorObj = (*env)->CallObjectMethod(env, setObj, iteratorMID);
+    jclass iteratorClass = (*env)->FindClass(env, "java/util/Iterator");
+    jmethodID hashNextMID = (*env)->GetMethodID(env, iteratorClass, "hasNext", "()Z");
+    jmethodID nextMID = (*env)->GetMethodID(env, iteratorClass, "next", "()Ljava/lang/Object;");
+
+    jclass entryClass = (*env)->FindClass(env, "java/util/Map$Entry");
+    jmethodID getKeyMID = (*env)->GetMethodID(env, entryClass, "getKey", "()Ljava/lang/Object;");
+    jmethodID getValueMID = (*env)->GetMethodID(env, entryClass, "getValue",
+                                                "()Ljava/lang/Object;");
+
+    int i = 0;
+    while ((*env)->CallBooleanMethod(env, iteratorObj, hashNextMID)) {
+        jobject entryObj = (*env)->CallObjectMethod(env, iteratorObj, nextMID);
+
+        jstring keyString = (*env)->CallObjectMethod(env, entryObj, getKeyMID);
+        const char *keyChar = (*env)->GetStringUTFChars(env, keyString, NULL);
+
+        jstring valueString = (*env)->CallObjectMethod(env, entryObj, getValueMID);
+        const char *valueChar = (*env)->GetStringUTFChars(env, valueString, NULL);
+
+        xqc_http_header_t header = {
+                .name = {.iov_base = keyChar, .iov_len = strlen(keyChar)},
+                .value = {.iov_base = valueChar, .iov_len = strlen(valueChar)},
+                .flags = 0,
+        };
+        heards[i] = header;
+        i++;
+    }
+
+    (*env)->DeleteLocalRef(env, sendParamsClass);
+    (*env)->DeleteLocalRef(env, headersHashMapObject);
+    (*env)->DeleteLocalRef(env, hashMapClass);
+    (*env)->DeleteLocalRef(env, setObj);
+    (*env)->DeleteLocalRef(env, setClass);
+    (*env)->DeleteLocalRef(env, iteratorObj);
+    (*env)->DeleteLocalRef(env, iteratorClass);
+    (*env)->DeleteLocalRef(env, entryClass);
+
+    return 0;
 }
 
 
@@ -132,7 +198,14 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     jint time_out = getInt(env, param, "timeOut");
     jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
     jint cc_type = getInt(env, param, "ccType");
+    jint headersSize = getInt(env, param, "headersSize");
 
+    /* build header from params */
+    xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
+    if (build_headers_from_params(env, param, "headers", headers) < 0) {
+        LOGE("build_headers_from_params error");
+        return NULL;
+    }
 
     const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
     const char *cContent = (*env)->GetStringUTFChars(env, content, 0);
@@ -158,6 +231,10 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     user_cfg->session = cSession;
     user_cfg->conn_timeout = time_out;
     user_cfg->max_recv_data_len = max_recv_data_len;
+
+    /* headers */
+    user_cfg->h3_hdrs.headers = headers;
+    user_cfg->h3_hdrs.count = headersSize;
 
     switch (cc_type) {
         case 0:

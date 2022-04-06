@@ -112,13 +112,20 @@ int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         return -1;
     }
 
-    /* format header */
-    xqc_http_header_t header[H3_HDR_CNT];
-    int hdr_cnt = client_format_h3_request(header, H3_HDR_CNT, req);
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
 
-    if (hdr_cnt > 0) {
-        user_stream->h3_hdrs.headers = header;
-        user_stream->h3_hdrs.count = hdr_cnt;
+    if (user_callback->h3_hdrs.count > 0) {
+        user_stream->h3_hdrs.headers = user_callback->h3_hdrs.headers;
+        user_stream->h3_hdrs.count = user_callback->h3_hdrs.count;
+
+        xqc_http_header_t *headers = user_stream->h3_hdrs.headers;
+        LOGD("============================");
+        for (int i = 0; i < user_stream->h3_hdrs.count; i++) {
+            xqc_http_header_t header = headers[i];
+            LOGD("= header name = %s, value =%s", (char *) header.name.iov_base,
+                 (char *) header.value.iov_base);
+        }
+        LOGD("============================");
 
         //发送h3内容
         client_send_h3_content(user_stream);

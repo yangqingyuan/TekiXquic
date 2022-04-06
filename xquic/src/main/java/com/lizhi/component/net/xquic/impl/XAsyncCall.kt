@@ -72,6 +72,13 @@ class XAsyncCall(
     override fun execute() {
         XLogUtils.debug("=======> execute <========")
 
+        val headers = hashMapOf<String, String>()
+        headers[":testKey"] = "testValue"
+        headers[":testKey1"] = "testValue1"
+        headers[":testKey2"] = "testValue2"
+        headers[":testKey3"] = "testValue3"
+        headers[":testKey4"] = "testValue4"
+
         val sendParams = XquicShortNative.SendParams.Builder()
             .setUrl(host())
             .setToken(tokenMap[host()])
@@ -82,6 +89,7 @@ class XAsyncCall(
             .setMaxRecvLenght(1024 * 1024)
             .setAuthority(xquicClient.authority)
             .setCCType(xquicClient.ccType)
+            .setCommonHeaders(headers)
             .build()
 
         XquicShortNative().send(

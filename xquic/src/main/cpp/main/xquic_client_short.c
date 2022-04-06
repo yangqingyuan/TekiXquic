@@ -323,8 +323,10 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     /* free stream */
     free(ctx->args->user_stream.send_body);
     free(ctx->args->user_stream.recv_body);
-    free(ctx->args->user_callback);
 
+    /* free user_callback */
+    free(ctx->args->user_callback->h3_hdrs.headers);
+    free(ctx->args->user_callback);
     return 0;
 }
 
@@ -744,6 +746,8 @@ int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *u
  */
 int client_send(xqc_cli_user_data_params_t *user_param) {
 
+    uint64_t start_time = xqc_now();
+
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
     client_init_args(args, user_param);
@@ -768,6 +772,6 @@ int client_send(xqc_cli_user_data_params_t *user_param) {
     xqc_engine_destroy(ctx->engine);
     client_free_ctx(ctx);
 
-    LOGW("client send end(发送结束)");
+    LOGW("client send end(发送结束),总时间：%lu us", (xqc_now() - start_time));
     return XQC_OK;
 }

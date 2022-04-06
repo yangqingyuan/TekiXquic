@@ -307,6 +307,9 @@ typedef struct xqc_cli_user_data_params_s {
     /* congestion control algorithm */
     CC_TYPE cc;
 
+    /* headers */
+    xqc_http_headers_t h3_hdrs;
+
 } xqc_cli_user_data_params_t;
 
 /**
