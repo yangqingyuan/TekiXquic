@@ -15,7 +15,7 @@ class XResponse {
 
 
     class Builder() {
-        val xResponse = XResponse()
+        private val xResponse = XResponse()
 
         fun request(xRequest: XRequest?): Builder {
             xResponse.xRequest = xRequest

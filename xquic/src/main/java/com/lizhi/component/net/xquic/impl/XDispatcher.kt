@@ -84,7 +84,7 @@ class XDispatcher {
     private fun runningCallsForHost(call: XAsyncCall): Int {
         var result = 0
         for (c in runningAsyncCalls) {
-            if (c.host().equals(call.host())) result++
+            if (c.url().equals(call.url())) result++
         }
         return result
     }

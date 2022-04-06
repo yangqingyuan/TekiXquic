@@ -407,12 +407,15 @@ void client_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_clie
     switch (args->net_cfg.cc) {
         case CC_TYPE_BBR:
             cong_ctrl = xqc_bbr_cb;
+            LOGD("cong_ctrl type xqc_bbr_cb");
             break;
         case CC_TYPE_CUBIC:
             cong_ctrl = xqc_cubic_cb;
+            LOGD("cong_ctrl type xqc_cubic_cb");
             break;
         case CC_TYPE_RENO:
             cong_ctrl = xqc_reno_cb;
+            LOGD("cong_ctrl type xqc_reno_cb");
             break;
         default:
             break;

@@ -7,25 +7,25 @@ package com.lizhi.component.net.xquic.mode
  */
 class XHeaders {
 
+    val headersMap by lazy { hashMapOf<String, String>() }
+
     class Builder {
-        val xHeaders = XHeaders()
+        private val xHeaders = XHeaders()
 
         fun build(): XHeaders {
             return xHeaders
         }
 
         fun set(name: String, value: String) {
-            TODO("Not yet implemented")
+            xHeaders.headersMap[name] = value
         }
 
         fun add(name: String, value: String) {
-            TODO("Not yet implemented")
+            xHeaders.headersMap[name] = value
         }
     }
 
     fun newBuilder(): Builder {
         return Builder()
     }
-
-
 }

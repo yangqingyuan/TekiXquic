@@ -60,7 +60,12 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
             user_stream->start_time = xqc_now();
         }
 
-        ret = xqc_h3_request_send_headers(user_stream->h3_request, &user_stream->h3_hdrs, 0);
+        int fin = 0;
+        if (user_stream->send_body == NULL) {
+            fin = 1;
+        }
+
+        ret = xqc_h3_request_send_headers(user_stream->h3_request, &user_stream->h3_hdrs, fin);
         if (ret < 0) {
             LOGI("client send h3 headers error size=%zd", ret);
         } else {

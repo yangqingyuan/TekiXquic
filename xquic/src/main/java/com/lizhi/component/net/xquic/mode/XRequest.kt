@@ -9,8 +9,8 @@ import java.lang.NullPointerException
  */
 class XRequest {
 
-    lateinit var url: String
-    var body: XRequestBody? = null
+    lateinit var url: XHttpUrl
+    lateinit var body: XRequestBody
 
     var method: String = "GET" // or POST
     var headers: XHeaders.Builder = XHeaders.Builder()
@@ -26,7 +26,7 @@ class XRequest {
             if (url.isNullOrBlank()) {
                 throw NullPointerException("url == null")
             }
-            xRequest.url = url
+            xRequest.url = XHttpUrl.get(url)
             return this
         }
 

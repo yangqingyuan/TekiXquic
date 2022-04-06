@@ -7,4 +7,14 @@ package com.lizhi.component.net.xquic.mode
  */
 class XRequestBody {
     lateinit var content: String
+    lateinit var mediaType: XMediaType
+
+    companion object {
+        fun create(mediaType: XMediaType, content: String): XRequestBody {
+            val xRequestBody = XRequestBody()
+            xRequestBody.content = content
+            xRequestBody.mediaType = mediaType
+            return xRequestBody
+        }
+    }
 }

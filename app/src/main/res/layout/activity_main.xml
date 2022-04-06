@@ -10,6 +10,7 @@
 
 
     <RadioGroup
+        android:id="@+id/radioGroup"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_gravity="center"
@@ -17,7 +18,7 @@
         android:orientation="horizontal">
 
         <RadioButton
-            android:id="@+id/bbr_btn"
+            android:id="@+id/btn_bbr"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:checked="true"
@@ -25,14 +26,14 @@
 
 
         <RadioButton
-            android:id="@+id/bbr_cubic"
+            android:id="@+id/btn_cubic"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="CUBIC" />
 
 
         <RadioButton
-            android:id="@+id/bbr_beon"
+            android:id="@+id/btn_beon"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="RENO" />

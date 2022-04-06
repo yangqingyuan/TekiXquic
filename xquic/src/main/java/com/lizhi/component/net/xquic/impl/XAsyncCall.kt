@@ -9,12 +9,14 @@ import com.lizhi.component.net.xquic.mode.XResponseBody
 import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.native.XquicShortNative
+import com.lizhi.component.net.xquic.native.XquicShortNative.SendParams
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.io.InterruptedIOException
 import java.lang.Exception
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
+import kotlin.collections.HashMap
 
 class XAsyncCall(
     var xCall: XCall,
@@ -45,6 +47,21 @@ class XAsyncCall(
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
     }
 
+
+    private fun parseHeadersToMap(): HashMap<String, String> {
+        val headers = hashMapOf<String, String>()
+        headers[":method"] = originalRequest.method
+        headers.putAll(originalRequest.headers.build().headersMap)
+
+        if (originalRequest.method == "POST") {
+            val body = originalRequest.body
+
+            headers["content-type"] = body.mediaType.mediaType
+            headers["content-length"] = body.content.length.toString()
+        }
+        return headers
+    }
+
     fun executeOn(executorService: ExecutorService?) {
         assert(!Thread.holdsLock(xquicClient.dispatcher()))
         var success = false
@@ -61,8 +78,8 @@ class XAsyncCall(
         }
     }
 
-    fun host(): String {
-        return originalRequest.url
+    fun url(): String {
+        return originalRequest.url.url!!
     }
 
     fun request(): XRequest {
@@ -71,26 +88,21 @@ class XAsyncCall(
 
     override fun execute() {
         XLogUtils.debug("=======> execute <========")
-
-        val headers = hashMapOf<String, String>()
-        headers[":testKey"] = "testValue"
-        headers[":testKey1"] = "testValue1"
-        headers[":testKey2"] = "testValue2"
-        headers[":testKey3"] = "testValue3"
-        headers[":testKey4"] = "testValue4"
-
-        val sendParams = XquicShortNative.SendParams.Builder()
-            .setUrl(host())
-            .setToken(tokenMap[host()])
-            .setSession(sessionMap[host()])
-            .setContent("demo/tile")
+        val sendParams = SendParams.Builder()
+            .setUrl(url())
+            .setToken(tokenMap[url()])
+            .setSession(sessionMap[url()])
             .setTimeOut(xquicClient.connectTimeOut)
-            .setMethod(originalRequest.method)
             .setMaxRecvLenght(1024 * 1024)
             .setAuthority(xquicClient.authority)
             .setCCType(xquicClient.ccType)
-            .setCommonHeaders(headers)
+            .setHeaders(parseHeadersToMap())
             .build()
+
+        if (originalRequest.method == "POST") {
+            val body = originalRequest.body
+            sendParams.content = body.content
+        }
 
         XquicShortNative().send(
             sendParams, this
@@ -118,13 +130,13 @@ class XAsyncCall(
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.TOKEN.ordinal -> {
-                    tokenMap[host()] = String(data)
+                    tokenMap[url()] = String(data)
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    sessionMap[host()] = String(data)
+                    sessionMap[url()] = String(data)
                 }
                 XquicMsgType.TP.ordinal -> {
-                    tpMap[host()] = String(data)
+                    tpMap[url()] = String(data)
                 }
             }
         }

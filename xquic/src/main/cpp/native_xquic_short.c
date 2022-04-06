@@ -186,10 +186,9 @@ int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
 xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback) {
 
     jstring url = getString(env, param, "url");
-    jstring content = getString(env, param, "content");
 
-    if (url == NULL || content == NULL) {
-        LOGE("xquicConnect error url == NULL or content can not null");
+    if (url == NULL) {
+        LOGE("xquicConnect error url == NULL");
         return NULL;
     }
 
@@ -208,11 +207,16 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     }
 
     const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
-    const char *cContent = (*env)->GetStringUTFChars(env, content, 0);
+
+    jstring content = getString(env, param, "content");
+    const char *cContent = NULL;
+    if (content != NULL) {
+        cContent = (*env)->GetStringUTFChars(env, content, 0);
+    }
 
     const char *cToken = NULL;
     if (token != NULL) {
-        (*env)->GetStringUTFChars(env, token, 0);
+        cToken = (*env)->GetStringUTFChars(env, token, 0);
     }
     const char *cSession = NULL;
     if (session != NULL) {
