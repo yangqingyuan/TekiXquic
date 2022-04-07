@@ -9,19 +9,24 @@ import java.lang.Exception
 class XquicShortNative {
 
     companion object {
-
+        var libLoaded: Boolean = false
         fun loadLib() {
-            System.loadLibrary("xnet-lib")
-            System.loadLibrary("xquic")
+            try {
+                synchronized(this) {
+                    if (!libLoaded) {
+                        System.loadLibrary("xnet-lib")
+                        System.loadLibrary("xquic")
+                        libLoaded = true
+                    }
+                }
+            } catch (e: Exception) {
+                XLogUtils.error(e)
+            }
         }
     }
 
     init {
-        try {
-            loadLib()
-        } catch (e: Exception) {
-            XLogUtils.error(e)
-        }
+        loadLib()
     }
 
 
@@ -146,6 +151,8 @@ class XquicShortNative {
         }
 
     }
+
+    external fun init()
 
     /**
      * 发送数据
