@@ -33,10 +33,9 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
 
 void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) {
     DEBUG;
-    int ret = xqc_h3_conn_get_errno(h3_conn);
-    if (ret != 0x100) {
-        LOGE("client_h3_conn_handshake_finished error code=%d, HTTP_NO_ERROR(%d)", ret, 0x100);
-    }
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
+    LOGI("0rtt_flag:%d", stats.early_data_flag);
 }
 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
@@ -179,7 +178,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         LOGI("auto to call xqc_h3_request_close ret=%d", ret);
 
         /* auto to close conn */
-        ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine,&user_stream->user_conn->cid);
+        ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine, &user_stream->user_conn->cid);
         LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
     }
     return 0;
