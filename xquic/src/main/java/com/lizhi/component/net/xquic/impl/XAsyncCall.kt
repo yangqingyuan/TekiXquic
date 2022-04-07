@@ -16,8 +16,13 @@ import java.lang.Exception
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
-import kotlin.collections.HashMap
 
+
+/**
+ * 作用: 异步调用
+ * 作者: yqy
+ * 创建日期: 2022/4/1.
+ */
 class XAsyncCall(
     var xCall: XCall,
     var xquicClient: XquicClient,
@@ -47,21 +52,6 @@ class XAsyncCall(
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
     }
 
-
-    private fun parseHeadersToMap(): HashMap<String, String> {
-        val headers = hashMapOf<String, String>()
-        headers[":method"] = originalRequest.method
-        headers.putAll(originalRequest.headers.build().headersMap)
-
-        if (originalRequest.method == "POST") {
-            val body = originalRequest.body
-
-            headers["content-type"] = body.mediaType.mediaType
-            headers["content-length"] = body.content.length.toString()
-        }
-        return headers
-    }
-
     fun executeOn(executorService: ExecutorService?) {
         assert(!Thread.holdsLock(xquicClient.dispatcher()))
         var success = false
@@ -87,9 +77,10 @@ class XAsyncCall(
     }
 
     override fun execute() {
+        val startTime = System.currentTimeMillis()
         try {
-            XLogUtils.debug("=======> execute <========")
-            val sendParams = SendParams.Builder()
+            XLogUtils.debug("=======> execute start <========")
+            val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
                 .setToken(tokenMap[url()])
                 .setSession(sessionMap[url()])
@@ -97,20 +88,28 @@ class XAsyncCall(
                 .setMaxRecvLenght(1024 * 1024)
                 .setAuthority(xquicClient.authority)
                 .setCCType(xquicClient.ccType)
-                .setHeaders(parseHeadersToMap())
-                .build()
 
+            /* set headers */
+            val headers = hashMapOf<String, String>()
+            headers[":method"] = originalRequest.method
+            headers.putAll(originalRequest.headers.build().headersMap)
             if (originalRequest.method == "POST") {
                 val body = originalRequest.body
-                sendParams.content = body.content
-            }
 
+                headers["content-type"] = body.mediaType.mediaType
+                headers["content-length"] = body.content.length.toString()
+                sendParamsBuilder.setContent(body.content)
+            }
+            sendParamsBuilder.setHeaders(headers)
+
+            /* native to send */
             XquicShortNative().send(
-                sendParams, this
+                sendParamsBuilder.build(), this
             )
         } catch (e: Exception) {
             cancel()
         } finally {
+            XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms)<========")
             xquicClient.dispatcher().finished(this)
         }
 
@@ -155,6 +154,6 @@ class XAsyncCall(
     }
 
     fun cancel() {
-
+        XLogUtils.info("cancel")
     }
 }

@@ -327,6 +327,8 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     /* free user_callback */
     free(ctx->args->user_callback->h3_hdrs.headers);
     free(ctx->args->user_callback);
+
+    LOGI(">>>>>>>> free data success <<<<<<<<<");
     return 0;
 }
 

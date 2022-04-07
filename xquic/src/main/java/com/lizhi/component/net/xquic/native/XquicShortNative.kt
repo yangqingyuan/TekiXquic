@@ -1,5 +1,8 @@
 package com.lizhi.component.net.xquic.native
 
+import com.lizhi.component.net.xquic.utils.XLogUtils
+import java.lang.Exception
+
 /**
  * 短链接
  */
@@ -14,7 +17,11 @@ class XquicShortNative {
     }
 
     init {
-        loadLib()
+        try {
+            loadLib()
+        } catch (e: Exception) {
+            XLogUtils.error(e)
+        }
     }
 
 
@@ -56,11 +63,6 @@ class XquicShortNative {
          * default: bbr
          */
         var ccType: Int = CCType.BBR.ordinal
-
-        /**
-         * GET/POST
-         */
-        var method: String = "GET"
 
         /**
          * authority
@@ -120,10 +122,6 @@ class XquicShortNative {
                 return this
             }
 
-            fun setMethod(method: String): Builder {
-                params.method = method
-                return this
-            }
 
             fun setAuthority(authority: String): Builder {
                 params.authority = authority
