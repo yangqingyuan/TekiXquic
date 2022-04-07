@@ -12,7 +12,7 @@
 
 使用到的第三方sdk
 
-（1）xquic （https://github.com/alibaba/xquic)
+（1）xquic （https://github.com/alibaba/xquic) 目前用的是最新的1.0.1版本
 
 （2）libev
 
@@ -48,7 +48,7 @@
 
 # 规划
 
-（1）1.0 版本（支持短链接），进度：疯狂码中
+（1）1.0 版本（支持短链接），进度：疯狂码中，最新（dev分支）
 
 （2）2.0 版本（支持长链接），进度：未开始
 
