@@ -87,26 +87,33 @@ class XAsyncCall(
     }
 
     override fun execute() {
-        XLogUtils.debug("=======> execute <========")
-        val sendParams = SendParams.Builder()
-            .setUrl(url())
-            .setToken(tokenMap[url()])
-            .setSession(sessionMap[url()])
-            .setTimeOut(xquicClient.connectTimeOut)
-            .setMaxRecvLenght(1024 * 1024)
-            .setAuthority(xquicClient.authority)
-            .setCCType(xquicClient.ccType)
-            .setHeaders(parseHeadersToMap())
-            .build()
+        try {
+            XLogUtils.debug("=======> execute <========")
+            val sendParams = SendParams.Builder()
+                .setUrl(url())
+                .setToken(tokenMap[url()])
+                .setSession(sessionMap[url()])
+                .setTimeOut(xquicClient.connectTimeOut)
+                .setMaxRecvLenght(1024 * 1024)
+                .setAuthority(xquicClient.authority)
+                .setCCType(xquicClient.ccType)
+                .setHeaders(parseHeadersToMap())
+                .build()
 
-        if (originalRequest.method == "POST") {
-            val body = originalRequest.body
-            sendParams.content = body.content
+            if (originalRequest.method == "POST") {
+                val body = originalRequest.body
+                sendParams.content = body.content
+            }
+
+            XquicShortNative().send(
+                sendParams, this
+            )
+        } catch (e: Exception) {
+            cancel()
+        } finally {
+            xquicClient.dispatcher().finished(this)
         }
 
-        XquicShortNative().send(
-            sendParams, this
-        )
     }
 
     override fun callBackReadData(ret: Int, data: ByteArray) {
@@ -140,6 +147,14 @@ class XAsyncCall(
                 }
             }
         }
+
+    }
+
+    fun get(): XAsyncCall {
+        return this
+    }
+
+    fun cancel() {
 
     }
 }

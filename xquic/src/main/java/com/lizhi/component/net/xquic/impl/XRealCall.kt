@@ -36,4 +36,12 @@ class XRealCall : XCall {
             .enqueue(XAsyncCall(this, xquicClient, originalRequest, xCallback))
     }
 
+
+    fun get(): XRealCall {
+        return this
+    }
+
+    fun cancel() {
+
+    }
 }

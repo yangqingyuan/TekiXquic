@@ -84,13 +84,25 @@ class XDispatcher {
     private fun runningCallsForHost(call: XAsyncCall): Int {
         var result = 0
         for (c in runningAsyncCalls) {
-            if (c.url().equals(call.url())) result++
+            if (c.url() == call.url()) result++
         }
         return result
     }
 
-    fun cancelAll() {
 
+    @Synchronized
+    fun cancelAll() {
+        for (call in readyAsyncCalls) {
+            call.get().cancel()
+        }
+
+        for (call in runningAsyncCalls) {
+            call.get().cancel()
+        }
+
+        for (call in runningSyncCalls) {
+            call.cancel()
+        }
     }
 
     @Synchronized
