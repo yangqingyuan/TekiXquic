@@ -184,23 +184,9 @@ int client_init_engine(xqc_cli_ctx_t *ctx, xqc_cli_client_args_t *args) {
     if (xqc_engine_get_default_config(&config, XQC_ENGINE_CLIENT) < 0) {
         return XQC_ERROR;
     }
-    switch (args->env_cfg.log_level) {
-        case 'd':
-            config.cfg_log_level = XQC_LOG_DEBUG;
-            break;
-        case 'i':
-            config.cfg_log_level = XQC_LOG_INFO;
-            break;
-        case 'w':
-            config.cfg_log_level = XQC_LOG_WARN;
-            break;
-        case 'e':
-            config.cfg_log_level = XQC_LOG_ERROR;
-            break;
-        default:
-            config.cfg_log_level = XQC_LOG_DEBUG;
-            break;
-    }
+    config.cfg_log_level = args->env_cfg.log_level;
+    config.cfg_log_event = 10;//open log
+    config.cfg_log_level_name = args->env_cfg.log_level;//open log
 
     ctx->engine = xqc_engine_create(XQC_ENGINE_CLIENT, &config,
                                     &engine_ssl_config, &callback, &transport_cbs, ctx);
@@ -372,7 +358,8 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
         return;
     }
 
-    LOGW("socket idle timeout, task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
+    LOGW("socket idle timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
+         user_conn->ctx->args->net_cfg.conn_timeout,
          user_conn->ctx->task_ctx.tasks[user_conn->task->task_idx].req_cnt,
          user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
          user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
@@ -610,6 +597,13 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, in
     }
 
     if (all_task_fin_flag) {
+        /* when timeout, close which not fin */
+        for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+            if (!ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
+                client_close_task(ctx, ctx->task_ctx.tasks + i);
+                ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+            }
+        }
         LOGW("all tasks are finished,will break loop and exit!!");
         ev_break(main_loop, EVBREAK_ALL);
         return;
