@@ -719,35 +719,41 @@ int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *us
  */
 int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *user_param) {
     if (user_param->token != NULL) {
-        int token_len = strlen(user_param->token);
+        size_t token_len = strlen(user_param->token);
         strcpy(args->quic_cfg.token, user_param->token);//拷贝token
         args->quic_cfg.token_len = token_len;
     }
     if (user_param->session != NULL) {
-        int session_len = strlen(user_param->session);
+        size_t session_len = strlen(user_param->session);
         strcpy(args->quic_cfg.st, user_param->session);//拷贝session
         args->quic_cfg.st_len = session_len;
     }
 
     /* stream 配置 */
     if (user_param->content != NULL) {
-        int content_len = strlen(user_param->content);
+        size_t content_len = strlen(user_param->content);
         args->user_stream.send_body = malloc(content_len);
         strcpy(args->user_stream.send_body, user_param->content);//拷贝发送的内容
         args->user_stream.send_body_len = content_len;
-        if (user_param->max_recv_data_len > 0) {
-            args->user_stream.recv_body_max_len = user_param->max_recv_data_len;
-        } else {
-            args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
-        }
+    }
+    if (user_param->max_recv_data_len > 0) {
+        args->user_stream.recv_body_max_len = user_param->max_recv_data_len;
+    } else {
+        args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
     }
 
     /* set callback */
     args->user_callback = user_param;
 
     /* parse server addr */
-    return client_parse_server_addr(&args->net_cfg, user_param->url,
-                                    &args->user_callback);//根据url解析地址跟port
+    int ret = client_parse_server_addr(&args->net_cfg, user_param->url,
+                                       args->user_callback);//根据url解析地址跟port
+    if (ret < 0) {
+        free(args->user_stream.send_body);
+        free(args->user_callback);
+        free(args);
+    }
+    return ret;
 }
 
 /**
@@ -766,7 +772,9 @@ int client_send(xqc_cli_user_data_params_t *user_param) {
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
     client_init_args(args, user_param);
-    client_parse_args(args, user_param);
+    if (client_parse_args(args, user_param) < 0) {
+        goto end;
+    }
 
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
@@ -792,6 +800,7 @@ int client_send(xqc_cli_user_data_params_t *user_param) {
     xqc_engine_destroy(ctx->engine);
     client_free_ctx(ctx);
 
+    end:
     LOGW("client send end(发送结束),总时间：%lu us", (xqc_now() - start_time));
     return XQC_OK;
 }

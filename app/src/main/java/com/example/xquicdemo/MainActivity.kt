@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
     private fun get(index: Int) {
 
         val url = if (index % 2 == 0) {
-            "https://192.168.10.245:8441"
+            "https://192.168.10.245:8440"
         } else {
             "https://192.168.10.245:8442"
         }
@@ -114,6 +114,7 @@ class MainActivity : AppCompatActivity() {
             override fun onFailure(call: XCall, exception: Exception) {
                 exception.printStackTrace()
                 XLogUtils.error(exception.message)
+                appendText("${exception.message}")
             }
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
@@ -134,9 +135,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun post(index: Int) {
         val url = if (index % 2 == 0) {
-            "https://192.168.10.245:8441"
+            "https://192.168.8.120" //https://192.168.10.245:8441
         } else {
-            "https://192.168.10.245:8442"
+            "https://192.168.8.120:8442"
         }
 
         val content = etContent?.text
@@ -153,6 +154,7 @@ class MainActivity : AppCompatActivity() {
             override fun onFailure(call: XCall, exception: Exception) {
                 exception.printStackTrace()
                 XLogUtils.error(exception.message)
+                appendText("${exception.message}")
             }
 
             override fun onResponse(call: XCall, xResponse: XResponse) {

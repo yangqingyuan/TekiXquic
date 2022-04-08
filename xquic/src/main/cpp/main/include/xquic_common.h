@@ -155,11 +155,11 @@ typedef struct xqc_cli_quic_config_s {
     char alpn[16];
 
     /* 0-rtt config */
-    int st_len;                        /* session ticket len */
+    size_t st_len;                        /* session ticket len */
     char st[MAX_SESSION_TICKET_LEN];    /* session ticket buf */
     int tp_len;                        /* transport params len */
     char tp[MAX_TRANSPORT_PARAMS_LEN];  /* transport params buf */
-    int token_len;                     /* token len */
+    size_t token_len;                     /* token len */
     char token[XQC_MAX_TOKEN_LEN];      /* token buf */
 
     char *cipher_suites;                /* cipher suites */

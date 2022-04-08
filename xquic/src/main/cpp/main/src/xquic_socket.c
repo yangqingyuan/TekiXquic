@@ -30,8 +30,8 @@ int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
     struct addrinfo *result = NULL;
     int rv = getaddrinfo(cfg->host, s_port, &hints, &result);
     if (rv != 0) {
-        char err_msg[124];
-        sprintf(err_msg, "get addr info from hostname:%s", gai_strerror(rv));
+        char err_msg[1024];
+        sprintf(err_msg, "get addr info from hostname:%s, url:%s", gai_strerror(rv), url);
         LOGE("%s\n", err_msg);
         if (user_callback != NULL) {
             user_callback->user_data_callback.callback_read_data(
