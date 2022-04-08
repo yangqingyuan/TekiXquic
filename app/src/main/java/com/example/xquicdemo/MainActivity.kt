@@ -64,8 +64,10 @@ class MainActivity : AppCompatActivity() {
 
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
-            //get()
-            post()
+            for (i in (0..20)) {
+                //get(i)
+                post(i)
+            }
         }
 
     }
@@ -93,10 +95,16 @@ class MainActivity : AppCompatActivity() {
     }
 
 
-    private fun get() {
+    private fun get(index: Int) {
+
+        val url = if (index % 2 == 0) {
+            "https://192.168.10.245:8443"
+        } else {
+            "https://192.168.10.245:8442"
+        }
 
         val xRequest = XRequest.Builder()
-            .url("https://192.168.10.245:8443/demo/tile")//127.0.0.1:6121 //192.168.10.245:8443
+            .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .get() //Default
             .addHeader("testA", "testA")
             .build()
@@ -119,12 +127,18 @@ class MainActivity : AppCompatActivity() {
         })
     }
 
-    private fun post() {
+    private fun post(index: Int) {
+        val url = if (index % 2 == 0) {
+            "https://192.168.10.245:8443"
+        } else {
+            "https://192.168.10.245:8442"
+        }
+
         val content = etContent?.text
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content.toString())
         val xRequest = XRequest.Builder()
-            .url("https://192.168.10.245:8443/demo/tile")//127.0.0.1:6121 //192.168.10.245:8443
+            .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .post(xRequestBody) //Default
             .build()
 
@@ -138,11 +152,16 @@ class MainActivity : AppCompatActivity() {
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
 
+                var context = xResponse.xResponseBody?.getData()
+                if (content != null && content.length > 512 * 1024) {
+                    context = "数据太大，无法打印和显示，数据长度为:" + content.length
+                }
+
                 XLogUtils.error(
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${context}"
                 )
 
-                appendText(xResponse.xResponseBody?.getData())
+                appendText("$context ,index=$index")
             }
         })
     }

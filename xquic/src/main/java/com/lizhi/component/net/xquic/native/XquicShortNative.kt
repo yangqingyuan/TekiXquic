@@ -152,7 +152,6 @@ class XquicShortNative {
 
     }
 
-    external fun init()
 
     /**
      * 发送数据

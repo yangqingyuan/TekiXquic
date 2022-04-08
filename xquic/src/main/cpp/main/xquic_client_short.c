@@ -773,6 +773,11 @@ int client_send(xqc_cli_user_data_params_t *user_param) {
     client_start_task_manager(ctx);
     ev_run(ctx->eb, 0);
 
+    /* stop timer */
+    ev_timer_stop(ctx->eb, &ctx->ev_engine);
+    ev_async_stop(ctx->eb, &ctx->ev_task);
+    ev_loop_destroy(ctx->eb);
+
     /* free ctx */
     xqc_engine_destroy(ctx->engine);
     client_free_ctx(ctx);

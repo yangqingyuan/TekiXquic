@@ -46,6 +46,8 @@ class XAsyncCall(
          * tp
          */
         val tpMap by lazy { hashMapOf<String, String>() }
+
+        var index = 0
     }
 
     init {
@@ -109,7 +111,8 @@ class XAsyncCall(
         } catch (e: Exception) {
             cancel()
         } finally {
-            XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms)<========")
+            XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
+            index += 1
             xquicClient.dispatcher().finished(this)
         }
 

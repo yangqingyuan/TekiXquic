@@ -55,11 +55,17 @@
         android:text="H3发送"
         android:textAllCaps="false" />
 
-    <TextView
-        android:id="@+id/tv_result"
+    <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_margin="20dp"
-        android:text="返回结果:\n" />
+        android:layout_height="match_parent"
+        android:layout_margin="20dp">
+
+        <TextView
+            android:id="@+id/tv_result"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="20dp"
+            android:text="返回结果:\n" />
+    </ScrollView>
 
 </LinearLayout>
