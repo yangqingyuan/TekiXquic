@@ -64,7 +64,7 @@ class MainActivity : AppCompatActivity() {
 
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
-            for (i in (0..20)) {
+            for (i in (0..0)) {
                 //get(i)
                 post(i)
             }
@@ -98,7 +98,7 @@ class MainActivity : AppCompatActivity() {
     private fun get(index: Int) {
 
         val url = if (index % 2 == 0) {
-            "https://192.168.10.245:8443"
+            "https://192.168.10.245:8441"
         } else {
             "https://192.168.10.245:8442"
         }
@@ -129,7 +129,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun post(index: Int) {
         val url = if (index % 2 == 0) {
-            "https://192.168.10.245:8443"
+            "https://192.168.10.245:8441"
         } else {
             "https://192.168.10.245:8442"
         }
@@ -152,13 +152,15 @@ class MainActivity : AppCompatActivity() {
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
 
-                var context = xResponse.xResponseBody?.getData()
-                if (content != null && content.length > 512 * 1024) {
-                    context = "数据太大，无法打印和显示，数据长度为:" + content.length
-                }
+                val context: String? =
+                    if (xResponse.xResponseBody?.getDataArray()?.size!! > 512 * 1024) {
+                        "数据太大，无法打印和显示，数据长度为:" + xResponse.xResponseBody?.getDataArray()?.size
+                    } else {
+                        xResponse.xResponseBody?.getData()
+                    }
 
                 XLogUtils.error(
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${context}"
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms size=${xResponse.xResponseBody?.getDataArray()?.size},content=${context}"
                 )
 
                 appendText("$context ,index=$index")

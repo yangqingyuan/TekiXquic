@@ -9,6 +9,10 @@ import java.io.Closeable
  */
 class XResponseBody(var data: ByteArray?) : Closeable {
 
+    fun getDataArray(): ByteArray? {
+        return data
+    }
+
     fun getData(): String? {
         data?.let {
             return String(it)
@@ -17,6 +21,6 @@ class XResponseBody(var data: ByteArray?) : Closeable {
     }
 
     override fun close() {
-
+        data = null
     }
 }

@@ -120,6 +120,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         }
     }
 
+    /* continue to recv body */
     if (!(flag & XQC_REQ_NOTIFY_READ_BODY)) {
         return 0;
     }
@@ -128,7 +129,9 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
     size_t buff_size = 4096;
 
     //TODO 最好根据后端返回动态的调整
-    user_stream->recv_body = malloc(user_stream->recv_body_max_len);
+    if (user_stream->recv_body == NULL) {
+        user_stream->recv_body = malloc(user_stream->recv_body_max_len);
+    }
     ssize_t read = 0;
     ssize_t read_sum = 0;
     do {
@@ -141,16 +144,24 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
             return 0;
         }
 
-        //将内容拷贝到缓存中
-        memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
+        /* copy body to memory */
+        if (user_stream->recv_body_len + read <= user_stream->recv_body_max_len) {
+            memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
+        } else {
+            LOGW("revc data size > recv body max len %lu throw away", user_stream->recv_body_max_len);
+        }
 
         read_sum += read;
         user_stream->recv_body_len += read;
 
     } while (read > 0 && !fin);
 
+    if (flag & XQC_REQ_NOTIFY_READ_EMPTY_FIN) {
+        fin = 1;
+    }
+
     if (read > 0) {
-        LOGI("xqc h3 request recv body size %zd, fin:%d", read, fin);
+        LOGI("xqc h3 request recv body size %lu, fin:%d", user_stream->recv_body_len, fin);
     }
 
     /* finish */
@@ -166,12 +177,18 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
              (now_us - user_stream->start_time),
              stats.send_body_size, stats.recv_body_size);
 
+        /* data size */
+        int body_size = stats.recv_body_size;
+        if (body_size > user_stream->recv_body_max_len) {
+            body_size = user_stream->recv_body_max_len;
+        }
+
         /* call back to client */
         xqc_cli_user_data_params_t *user_callback = user_stream->user_conn->ctx->args->user_callback;
         user_callback->user_data_callback.callback_read_data(
                 user_callback->user_data_callback.env_android,
                 user_callback->user_data_callback.object_android, 0,
-                user_stream->recv_body, read_sum);
+                user_stream->recv_body, body_size);
 
         /* auto to close request */
         int ret = xqc_h3_request_close(h3_request);
