@@ -292,6 +292,11 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     DEBUG;
     xqc_cli_user_conn_t *user_conn = task->user_conn;
 
+    if (!user_conn) {
+        LOGW("is closed task,no need to close again!");
+        return -1;
+    }
+
     /*close xquic conn*/
     if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
         xqc_h3_conn_close(ctx->engine, &user_conn->cid);
@@ -304,15 +309,28 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     ev_timer_stop(ctx->eb, &user_conn->ev_timeout);
 
     /* close socket */
-    close(user_conn->fd);
+    if (user_conn->fd > -1) {
+        close(user_conn->fd);
+        user_conn->fd = -1;
+    }
 
     /* free stream */
-    free(ctx->args->user_stream.send_body);
-    free(ctx->args->user_stream.recv_body);
+    if (ctx->args->user_stream.send_body != NULL) {
+        free(ctx->args->user_stream.send_body);
+        ctx->args->user_stream.send_body = NULL;
+    }
+
+    if (ctx->args->user_stream.recv_body != NULL) {
+        free(ctx->args->user_stream.recv_body);
+        ctx->args->user_stream.recv_body = NULL;
+    }
 
     /* free user_callback */
-    free(ctx->args->user_callback->h3_hdrs.headers);
-    free(ctx->args->user_callback);
+    if (ctx->args->user_callback != NULL) {
+        free(ctx->args->user_callback->h3_hdrs.headers);
+        free(ctx->args->user_callback);
+        ctx->args->user_callback = NULL;
+    }
 
     LOGI(">>>>>>>> free data success <<<<<<<<<");
     return 0;
