@@ -1,4 +1,4 @@
-# XquicDemo
+# TekiXquic
 
 # 简介
 基于 Xquic 进行二次封装的Android sdk库，为了方便理解和使用，沿用了okhttp的封装方式模式，同时沿用了短链接和长链接的思维。
