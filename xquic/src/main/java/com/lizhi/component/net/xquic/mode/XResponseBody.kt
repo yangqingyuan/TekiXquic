@@ -1,26 +1,15 @@
 package com.lizhi.component.net.xquic.mode
 
-import java.io.Closeable
 
 /**
  * 作用:
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class XResponseBody(var data: ByteArray?) : Closeable {
+class XResponseBody(var data: ByteArray) {
 
-    fun getDataArray(): ByteArray? {
-        return data
+    fun getData(): String {
+        return String(data)
     }
 
-    fun getData(): String? {
-        data?.let {
-            return String(it)
-        }
-        return null
-    }
-
-    override fun close() {
-        data = null
-    }
 }

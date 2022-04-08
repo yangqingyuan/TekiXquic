@@ -11,7 +11,7 @@ class XResponse {
     var message: String? = null
 
     var xHeaders: XHeaders? = null
-    var xResponseBody: XResponseBody? = null
+    lateinit var xResponseBody: XResponseBody
 
 
     class Builder() {
@@ -27,7 +27,7 @@ class XResponse {
             return this
         }
 
-        fun responseBody(xResponseBody: XResponseBody?): Builder {
+        fun responseBody(xResponseBody: XResponseBody): Builder {
             xResponse.xResponseBody = xResponseBody
             return this
         }

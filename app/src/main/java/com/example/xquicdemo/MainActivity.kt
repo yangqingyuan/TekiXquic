@@ -151,16 +151,13 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
-
-                val context: String? =
-                    if (xResponse.xResponseBody?.getDataArray()?.size!! > 512 * 1024) {
-                        "数据太大，无法打印和显示，数据长度为:" + xResponse.xResponseBody?.getDataArray()?.size
-                    } else {
-                        xResponse.xResponseBody?.getData()
-                    }
+                var context: String = xResponse.xResponseBody.getData()
+                if (context.length > 512 * 1024) {
+                    context = "数据太大，无法打印和显示，数据长度为:" + content?.length
+                }
 
                 XLogUtils.error(
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms size=${xResponse.xResponseBody?.getDataArray()?.size},content=${context}"
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms size=${context.length},content=${context}"
                 )
 
                 appendText("$context ,index=$index")
