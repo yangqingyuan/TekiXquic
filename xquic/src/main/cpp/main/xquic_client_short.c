@@ -388,6 +388,15 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
 
         //修改为失败状态
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FAILED;
+
+        /* call back to client */
+        char err_msg[214];
+        sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
+        xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
+        user_callback->user_data_callback.callback_read_data(
+                user_callback->user_data_callback.env_android,
+                user_callback->user_data_callback.object_android, 0,
+                err_msg, strlen(err_msg));
     }
 }
 
@@ -433,6 +442,7 @@ void client_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_clie
     settings->cc_params.init_cwnd = 32;//拥塞窗口数
     settings->so_sndbuf = 1024 * 1024;//socket send  buf的大小
     settings->proto_version = XQC_VERSION_V1;
+    settings->init_idle_time_out = (args->net_cfg.conn_timeout + 1) * 1000;//xquic default 10s
     settings->spurious_loss_detect_on = 1;//散列丢失检测
     settings->keyupdate_pkt_threshold = args->quic_cfg.keyupdate_pkt_threshold;//单个 1-rtt 密钥的数据包限制，0 表示无限制
 }

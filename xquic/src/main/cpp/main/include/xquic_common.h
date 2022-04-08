@@ -293,7 +293,7 @@ typedef struct xqc_cli_user_data_params_s {
 
     xqc_cli_user_data_callback_t user_data_callback;
 
-    /* idle persist timeout */
+    /* idle persist timeout unit second*/
     int conn_timeout;
 
     int max_recv_data_len;

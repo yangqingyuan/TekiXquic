@@ -16,7 +16,7 @@ class XquicClient {
     /**
      *unit second
      */
-    var connectTimeOut: Int = 0
+    var connectTimeOut: Int = 30
 
     /**
      * unit second
