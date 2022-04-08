@@ -1,0 +1,1 @@
+-keep class com.lizhi.component.net.xquic.native*{*;}

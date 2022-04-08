@@ -118,11 +118,16 @@ class MainActivity : AppCompatActivity() {
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
 
+                var content: String = xResponse.xResponseBody.getData()
+                if (content.length > 512 * 1024) {
+                    content = "数据太大，无法打印和显示，数据长度为:" + content.length
+                }
+
                 XLogUtils.error(
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody?.getData()}"
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,size=${content.length},content=${content}"
                 )
 
-                appendText(xResponse.xResponseBody?.getData())
+                appendText("$content ,index=$index")
             }
         })
     }
@@ -151,16 +156,16 @@ class MainActivity : AppCompatActivity() {
             }
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
-                var context: String = xResponse.xResponseBody.getData()
-                if (context.length > 512 * 1024) {
-                    context = "数据太大，无法打印和显示，数据长度为:" + content?.length
+                var content: String = xResponse.xResponseBody.getData()
+                if (content.length > 512 * 1024) {
+                    content = "数据太大，无法打印和显示，数据长度为:" + content.length
                 }
 
                 XLogUtils.error(
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms size=${context.length},content=${context}"
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,size=${content.length},content=${content}"
                 )
 
-                appendText("$context ,index=$index")
+                appendText("$content ,index=$index")
             }
         })
     }
