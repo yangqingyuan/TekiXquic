@@ -363,34 +363,32 @@ void client_socket_event_callback(struct ev_loop *main_loop, ev_io *io_w, int wh
  */
 void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
     DEBUG;
-    int rc = 0;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) io_t->data;
-    if (user_conn->ctx->args->quic_cfg.alpn_type == ALPN_H3) {
-        rc = xqc_h3_conn_close(user_conn->ctx->engine, &user_conn->cid);
-    } else {
-        LOGE("不支持其他协议");
+
+    if (xqc_now() - user_conn->last_sock_read_time >=
+        (uint64_t) user_conn->ctx->args->net_cfg.conn_timeout * 1000000) {
+        int rc = 0;
+        if (user_conn->ctx->args->quic_cfg.alpn_type == ALPN_H3) {
+            rc = xqc_h3_conn_close(user_conn->ctx->engine, &user_conn->cid);
+        } else {
+            LOGE("不支持其他协议");
+        }
+
+        if (rc != XQC_OK) {
+            LOGE("client idle callback,close conn error");
+            return;
+        }
+
+        LOGW("socket idle timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
+             user_conn->ctx->args->net_cfg.conn_timeout,
+             user_conn->ctx->task_ctx.tasks[user_conn->task->task_idx].req_cnt,
+             user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
+             user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
+             user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
+
+        //修改为失败状态
+        user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FAILED;
     }
-
-    if (rc != XQC_OK) {
-        LOGE("client idle callback,close conn error");
-        return;
-    }
-
-    LOGW("socket idle timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
-         user_conn->ctx->args->net_cfg.conn_timeout,
-         user_conn->ctx->task_ctx.tasks[user_conn->task->task_idx].req_cnt,
-         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
-         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
-         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
-
-    //修改为失败状态
-    user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FAILED;
-
-    LOGW("task failed, total task_req_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, "
-         "req_create_cnt: %d\n", user_conn->task->req_cnt,
-         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
-         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_sent_cnt,
-         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
 }
 
 /**

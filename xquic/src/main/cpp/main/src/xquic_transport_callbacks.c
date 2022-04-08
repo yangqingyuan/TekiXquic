@@ -17,7 +17,9 @@ ssize_t client_write_socket(const unsigned char *buf, size_t size,
                 res = XQC_SOCKET_EAGAIN;
             }
         }
-        user_conn->last_sock_op_time = xqc_now();
+
+        user_conn->last_sock_write_time = xqc_now();
+
     } while ((res < 0) && (errno == EINTR));
     return res;
 }

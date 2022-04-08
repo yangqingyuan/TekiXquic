@@ -450,7 +450,8 @@ typedef struct xqc_cli_user_conn_s {
     struct ev_timer ev_timeout;
 
     xqc_cli_ctx_t *ctx;
-    uint64_t last_sock_op_time;
+    uint64_t last_sock_write_time;
+    uint64_t last_sock_read_time;
     xqc_cli_task_t *task;
 
 } xqc_cli_user_conn_t;
