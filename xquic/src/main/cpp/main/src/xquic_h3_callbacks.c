@@ -27,7 +27,10 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
          ctx->task_ctx.schedule.schedule_info[task->task_idx].req_fin_cnt,
          ctx->task_ctx.schedule.schedule_info[task->task_idx].req_sent_cnt,
          ctx->task_ctx.schedule.schedule_info[task->task_idx].req_create_cnt);
-    free(user_conn);
+
+    /* call method client_task_schedule_callback */
+    ev_async_send(ctx->eb, &ctx->ev_task);
+
     return 0;
 }
 

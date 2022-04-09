@@ -85,7 +85,9 @@ void client_init_ctx(xqc_cli_ctx_t *pctx, xqc_cli_client_args_t *args) {
 void client_engine_callback(struct ev_loop *main_loop, ev_timer *io_w, int what) {
     //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
-    xqc_engine_main_logic(ctx->engine);
+    if (ctx && ctx->engine) {
+        xqc_engine_main_logic(ctx->engine);
+    }
 }
 
 /**
@@ -214,6 +216,19 @@ void client_free_ctx(xqc_cli_ctx_t *ctx) {
     client_close_keylog_file(ctx);
     client_close_log_file(ctx);
     if (ctx->args) {
+        if (ctx->args->user_stream.send_body != NULL) {
+            free(ctx->args->user_stream.send_body);
+        }
+
+        if (ctx->args->user_stream.recv_body != NULL) {
+            free(ctx->args->user_stream.recv_body);
+        }
+
+        if (ctx->args->user_callback != NULL) {
+            free(ctx->args->user_callback->h3_hdrs.headers);
+            free(ctx->args->user_callback);
+        }
+
         free(ctx->args);
         ctx->args = NULL;
     }
@@ -331,6 +346,9 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
         free(ctx->args->user_callback);
         ctx->args->user_callback = NULL;
     }
+
+    free(user_conn);
+    user_conn = NULL;
 
     LOGI(">>>>>>>> free data success <<<<<<<<<");
     return 0;
@@ -607,7 +625,7 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, in
         /* if task finished,close task */
         if (ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
             client_close_task(ctx, ctx->task_ctx.tasks + i);
-            ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+            //ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
         }
 
         /* if task finished,close task */
@@ -647,8 +665,8 @@ void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, in
         }
     }
 
-    /* start next round 开始下一轮检查*/
-    ev_async_send(main_loop, io_w);
+    /* start next round 开始下一轮检查,搬迁到链接关闭再调用，避免死循环占用cpu过高*/
+    //ev_async_send(main_loop, io_w);
 }
 
 /**
@@ -795,12 +813,17 @@ int client_send(xqc_cli_user_data_params_t *user_param) {
     ctx->ev_engine.data = ctx;
     ev_timer_init(&ctx->ev_engine, client_engine_callback, 0, 0);//EV_READ=1,EV_WRITE=2
     ev_timer_start(ctx->eb, &ctx->ev_engine);
-    client_init_engine(ctx, args);
+
+    /* init engine */
+    if (client_init_engine(ctx, args) != XQC_OK) {
+        goto fail;
+    }
 
     /* start task scheduler */
     client_start_task_manager(ctx);
     ev_run(ctx->eb, 0);
 
+    fail:
     /* stop timer */
     ev_timer_stop(ctx->eb, &ctx->ev_engine);
     ev_async_stop(ctx->eb, &ctx->ev_task);
