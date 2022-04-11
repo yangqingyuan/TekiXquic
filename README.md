@@ -19,8 +19,8 @@
 
 # sdk 接入
 
-第一步：引入maven
-在allprojects中引入（目前是snapshot版本所有暂时需要）
+第一步：引入maven 在allprojects中引入（目前是snapshot版本所有暂时需要）
+
 maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 
 第二步：导入sdk
