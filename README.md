@@ -2,7 +2,7 @@
 
 # 简介
 tekixquic 是基于 Xquic 进行二次封装的Android sdk库，为了方便理解和使用，沿用了okhttp的封装方式模式，同时沿用了短链接和长链接的思维。
-
+通过tekixquic 你可以在客户端快速的验证和使用xquic基于udp传输
 
 # 环境
 工具
