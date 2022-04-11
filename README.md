@@ -119,7 +119,7 @@ native->包：xquic底层JNI实现和回调/参数等
 
 关键类说明：
 
-XquicClient->类： 端链接API入口
+XquicClient->类： 短链接API入口
 
 XAsyncCall->类：真正的执行逻辑类
 
