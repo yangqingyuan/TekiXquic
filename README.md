@@ -126,7 +126,7 @@ XAsyncCall->类：真正的执行逻辑类
 XQuicShortNative->类：JNI接口
 
 # 其他
-有任何问题，欢迎留言，同时也希望找志同道合的人，一同完善tekixquic，毕竟一个人的力量是有限的！！本人wx，请标注来意
+有任何问题，欢迎留言，同时也希望找志同道合的人，一同完善tekixquic，毕竟一个人的力量是有限的！！本人wx
 ![image](https://user-images.githubusercontent.com/6867757/162711742-7cfd5e4b-54d8-4c4f-b80e-4d9c9af34ba5.png)
 
 
