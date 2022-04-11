@@ -1,7 +1,7 @@
 # TekiXquic
 
 # 简介
-基于 Xquic 进行二次封装的Android sdk库，为了方便理解和使用，沿用了okhttp的封装方式模式，同时沿用了短链接和长链接的思维。
+tekixquic 是基于 Xquic 进行二次封装的Android sdk库，为了方便理解和使用，沿用了okhttp的封装方式模式，同时沿用了短链接和长链接的思维。
 
 
 # 环境
@@ -37,7 +37,6 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
                 .writeTimeout(15)//TODO 待实现
                 .pingInterval(15)//TODO 待实现
                 .ccType(CCType.BBR) //拥塞算法
-                .authority("test")
                 .build()
             val xRequest = XRequest.Builder()
                 .url("https://192.168.10.245:8443")
@@ -65,7 +64,6 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
                 .writeTimeout(15)//TODO 待实现
                 .pingInterval(15)//TODO 待实现
                 .ccType(CCType.BBR) //拥塞算法
-                .authority("test")
                 .build()
                 
             val xRequestBody =XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), "test")
@@ -98,7 +96,25 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
 （3）3.0 版本（支持自定义协议，例如rtmp等），进度：未开始
 
 
+# 架构说明
+
+
+
+## 工程结构说明
+包说明：
+impl->包：逻辑实现类，里面封装了线程池和xquic的底层调用等
+native->包：xquic底层JNI实现和回调/参数等
+
+关键类说明：
+XquicClient->类： 端链接API入口
+XAsyncCall->类：真正的执行逻辑类
+XQuicShortNative->类：JNI接口
+
 # 其他
-有任何问题，欢迎留言
+有任何问题，欢迎留言，同时也希望找志同道合的人，一同完善tekixquic，毕竟一个人的力量是有限的！！本人wx，➕V请标注
+![image](https://user-images.githubusercontent.com/6867757/162711488-a8ac4057-39d3-4310-be1d-4759b16d8d52.png)
+
+
+
 
 
