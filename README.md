@@ -102,12 +102,17 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
 
 ## 工程结构说明
 包说明：
+
 impl->包：逻辑实现类，里面封装了线程池和xquic的底层调用等
+
 native->包：xquic底层JNI实现和回调/参数等
 
 关键类说明：
+
 XquicClient->类： 端链接API入口
+
 XAsyncCall->类：真正的执行逻辑类
+
 XQuicShortNative->类：JNI接口
 
 # 其他
