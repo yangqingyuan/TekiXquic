@@ -124,13 +124,13 @@ int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         user_stream->h3_hdrs.count = user_callback->h3_hdrs.count;
 
         xqc_http_header_t *headers = user_stream->h3_hdrs.headers;
-        LOGD("============================");
+        LOGD("=========== request head start =================");
         for (int i = 0; i < user_stream->h3_hdrs.count; i++) {
             xqc_http_header_t header = headers[i];
             LOGD("= header name = %s, value =%s", (char *) header.name.iov_base,
                  (char *) header.value.iov_base);
         }
-        LOGD("============================");
+        LOGD("============ request head end ================");
 
         //发送h3内容
         client_send_h3_content(user_stream);

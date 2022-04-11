@@ -35,43 +35,6 @@ class MainActivity : AppCompatActivity() {
         .authority("test_authority")
         .build()
 
-    override fun onCreate(savedInstanceState: Bundle?) {
-        super.onCreate(savedInstanceState)
-        setContentView(R.layout.activity_main)
-
-        textView = findViewById(R.id.tv_result)
-
-        radioGroup = findViewById(R.id.radioGroup)
-
-        etContent = findViewById(R.id.et_content)
-
-        radioGroup?.setOnCheckedChangeListener { _, i ->
-            when (i) {
-                R.id.btn_bbr -> {
-                    xquicClient.ccType = CCType.BBR
-                    XLogUtils.info("BBR")
-                }
-                R.id.btn_cubic -> {
-                    xquicClient.ccType = CCType.CUBIC
-                    XLogUtils.info("CUBIC")
-                }
-                else -> {
-                    xquicClient.ccType = CCType.RENO
-                    XLogUtils.info("ccType")
-                }
-            }
-        }
-
-
-        findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
-            for (i in (0..0)) {
-                //get(i)
-                post(i)
-            }
-        }
-
-    }
-
 
     private fun getData(): String {
         return SimpleDateFormat("dd hh:mm:ss").format(Date())
@@ -98,7 +61,7 @@ class MainActivity : AppCompatActivity() {
     private fun get(index: Int) {
 
         val url = if (index % 2 == 0) {
-            "https://192.168.10.245:8440"
+            "https://192.168.10.245:8442/abd/sd?deviceId=123&si_dd=123"
         } else {
             "https://192.168.10.245:8442"
         }
@@ -135,9 +98,9 @@ class MainActivity : AppCompatActivity() {
 
     private fun post(index: Int) {
         val url = if (index % 2 == 0) {
-            "https://192.168.8.120" //https://192.168.10.245:8441
+            "http://192.168.10.245:8442/abd/sd?deviceId=123&si_dd=123" //https://192.168.10.245:8441 -https://117.122.212.164:8443
         } else {
-            "https://192.168.8.120:8442"
+            "https://192.168.10.245:8443/abd/sd?deviceId=123&si_dd=123"
         }
 
         val content = etContent?.text
@@ -164,11 +127,49 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 XLogUtils.error(
-                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,size=${content.length},content=${content}"
+                    " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,delayTime=${xResponse.delayTime},index=${xResponse.index},size=${content.length},content=${content}"
                 )
 
                 appendText("$content ,index=$index")
             }
         })
     }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        textView = findViewById(R.id.tv_result)
+
+        radioGroup = findViewById(R.id.radioGroup)
+
+        etContent = findViewById(R.id.et_content)
+
+        radioGroup?.setOnCheckedChangeListener { _, i ->
+            when (i) {
+                R.id.btn_bbr -> {
+                    xquicClient.ccType = CCType.BBR
+                    XLogUtils.info("BBR")
+                }
+                R.id.btn_cubic -> {
+                    xquicClient.ccType = CCType.CUBIC
+                    XLogUtils.info("CUBIC")
+                }
+                else -> {
+                    xquicClient.ccType = CCType.RENO
+                    XLogUtils.info("ccType")
+                }
+            }
+        }
+
+
+        findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
+            for (i in (0..0)) {
+                get(i)
+                //post(i)
+            }
+        }
+
+    }
+
 }

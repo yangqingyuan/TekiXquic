@@ -31,7 +31,7 @@
 #include "xqc_errno.h"
 #include "xquic_typedef.h"
 
-#define DEBUG LOGI("fun:%s,line %d \n", __FUNCTION__, __LINE__);
+#define DEBUG LOGD("fun:%s,line %d \n", __FUNCTION__, __LINE__);
 
 
 #ifdef _LP64

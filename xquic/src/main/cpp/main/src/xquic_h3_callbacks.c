@@ -111,10 +111,13 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
             return -1;
         }
 
+        LOGD("============ response head start ================");
         for (int i = 0; i < headers->count; ++i) {
-            LOGI("header %s = %s \n", (char *) headers->headers[i].name.iov_base,
+            LOGD("= header %s = %s \n", (char *) headers->headers[i].name.iov_base,
                  (char *) headers->headers[i].value.iov_base);
         }
+        LOGD("============ response head end ================");
+
 
         if (fin) {
             user_stream->recv_fin = 1;
@@ -151,7 +154,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         if (user_stream->recv_body_len + read <= user_stream->recv_body_max_len) {
             memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
         } else {
-            LOGW("revc data size > recv body max len %lu throw away", user_stream->recv_body_max_len);
+            LOGW("revc data size > recv body max len %lu throw away",
+                 user_stream->recv_body_max_len);
         }
 
         read_sum += read;

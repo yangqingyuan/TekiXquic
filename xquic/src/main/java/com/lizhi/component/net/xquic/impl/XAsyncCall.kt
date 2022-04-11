@@ -17,6 +17,7 @@ import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.collections.HashMap
 
 
 /**
@@ -97,6 +98,31 @@ class XAsyncCall(
         return originalRequest
     }
 
+    /**
+     * parse http heads
+     * more headers "https://zhuanlan.zhihu.com/p/282737965"
+     */
+    private fun parseHttpHeads(): HashMap<String, String> {
+        /* set headers */
+        val headers = hashMapOf<String, String>()
+        headers[":method"] = originalRequest.method
+        headers[":scheme"] = originalRequest.url.scheme
+        originalRequest.url.path?.let {
+            headers[":path"] = it
+        }
+        originalRequest.url.authority?.let {
+            headers[":authority"] = it
+        }
+
+        headers.putAll(originalRequest.headers.build().headersMap)
+        if (originalRequest.method == "POST") {
+            val body = originalRequest.body
+            headers["content-type"] = body.mediaType.mediaType
+            headers["content-length"] = body.content.length.toString()
+        }
+        return headers
+    }
+
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
@@ -111,18 +137,11 @@ class XAsyncCall(
                 .setAuthority(xquicClient.authority)
                 .setCCType(xquicClient.ccType)
 
-            /* set headers */
-            val headers = hashMapOf<String, String>()
-            headers[":method"] = originalRequest.method
-            headers.putAll(originalRequest.headers.build().headersMap)
-            if (originalRequest.method == "POST") {
-                val body = originalRequest.body
+            sendParamsBuilder.setHeaders(parseHttpHeads())
 
-                headers["content-type"] = body.mediaType.mediaType
-                headers["content-length"] = body.content.length.toString()
-                sendParamsBuilder.setContent(body.content)
+            if (originalRequest.method == "POST") {
+                sendParamsBuilder.setContent(originalRequest.body.content)
             }
-            sendParamsBuilder.setHeaders(headers)
 
             /* native to send */
             XquicShortNative().send(
