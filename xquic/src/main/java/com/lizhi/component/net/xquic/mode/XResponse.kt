@@ -6,24 +6,41 @@ package com.lizhi.component.net.xquic.mode
  * 创建日期: 2022/4/1.
  */
 class XResponse {
-    var xRequest: XRequest? = null
+    lateinit var xRequest: XRequest
+    lateinit var xHeaders: XHeaders
+    lateinit var xResponseBody: XResponseBody
+
     var code: Int = 0
     var message: String? = null
 
-    var xHeaders: XHeaders? = null
-    lateinit var xResponseBody: XResponseBody
+    /**
+     * queue wait time，unit ms
+     */
+    var delayTime = 0L
+
+    var index = 0
 
 
     class Builder() {
         private val xResponse = XResponse()
 
-        fun request(xRequest: XRequest?): Builder {
+        fun request(xRequest: XRequest): Builder {
             xResponse.xRequest = xRequest
             return this
         }
 
-        fun headers(xHeaders: XHeaders?): Builder {
+        fun headers(xHeaders: XHeaders): Builder {
             xResponse.xHeaders = xHeaders
+            return this
+        }
+
+        fun delayTime(delayTime: Long): Builder {
+            xResponse.delayTime = delayTime
+            return this
+        }
+
+        fun index(index: Int): Builder {
+            xResponse.index = index
             return this
         }
 

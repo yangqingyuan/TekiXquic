@@ -16,6 +16,7 @@ import java.lang.Exception
 import java.util.*
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.RejectedExecutionException
+import java.util.concurrent.atomic.AtomicInteger
 
 
 /**
@@ -35,22 +36,40 @@ class XAsyncCall(
         /**
          * token
          */
-        val tokenMap by lazy { hashMapOf<String, String>() }
+        private val tokenMap by lazy { hashMapOf<String, String>() }
 
         /**
          * session
          */
-        val sessionMap by lazy { hashMapOf<String, String>() }
+        private val sessionMap by lazy { hashMapOf<String, String>() }
 
         /**
          * tp
          */
-        val tpMap by lazy { hashMapOf<String, String>() }
+        private val tpMap by lazy { hashMapOf<String, String>() }
 
-        var index = 0
+        /**
+         * create index
+         */
+        private val atomicInteger = AtomicInteger()
     }
 
+    private var index = 0
+    private var createTime = System.currentTimeMillis()
+
+    /**
+     * queue delay time
+     */
+    private var delayTime = 0L
+
+    /**
+     * isCallback
+     */
+    private var isCallback = false
+
+
     init {
+        index = atomicInteger.incrementAndGet()
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
     }
 
@@ -80,8 +99,9 @@ class XAsyncCall(
 
     override fun execute() {
         val startTime = System.currentTimeMillis()
+        delayTime = startTime - createTime
         try {
-            XLogUtils.debug("=======> execute start <========")
+            XLogUtils.debug("=======> execute start index(${index})<========")
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
                 .setToken(tokenMap[url()])
@@ -112,24 +132,38 @@ class XAsyncCall(
             cancel()
         } finally {
             XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
-            index += 1
             xquicClient.dispatcher().finished(this)
         }
 
     }
 
     override fun callBackReadData(ret: Int, data: ByteArray) {
-        if (ret == 0) {
-            val xResponse = XResponse.Builder()
-                .headers(originalRequest.headers.build())
-                .responseBody(XResponseBody(data))
-                .request(originalRequest)
-                .build()
-            xResponse.code = ret
-            responseCallback?.onResponse(xCall, xResponse)
-        } else {
-            val errMsg = String(data)
-            responseCallback?.onFailure(xCall, Exception(errMsg))
+        synchronized(isCallback) {
+            if (isCallback) {
+                XLogUtils.error(
+                    "is callback on need to callback again!! ret=${ret},data=${
+                        String(
+                            byteArrayOf()
+                        )
+                    }"
+                )
+                return@synchronized
+            }
+            isCallback = true
+            if (ret == 0) {
+                val xResponse = XResponse.Builder()
+                    .headers(originalRequest.headers.build())
+                    .responseBody(XResponseBody(data))
+                    .request(originalRequest)
+                    .delayTime(delayTime)
+                    .index(index)
+                    .build()
+                xResponse.code = ret
+                responseCallback?.onResponse(xCall, xResponse)
+            } else {
+                val errMsg = String(data)
+                responseCallback?.onFailure(xCall, Exception(errMsg))
+            }
         }
     }
 
