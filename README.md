@@ -25,7 +25,7 @@ maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
 
 第二步：导入sdk
 
-implementation 'io.github.yangqingyuan:teki-quic:1.0.0-SNAPSHOT'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
 
 
 # 使用方式
