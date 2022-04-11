@@ -17,6 +17,10 @@ tekixquic 是基于 Xquic 进行二次封装的Android sdk库，为了方便理�
 
 （2）libev 4.33版本
 
+
+**注意：server端目前本人只用了xquic，其他例如：quic-go 需要关闭retry功能** 
+
+
 # sdk 接入
 
 第一步：引入maven 在allprojects中引入（目前是snapshot版本所有暂时需要）
