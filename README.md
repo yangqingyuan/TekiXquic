@@ -91,6 +91,12 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
             })
 
 
+## log check
+可以过滤tag lzXquic 会打印所有跟tekixquic相关的log，比如下图
+
+![image](https://user-images.githubusercontent.com/6867757/162715655-ef6f864a-1f83-4ae8-bad5-1691acfb7f67.png)
+
+
 # 规划
 
 （1）1.0 版本（支持短链接），进度：疯狂码中，最新（master分支）
