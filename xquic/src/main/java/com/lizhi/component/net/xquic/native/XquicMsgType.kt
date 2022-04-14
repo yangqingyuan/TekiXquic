@@ -15,5 +15,10 @@ enum class XquicMsgType {
     /**
      * transport parameter
      */
-    TP
+    TP,
+
+    /**
+     * Headers
+     */
+    HEAD
 }

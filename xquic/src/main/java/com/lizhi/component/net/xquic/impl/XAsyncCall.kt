@@ -134,7 +134,6 @@ class XAsyncCall(
                 .setSession(sessionMap[url()])
                 .setTimeOut(xquicClient.connectTimeOut)
                 .setMaxRecvLenght(1024 * 1024)
-                .setAuthority(xquicClient.authority)
                 .setCCType(xquicClient.ccType)
 
             sendParamsBuilder.setHeaders(parseHttpHeads())

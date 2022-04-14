@@ -14,22 +14,22 @@ import com.lizhi.component.net.xquic.native.CCType
 class XquicClient {
 
     /**
-     *unit second
+     * unit second
      */
     var connectTimeOut: Int = 30
 
     /**
-     * unit second
+     * unit second TODO 待实现
      */
     var readTimeout: Int = 0
 
     /**
-     * unit second
+     * unit second TODO 待实现
      */
     var writeTimeout: Int = 0
 
     /**
-     * unit second
+     * unit second TODO 待实现
      */
     var pingInterval: Int = 0
 
@@ -38,15 +38,10 @@ class XquicClient {
      */
     var ccType = CCType.CUBIC
 
-    /**
-     * authority：鉴权
-     */
-    lateinit var authority: String
-
     private val dispatcher by lazy { XDispatcher() }
 
     class Builder {
-        val xquicClient = XquicClient()
+        private val xquicClient = XquicClient()
 
         fun build(): XquicClient {
             return xquicClient
@@ -74,11 +69,6 @@ class XquicClient {
 
         fun pingInterval(pingInterval: Int): Builder {
             xquicClient.pingInterval = pingInterval
-            return this
-        }
-
-        fun authority(authority: String): Builder {
-            xquicClient.authority = authority
             return this
         }
     }

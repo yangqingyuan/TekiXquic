@@ -45,6 +45,6 @@ dependencies {
     androidTestImplementation 'androidx.test.ext:junit:1.1.3'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.4.0'
 
-    //implementation 'io.github.yangqingyuan:teki-quic:1.0.0-SNAPSHOT'
+    //implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
     debugApi project(":xquic")
 }
