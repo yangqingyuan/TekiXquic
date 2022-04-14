@@ -101,6 +101,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
     //DEBUG;
     unsigned char fin = 0;
     xqc_cli_user_stream_t *user_stream = (xqc_cli_user_stream_t *) user_data;
+    uint64_t recv_time = xqc_now();
+    user_stream->user_conn->last_sock_read_time = recv_time;
 
     /* read headers */
     if (flag & XQC_REQ_NOTIFY_READ_HEADER) {
