@@ -10,6 +10,19 @@
 #include "xquic_h3_ctrl.h"
 
 /**
+ *
+ * @param user_conn
+ * @param errMsg
+ */
+void callback_err_msg_to_client(xqc_cli_user_conn_t *user_conn, char *err_msg) {
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
+    user_callback->user_data_callback.callback_read_data(
+            user_callback->user_data_callback.env_android,
+            user_callback->user_data_callback.object_android, 0,
+            err_msg, strlen(err_msg));
+}
+
+/**
  * 打开log文件
  * @param ctx
  * @return
@@ -410,11 +423,7 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
-        user_callback->user_data_callback.callback_read_data(
-                user_callback->user_data_callback.env_android,
-                user_callback->user_data_callback.object_android, 0,
-                err_msg, strlen(err_msg));
+        callback_err_msg_to_client(user_conn, err_msg);
     }
 }
 
@@ -541,8 +550,12 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
 
         if (args->quic_cfg.alpn_type == ALPN_H3) {
             if (client_send_h3_requests(user_conn, &args->user_stream, reqs + i) < 0) {
-                LOGE("send h3 req blocked,will try later,total sent_cnt :%d",
-                     user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt);
+                char err_msg[214];
+                sprintf(err_msg,
+                        "xqc h3 request create error,please check network or retry,host=%s",
+                        user_conn->ctx->args->net_cfg.host);
+                LOGE("%s", err_msg);
+                callback_err_msg_to_client(user_conn, err_msg);
                 return;
             }
         } else {
