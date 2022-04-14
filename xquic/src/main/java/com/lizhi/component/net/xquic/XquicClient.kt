@@ -1,8 +1,9 @@
 package com.lizhi.component.net.xquic
 
 import com.lizhi.component.net.xquic.impl.XDispatcher
-import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.impl.XRealCall
+import com.lizhi.component.net.xquic.listener.XCall
+import com.lizhi.component.net.xquic.listener.XInterceptor
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.CCType
 
@@ -40,6 +41,16 @@ class XquicClient {
 
     private val dispatcher by lazy { XDispatcher() }
 
+    /**
+     * 拦截器
+     */
+    private val interceptors by lazy { mutableListOf<XInterceptor>() }
+
+    /**
+     * 网络拦截器
+     */
+    private val networkInterceptors by lazy { mutableListOf<XInterceptor>() }
+
     class Builder {
         private val xquicClient = XquicClient()
 
@@ -69,6 +80,16 @@ class XquicClient {
 
         fun pingInterval(pingInterval: Int): Builder {
             xquicClient.pingInterval = pingInterval
+            return this
+        }
+
+        fun addInterceptor(xInterceptor: XInterceptor): Builder {
+            xquicClient.interceptors.add(xInterceptor)
+            return this
+        }
+
+        fun addNetworkInterceptor(xInterceptor: XInterceptor): Builder {
+            xquicClient.networkInterceptors.add(xInterceptor)
             return this
         }
     }

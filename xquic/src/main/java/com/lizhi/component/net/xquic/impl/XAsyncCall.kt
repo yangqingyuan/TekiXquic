@@ -1,15 +1,16 @@
 package com.lizhi.component.net.xquic.impl
 
+import android.util.LruCache
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
+import com.lizhi.component.net.xquic.native.SendParams
 import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.native.XquicShortNative
-import com.lizhi.component.net.xquic.native.XquicShortNative.SendParams
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.io.InterruptedIOException
 import java.lang.Exception
@@ -26,10 +27,10 @@ import kotlin.collections.HashMap
  * 创建日期: 2022/4/1.
  */
 class XAsyncCall(
-    var xCall: XCall,
-    var xquicClient: XquicClient,
-    var originalRequest: XRequest,
-    var responseCallback: XCallBack? = null
+    private var xCall: XCall,
+    private var xquicClient: XquicClient,
+    private var originalRequest: XRequest,
+    private var responseCallback: XCallBack? = null
 ) : XNamedRunnable(), XquicCallback {
 
     companion object {
@@ -37,17 +38,17 @@ class XAsyncCall(
         /**
          * token
          */
-        private val tokenMap by lazy { hashMapOf<String, String>() }
+        private val tokenMap by lazy { LruCache<String, String>(100) }
 
         /**
          * session
          */
-        private val sessionMap by lazy { hashMapOf<String, String>() }
+        private val sessionMap by lazy { LruCache<String, String>(100) }
 
         /**
          * tp
          */
-        private val tpMap by lazy { hashMapOf<String, String>() }
+        private val tpMap by lazy { LruCache<String, String>(100) }
 
         /**
          * create index
@@ -91,7 +92,7 @@ class XAsyncCall(
     }
 
     fun url(): String {
-        return originalRequest.url.url!!
+        return originalRequest.url.url
     }
 
     fun request(): XRequest {
@@ -191,13 +192,16 @@ class XAsyncCall(
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.TOKEN.ordinal -> {
-                    tokenMap[url()] = String(data)
+                    tokenMap.put(url(), String(data))
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    sessionMap[url()] = String(data)
+                    sessionMap.put(url(), String(data))
                 }
                 XquicMsgType.TP.ordinal -> {
-                    tpMap[url()] = String(data)
+                    tpMap.put(url(), String(data))
+                }
+                else -> {
+                    XLogUtils.error("un know callback msg")
                 }
             }
         }
@@ -211,4 +215,5 @@ class XAsyncCall(
     fun cancel() {
         XLogUtils.info("cancel")
     }
+
 }
