@@ -145,8 +145,10 @@ class MainActivity : AppCompatActivity() {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }
 
+        val now = System.currentTimeMillis()
+
         XLogUtils.error(
-            " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,size=${content.length},content=${content}"
+            " java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},content=${content}"
         )
 
         appendText("$content ,index=$index")

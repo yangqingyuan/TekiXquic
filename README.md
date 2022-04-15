@@ -18,8 +18,11 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 （2）libev 4.33版本
 
 
-**注意：server端目前本人只用了xquic，其他例如：quic-go 需要关闭retry功能** 
-
+**注意：tekixquic跟其他开源 server 互通测试**
+|  server   | 互通结果  | 备注  |
+|  ----  | ----  |----  |
+| quic-go  | quic-go 可以收到消息 <br /> xquic socket可以收到消息但是无法解析 | tekixquic表现为超时，底层原因：xquic 未支持retry header解析|
+| 待补充  | 待补充 | |
 
 # sdk 接入
 

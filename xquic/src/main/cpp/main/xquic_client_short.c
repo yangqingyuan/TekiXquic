@@ -404,7 +404,7 @@ void client_socket_event_callback(struct ev_loop *main_loop, ev_io *io_w, int wh
  * @param what
  */
 void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
-    DEBUG;
+    //DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) io_t->data;
 
     if (xqc_now() - user_conn->last_sock_read_time >=
