@@ -445,7 +445,7 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
  */
 void client_init_0rtt(xqc_cli_client_args_t *args) {
     /* read session ticket */
-    DEBUG;
+    //DEBUG;
 }
 
 /**

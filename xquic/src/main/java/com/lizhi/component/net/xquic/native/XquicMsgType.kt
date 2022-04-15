@@ -20,5 +20,10 @@ enum class XquicMsgType {
     /**
      * Headers
      */
-    HEAD
+    HEAD,
+
+    /**
+     * ping msg
+     */
+    PING
 }

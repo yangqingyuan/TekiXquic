@@ -14,7 +14,7 @@
  * @param user_conn
  * @param errMsg
  */
-void callback_err_msg_to_client2(xqc_cli_user_conn_t *user_conn, char *err_msg) {
+void callback_long_err_msg_to_client(xqc_cli_user_conn_t *user_conn, char *err_msg) {
     xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
     user_callback->user_data_callback.callback_read_data(
             user_callback->user_data_callback.env_android,
@@ -122,8 +122,8 @@ void client_long_init_engine_ssl_config(xqc_engine_ssl_config_t *cfg, xqc_cli_cl
  * @param transport_cbs
  * @param arg
  */
-void
-client_long_init_engine_callback(xqc_engine_callback_t *cb, xqc_transport_callbacks_t *transport_cbs,
+void client_long_init_engine_callback(xqc_engine_callback_t *cb,
+                                 xqc_transport_callbacks_t *transport_cbs,
                                  xqc_cli_client_args_t *arg) {
     static xqc_engine_callback_t callback = {
             .log_callbacks = {
@@ -435,7 +435,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        callback_err_msg_to_client2(user_conn, err_msg);
+        callback_long_err_msg_to_client(user_conn, err_msg);
     }
 }
 
@@ -567,7 +567,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                         "xqc h3 request create error,please check network or retry,host=%s",
                         user_conn->ctx->args->net_cfg.host);
                 LOGE("%s", err_msg);
-                callback_err_msg_to_client2(user_conn, err_msg);
+                callback_long_err_msg_to_client(user_conn, err_msg);
                 return;
             }
         } else {
@@ -622,7 +622,8 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 
     /*xquic timer */
     user_conn->ev_timeout.data = user_conn;
-    ev_timer_init(&user_conn->ev_timeout, client_long_idle_callback, ctx->args->net_cfg.conn_timeout,
+    ev_timer_init(&user_conn->ev_timeout, client_long_idle_callback,
+                  ctx->args->net_cfg.conn_timeout,
                   0);
     ev_timer_start(ctx->eb, &user_conn->ev_timeout);
 
@@ -690,9 +691,6 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
         }
     }
-
-    /* start next round 开始下一轮检查,搬迁到链接关闭再调用，避免死循环占用cpu过高*/
-    //ev_async_send(main_loop, io_w);
 }
 
 /**
@@ -725,7 +723,8 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
     /* kill it anyway, to protect from endless task (如果设置了生命时长，并超时了生命时长，直接kill掉)*/
     if (ctx->args->env_cfg.life > 0) {
         ctx->ev_kill.data = ctx;
-        ev_timer_init(&ctx->ev_kill, client_long_kill_it_any_way_callback, ctx->args->env_cfg.life, 0);
+        ev_timer_init(&ctx->ev_kill, client_long_kill_it_any_way_callback, ctx->args->env_cfg.life,
+                      0);
         ev_timer_start(ctx->eb, &ctx->ev_kill);
     }
 }
@@ -841,6 +840,10 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
  * @return
  */
 int client_long_start(xqc_cli_ctx_t *ctx) {
+    if (ctx == NULL) {
+        LOGE("client long start error: ctx is NULL");
+        return -1;
+    }
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
     ctx->ev_engine.data = ctx;
@@ -876,6 +879,12 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
  * @return
  */
 int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
+    if (ctx == NULL) {
+        LOGE("client long send ping error: ctx is NULL");
+        return -1;
+    }
+
+
     return -1;
 }
 
@@ -886,6 +895,10 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
  * @return
  */
 int client_long_send(xqc_cli_ctx_t *ctx, char *content) {
+    if (ctx == NULL) {
+        LOGE("client long send error: ctx is NULL");
+        return -1;
+    }
     return -1;
 }
 
@@ -893,6 +906,10 @@ int client_long_send(xqc_cli_ctx_t *ctx, char *content) {
  * 取消
  * @return
  */
-int client_long_cancel() {
+int client_long_cancel(xqc_cli_ctx_t *ctx) {
+    if (ctx == NULL) {
+        LOGE("client long cancel error: ctx is NULL");
+        return -1;
+    }
     return -1;
 }

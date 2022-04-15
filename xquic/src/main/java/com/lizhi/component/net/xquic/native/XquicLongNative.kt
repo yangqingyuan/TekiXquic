@@ -29,16 +29,26 @@ class XquicLongNative {
         loadLib()
     }
 
+    private var clientCtx: Long = 0L
+
     /**
      * 链接
      * return 返回的是clientCtx的指针地址，为其他函数提供入参
      */
     external fun connect(
-        host: String,
-        port: Int,
-        token: String?,
-        session: String?
+        param: SendParams,
+        xquicCallback: XquicCallback
     ): Long
+
+    /**
+     * 开始
+     */
+    external fun start(clientCtx: Long): Int
+
+    /**
+     * 发送ping数据
+     */
+    external fun sendPing(clientCtx: Long, content: String): Int
 
     /**
      * 发送数据

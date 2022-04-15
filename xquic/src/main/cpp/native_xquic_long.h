@@ -17,19 +17,33 @@ extern "C"{
 * 链接
 */
 JNIEXPORT jlong JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_connect
-        (JNIEnv *env, jclass cls,jstring host ,jint port,jstring token,jstring session);
+        (JNIEnv *env, jclass cls, jobject params, jobject callback);
+
+
+/**
+* 开始
+ */
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_start
+        (JNIEnv *env, jclass cls, jlong clientCtx);
+
+
+/**
+* 发送ping数据
+ */
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_sendPing
+        (JNIEnv *env, jclass cls, jlong clientCtx, jstring pingContent);
 
 /**
 * 发送数据
  */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_send
-        (JNIEnv *env, jclass cls,jlong clientCtx, jstring content);
+        (JNIEnv *env, jclass cls, jlong clientCtx, jstring content);
 
 /**
 * 取消发送数据
 */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_cancel
-        (JNIEnv *env, jclass cls,jlong clientCtx);
+        (JNIEnv *env, jclass cls, jlong clientCtx);
 
 #ifdef __cplusplus
 }

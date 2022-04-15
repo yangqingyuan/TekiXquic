@@ -46,7 +46,7 @@ int client_long_send(xqc_cli_ctx_t *ctx, char *content);
  * 取消
  * @return
  */
-int client_long_cancel();
+int client_long_cancel(xqc_cli_ctx_t *ctx);
 
 #ifdef __cplusplus
 }
