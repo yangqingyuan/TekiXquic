@@ -29,7 +29,7 @@ class XquicLongNative {
         loadLib()
     }
 
-    private var clientCtx: Long = 0L
+    var clientCtx: Long = 0L
 
     /**
      * 链接

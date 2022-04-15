@@ -43,6 +43,19 @@ typedef enum conn_type_s {
 } CONN_TYPE;
 
 /**
+ * cmd type（指令类型）
+ */
+typedef enum cmd_type_s {
+    CMD_TYPE_NONE,
+    CMD_TYPE_INIT_TASK,
+    CMD_TYPE_SEND_PING,
+    CMD_TYPE_SEND_DATA,
+    CMD_TYPE_CANCEL,//disconnect
+    CMD_TYPE_DESTROY,//destroy
+} CMD_TYPE;
+
+
+/**
  * 数据流
  */
 typedef struct xqc_cli_user_stream_s {
@@ -202,7 +215,7 @@ typedef struct xqc_cli_env_config_s {
     int key_output_flag;
     char key_out_path[256];
 
-    /* life cycle */
+    /* life cycle TODO 目前没有用到*/
     int life;
 } xqc_cli_env_config_t;
 
@@ -416,6 +429,13 @@ typedef struct xqc_cli_task_ctx_s {
     xqc_cli_task_schedule_t schedule; /* current task index */
 } xqc_cli_task_ctx_t;
 
+/**
+ * user msg data,long conn user
+ */
+typedef struct xqc_cli_user_data_msg_s {
+    CMD_TYPE cmd_type;
+    char data[1024*512];
+} xqc_cli_user_data_msg_t;
 
 /***
  * client 上下文
@@ -442,6 +462,9 @@ typedef struct xqc_cli_ctx_s {
 
     /* task schedule context */
     xqc_cli_task_ctx_t task_ctx;
+
+    /* long conn use */
+    xqc_cli_user_data_msg_t msg_data;
 } xqc_cli_ctx_t;
 
 

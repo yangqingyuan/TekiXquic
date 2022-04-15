@@ -336,13 +336,6 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
         return -1;
     }
 
-    /*close xquic conn*/
-    if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
-        xqc_h3_conn_close(ctx->engine, &user_conn->cid);
-    } else {
-        LOGE("client close task error: unKnow alpn type:%d", ctx->args->quic_cfg.alpn_type);
-    }
-
     /* remove task event handle */
     ev_io_stop(ctx->eb, &user_conn->ev_socket);
     ev_timer_stop(ctx->eb, &user_conn->ev_timeout);

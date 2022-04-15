@@ -123,8 +123,8 @@ void client_long_init_engine_ssl_config(xqc_engine_ssl_config_t *cfg, xqc_cli_cl
  * @param arg
  */
 void client_long_init_engine_callback(xqc_engine_callback_t *cb,
-                                 xqc_transport_callbacks_t *transport_cbs,
-                                 xqc_cli_client_args_t *arg) {
+                                      xqc_transport_callbacks_t *transport_cbs,
+                                      xqc_cli_client_args_t *arg) {
     static xqc_engine_callback_t callback = {
             .log_callbacks = {
                     .xqc_log_write_err = client_write_log,
@@ -337,13 +337,6 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
         return -1;
     }
 
-    /*close xquic conn*/
-    if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
-        xqc_h3_conn_close(ctx->engine, &user_conn->cid);
-    } else {
-        LOGE("client close task error: unKnow alpn type:%d", ctx->args->quic_cfg.alpn_type);
-    }
-
     /* remove task event handle */
     ev_io_stop(ctx->eb, &user_conn->ev_socket);
     ev_timer_stop(ctx->eb, &user_conn->ev_timeout);
@@ -352,17 +345,6 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     if (user_conn->fd > -1) {
         close(user_conn->fd);
         user_conn->fd = -1;
-    }
-
-    /* free stream */
-    if (ctx->args->user_stream.send_body != NULL) {
-        free(ctx->args->user_stream.send_body);
-        ctx->args->user_stream.send_body = NULL;
-    }
-
-    if (ctx->args->user_stream.recv_body != NULL) {
-        free(ctx->args->user_stream.recv_body);
-        ctx->args->user_stream.recv_body = NULL;
     }
 
     /* free user_callback */
@@ -453,7 +435,8 @@ void client_long_init_0rtt(xqc_cli_client_args_t *args) {
  * 初始化链接设置
  * @param args
  */
-void client_long_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_client_args_t *args) {
+void
+client_long_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_client_args_t *args) {
 
     /* 拥塞控制*/
     xqc_cong_ctrl_callback_t cong_ctrl;
@@ -553,47 +536,41 @@ int client_long_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_a
  * @param req_cnt
  */
 void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *args,
-                               xqc_cli_request_t *reqs, int req_cnt) {
+                               xqc_cli_request_t *reqs, char *content) {
     DEBUG;
 
     /*send request */
-    for (int i = 0; i < req_cnt; i++) {
-        args->user_stream.user_conn = user_conn;
+    xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
+    user_stream->user_conn = user_conn;
 
-        if (args->quic_cfg.alpn_type == ALPN_H3) {
-            if (client_send_h3_requests(user_conn, &args->user_stream, reqs + i) < 0) {
-                char err_msg[214];
-                sprintf(err_msg,
-                        "xqc h3 request create error,please check network or retry,host=%s",
-                        user_conn->ctx->args->net_cfg.host);
-                LOGE("%s", err_msg);
-                callback_long_err_msg_to_client(user_conn, err_msg);
-                return;
-            }
-        } else {
-            LOGE("只持者 h3发送");
+    if (content != NULL) {
+        size_t content_len = strlen(content);
+        user_stream->send_body = malloc(content_len);
+        strcpy(user_stream->send_body, content);//copy data
+        user_stream->send_body_len = content_len;
+    }
+    if (args->user_callback->max_recv_data_len > 0) {
+        user_stream->recv_body_max_len = args->user_callback->max_recv_data_len;
+    } else {
+        user_stream->recv_body_max_len = MAX_REC_DATA_LEN;
+    }
+
+    if (args->quic_cfg.alpn_type == ALPN_H3) {
+        if (client_send_h3_requests(user_conn, user_stream, reqs) < 0) {
+            char err_msg[214];
+            sprintf(err_msg,
+                    "xqc h3 request create error,please check network or retry,host=%s",
+                    user_conn->ctx->args->net_cfg.host);
+            LOGE("%s", err_msg);
+            callback_long_err_msg_to_client(user_conn, err_msg);
+            return;
         }
-        user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
+    } else {
+        LOGE("只持者 h3发送");
     }
+    user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
 }
 
-/**
- * 开始真正的执行任务
- * @param user_conn
- * @param args
- * @param reqs
- * @param ree_cnt
- */
-void client_long_task_start(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *args,
-                            xqc_cli_request_t *reqs, int req_cnt) {
-    DEBUG;
-    if (XQC_OK != client_long_init_connection(user_conn, args)) {
-        return;
-    }
-
-    /*发送请求 TODO : fix MAX_STREAM bug*/
-    client_long_send_requests(user_conn, args, reqs, req_cnt);
-}
 
 /**
  * 处理任务
@@ -602,7 +579,7 @@ void client_long_task_start(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_
  * @return
  */
 int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
-    //DEBUG;
+    DEBUG;
 
     /* create socket and connection callback user data*/
     xqc_cli_user_conn_t *user_conn = calloc(1, sizeof(xqc_cli_user_conn_t));
@@ -627,11 +604,12 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
                   0);
     ev_timer_start(ctx->eb, &user_conn->ev_timeout);
 
-    /* start client */
-    client_long_task_start(user_conn, ctx->args, task->reqs, task->req_cnt);
-
     task->user_conn = user_conn;
 
+    /* init connect */
+    if (XQC_OK != client_long_init_connection(user_conn, ctx->args)) {
+        return -1;
+    }
     return 0;
 }
 
@@ -642,55 +620,75 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
  * @param what
  */
 void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
-    //DEBUG;
+    DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
-    uint8_t all_task_fin_flag = 1;
-    uint8_t idle_flag = 1;
-    int idle_waiting_task_id = -1;
 
-    for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
-        /* if task finished,close task */
-        if (ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
-            client_long_close_task(ctx, ctx->task_ctx.tasks + i);
-            //ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+    switch (ctx->msg_data.cmd_type) {
+        case CMD_TYPE_NONE:
+            LOGE("send none");
+            break;
+        case CMD_TYPE_INIT_TASK: {//init task data
+            LOGE("send init start");
+            uint8_t idle_flag = 1;
+            int idle_waiting_task_id = -1;
+
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                /* record the first waiting task */
+                if (idle_waiting_task_id == -1
+                    && ctx->task_ctx.schedule.schedule_info[i].status == TASK_STATUS_WAITTING) {
+                    idle_waiting_task_id = i;
+                }
+            }
+
+            /* if dle and got a waiting task, run the task */
+            if (idle_flag && idle_waiting_task_id >= 0) {
+                /* handle task and set status to RUNNING */
+                int ret = client_long_handle_task(ctx, ctx->task_ctx.tasks + idle_waiting_task_id);
+                if (0 == ret) {
+                    ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_RUNNING;
+                } else {
+                    ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
+                }
+            }
+
+            LOGE("send init end");
+
         }
+            break;
+        case CMD_TYPE_SEND_PING://send ping
+            LOGE("send ping");
 
-        /* if task finished,close task */
-        if (ctx->task_ctx.schedule.schedule_info[i].status <= TASK_STATUS_RUNNING) {
-            all_task_fin_flag = 0;
-        }
-
-        /* record the first waiting task */
-        if (idle_waiting_task_id == -1
-            && ctx->task_ctx.schedule.schedule_info[i].status == TASK_STATUS_WAITTING) {
-            idle_waiting_task_id = i;
-        }
-    }
-
-    if (all_task_fin_flag) {
-        /* when timeout, close which not fin */
-        for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
-            if (!ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
-                client_long_close_task(ctx, ctx->task_ctx.tasks + i);
-                ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+            break;
+        case CMD_TYPE_SEND_DATA: {//send data
+            LOGE("send data");
+            //FIXME 如果是多链接的时候，永远只用第一个conn来进行请求，例如非 MODE_SCMR模式
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
+                client_long_send_requests(task->user_conn, ctx->args, task->reqs,
+                                          ctx->msg_data.data);
             }
         }
-        LOGW("all tasks are finished,will break loop and exit!!");
-        ev_break(main_loop, EVBREAK_ALL);
-        return;
+            break;
+        case CMD_TYPE_CANCEL://cancel conn
+            LOGE("send cancel");
+            /* when timeout, close which not fin */
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
+                LOGE("xqc_h3_conn_close");
+                xqc_h3_conn_close(task->user_conn->ctx->engine, &task->user_conn->cid);
+            }
+            break;
+        case CMD_TYPE_DESTROY:
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
+                client_long_close_task(ctx, task);
+                ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+            }
+            LOGW("all tasks are finished,will break loop and exit!!");
+            ev_break(main_loop, EVBREAK_ALL);
+            break;
     }
-
-    /* if dle and got a waiting task, run the task */
-    if (idle_flag && idle_waiting_task_id >= 0) {
-        /* handle task and set status to RUNNING */
-        int ret = client_long_handle_task(ctx, ctx->task_ctx.tasks + idle_waiting_task_id);
-
-        if (0 == ret) {
-            ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_RUNNING;
-        } else {
-            ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
-        }
-    }
+    ctx->msg_data.cmd_type = CMD_TYPE_NONE;
 }
 
 /**
@@ -718,7 +716,9 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
     ev_async_init(&ctx->ev_task, client_long_task_schedule_callback);
     ev_async_start(ctx->eb, &ctx->ev_task);
 
-    client_long_task_schedule_callback(ctx->eb, &ctx->ev_task, 0);
+    /*init task */
+    ctx->msg_data.cmd_type = CMD_TYPE_INIT_TASK;
+    ev_async_send(ctx->eb, &ctx->ev_task);
 
     /* kill it anyway, to protect from endless task (如果设置了生命时长，并超时了生命时长，直接kill掉)*/
     if (ctx->args->env_cfg.life > 0) {
@@ -786,19 +786,6 @@ int client_long_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params
         args->quic_cfg.st_len = session_len;
     }
 
-    /* stream 配置 */
-    if (user_param->content != NULL) {
-        size_t content_len = strlen(user_param->content);
-        args->user_stream.send_body = malloc(content_len);
-        strcpy(args->user_stream.send_body, user_param->content);//拷贝发送的内容
-        args->user_stream.send_body_len = content_len;
-    }
-    if (user_param->max_recv_data_len > 0) {
-        args->user_stream.recv_body_max_len = user_param->max_recv_data_len;
-    } else {
-        args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
-    }
-
     /* set callback */
     args->user_callback = user_param;
 
@@ -820,6 +807,7 @@ int client_long_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params
  * @return
  */
 xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
+    DEBUG;
     /*get input client args */
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
     client_long_init_args(args, user_param);
@@ -840,6 +828,7 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
  * @return
  */
 int client_long_start(xqc_cli_ctx_t *ctx) {
+    DEBUG;
     if (ctx == NULL) {
         LOGE("client long start error: ctx is NULL");
         return -1;
@@ -879,13 +868,16 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
  * @return
  */
 int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
+    DEBUG;
     if (ctx == NULL) {
         LOGE("client long send ping error: ctx is NULL");
         return -1;
     }
-
-
-    return -1;
+    /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_SEND_PING;
+    memcpy(ctx->msg_data.data, ping_content, strlen(ping_content));
+    ev_async_send(ctx->eb, &ctx->ev_task);
+    return 0;
 }
 
 /**
@@ -895,11 +887,16 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
  * @return
  */
 int client_long_send(xqc_cli_ctx_t *ctx, char *content) {
+    DEBUG;
     if (ctx == NULL) {
         LOGE("client long send error: ctx is NULL");
         return -1;
     }
-    return -1;
+    /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;
+    memcpy(ctx->msg_data.data, content, strlen(content));
+    ev_async_send(ctx->eb, &ctx->ev_task);
+    return 0;
 }
 
 /**
@@ -907,9 +904,13 @@ int client_long_send(xqc_cli_ctx_t *ctx, char *content) {
  * @return
  */
 int client_long_cancel(xqc_cli_ctx_t *ctx) {
+    DEBUG;
     if (ctx == NULL) {
         LOGE("client long cancel error: ctx is NULL");
         return -1;
     }
-    return -1;
+    /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_CANCEL;
+    ev_async_send(ctx->eb, &ctx->ev_task);
+    return 0;
 }

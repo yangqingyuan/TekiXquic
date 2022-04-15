@@ -29,6 +29,7 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
          ctx->task_ctx.schedule.schedule_info[task->task_idx].req_create_cnt);
 
     /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_DESTROY;
     ev_async_send(ctx->eb, &ctx->ev_task);
 
     return 0;
@@ -194,18 +195,35 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
 
         /* call back to client */
         xqc_cli_user_data_params_t *user_callback = user_stream->user_conn->ctx->args->user_callback;
-        user_callback->user_data_callback.callback_read_data(
-                user_callback->user_data_callback.env_android,
-                user_callback->user_data_callback.object_android, 0,
-                user_stream->recv_body, body_size);
+        if (user_callback) {
+            user_callback->user_data_callback.callback_read_data(
+                    user_callback->user_data_callback.env_android,
+                    user_callback->user_data_callback.object_android, 0,
+                    user_stream->recv_body, body_size);
+        }
 
         /* auto to close request */
         int ret = xqc_h3_request_close(h3_request);
         LOGI("auto to call xqc_h3_request_close ret=%d", ret);
 
-        /* auto to close conn */
-        ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine, &user_stream->user_conn->cid);
-        LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
+        if (user_stream->user_conn->ctx->args->net_cfg.conn_type == CONN_TYPE_SHORT) {
+            /* auto to close conn */
+            ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine,
+                                    &user_stream->user_conn->cid);
+            LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
+        } else {
+            if (user_stream->send_body != NULL) {
+                free(user_stream->send_body);
+                user_stream->send_body = NULL;
+            }
+            if (user_stream->recv_body != NULL) {
+                free(user_stream->recv_body);
+                user_stream->recv_body = NULL;
+            }
+            free(user_stream);
+            user_stream = NULL;
+            LOGD("free stream success");
+        }
     }
     return 0;
 }

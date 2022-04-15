@@ -36,28 +36,28 @@ callback_to_java(void *ev_android, void *object_android, int msg_type, const uns
 void callback_token(void *ev_android, void *object_android, const unsigned char *data,
                     unsigned len) {
     DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_TOKEN, data, len);
+    //callback_to_java(ev_android, object_android, MSG_TYPE_TOKEN, data, len);//FIXME 长链接会有问题
 }
 
 void callback_session(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_SESSION, data, len);
+    //callback_to_java(ev_android, object_android, MSG_TYPE_SESSION, data, len);//FIXME 长链接会有问题
 }
 
 
 void callback_tp(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_TP, data, len);
+    //callback_to_java(ev_android, object_android, MSG_TYPE_TP, data, len);//FIXME 长链接会有问题
 }
 
 void callback_ping(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_PING, data, len);
+    //callback_to_java(ev_android, object_android, MSG_TYPE_PING, data, len);//FIXME 长链接会有问题
 }
 
 void callback_head(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_HEAD, data, len);
+    callback_to_java(ev_android, object_android, MSG_TYPE_HEAD, data, len);//FIXME 长链接会有问题
 }
 
 
@@ -66,6 +66,9 @@ void callback_head(void *ev_android, void *object_android, const char *data, siz
  * @return callback data to java
  */
 int callback_read_data(void *ev_android, void *object_android, int ret, char *data, ssize_t len) {
+    if(1){//FIXME 长链接会有问题
+        return 0;
+    }
     JNIEnv *env = (JNIEnv *) ev_android;
 
     /* find class and get method */
