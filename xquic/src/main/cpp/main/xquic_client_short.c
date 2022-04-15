@@ -245,6 +245,17 @@ void client_free_ctx(xqc_cli_ctx_t *ctx) {
         free(ctx->args);
         ctx->args = NULL;
     }
+
+    if (ctx->task_ctx.tasks) {
+        free(ctx->task_ctx.tasks);
+        ctx->task_ctx.tasks = NULL;
+    }
+
+    if (ctx->task_ctx.schedule.schedule_info != NULL) {
+        free(ctx->task_ctx.schedule.schedule_info);
+        ctx->task_ctx.schedule.schedule_info = NULL;
+    }
+
     free(ctx);
 }
 
@@ -736,7 +747,10 @@ int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *us
     }
     args->net_cfg.mode = MODE_SCMR;
     args->net_cfg.cc = user_param->cc;
-    args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
+    args->net_cfg.conn_type = CONN_TYPE_SHORT;
+
+    /* 短链接只有一个url请求*/
+    args->req_cfg.request_cnt = 1;
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;

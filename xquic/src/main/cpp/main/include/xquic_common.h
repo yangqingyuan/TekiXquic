@@ -36,6 +36,12 @@ typedef enum cc_type_s {
 } CC_TYPE;
 
 
+/* the conn types */
+typedef enum conn_type_s {
+    CONN_TYPE_SHORT,
+    CONN_TYPE_LONG,
+} CONN_TYPE;
+
 /**
  * 数据流
  */
@@ -109,6 +115,9 @@ typedef struct xqc_cli_net_config_s {
 
     /** 任务模式*/
     xqc_cli_task_mode_t mode;
+
+    /* conn type */
+    CONN_TYPE conn_type;
 } xqc_cli_net_config_t;
 
 
