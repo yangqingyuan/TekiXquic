@@ -276,6 +276,6 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNativ
         return -1;
     }
     /* start to send data */
-    client_send(user_param);
+    client_short_send(user_param);
     return 0;
 }
