@@ -245,6 +245,17 @@ void client_free_ctx(xqc_cli_ctx_t *ctx) {
         free(ctx->args);
         ctx->args = NULL;
     }
+
+    if (ctx->task_ctx.tasks) {
+        free(ctx->task_ctx.tasks);
+        ctx->task_ctx.tasks = NULL;
+    }
+
+    if (ctx->task_ctx.schedule.schedule_info != NULL) {
+        free(ctx->task_ctx.schedule.schedule_info);
+        ctx->task_ctx.schedule.schedule_info = NULL;
+    }
+
     free(ctx);
 }
 
@@ -393,7 +404,7 @@ void client_socket_event_callback(struct ev_loop *main_loop, ev_io *io_w, int wh
  * @param what
  */
 void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
-    DEBUG;
+    //DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) io_t->data;
 
     if (xqc_now() - user_conn->last_sock_read_time >=

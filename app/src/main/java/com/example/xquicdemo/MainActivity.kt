@@ -108,15 +108,15 @@ class MainActivity : AppCompatActivity() {
 
 
     private fun request(index: Int, xRequest: XRequest) {
-        val requestInfo = StringBuilder()
-        requestInfo.append("index：$index\n")
-        requestInfo.append("拥塞算法：" + SetCache.getCCType(applicationContext) + "\n")
-        requestInfo.append("链接超时：" + SetCache.getConnTimeout(applicationContext) + " 秒\n")
-        requestInfo.append("请求方式：" + SetCache.getMethod(applicationContext) + "\n")
-        requestInfo.append("轮询次数：" + SetCache.getTestCount(applicationContext) + " 次\n")
-        requestInfo.append("请求url：" + xRequest.url.url + "\n")
-
-        appendText(requestInfo.toString())
+        if (index == 1) {
+            val requestInfo = StringBuilder()
+            requestInfo.append("拥塞算法：" + SetCache.getCCType(applicationContext) + "\n")
+            requestInfo.append("链接超时：" + SetCache.getConnTimeout(applicationContext) + " 秒\n")
+            requestInfo.append("请求方式：" + SetCache.getMethod(applicationContext) + "\n")
+            requestInfo.append("轮询次数：" + SetCache.getTestCount(applicationContext) + " 次\n")
+            requestInfo.append("请求url：" + xRequest.url.url + "\n")
+            appendText(requestInfo.toString())
+        }
 
         val xquicClient = XquicClient.Builder()
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
@@ -145,8 +145,10 @@ class MainActivity : AppCompatActivity() {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }
 
+        val now = System.currentTimeMillis()
+
         XLogUtils.error(
-            " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,size=${content.length},content=${content}"
+            " java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},content=${content}"
         )
 
         appendText("$content ,index=$index")
