@@ -4,6 +4,14 @@
 
 static JavaVM *g_jvm;
 
+/**
+ * callback msg to java
+ * @param object_android
+ * @param msg_type
+ * @param data
+ * @param len
+ * @param user_data
+ */
 void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *data,
                           unsigned len, void *user_data) {
     JNIEnv *env;
@@ -29,8 +37,8 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
         }
 
         /* data to byteArray*/
-        jbyteArray dataBuf = (*env)->NewByteArray(env, len);
-        (*env)->SetByteArrayRegion(env, dataBuf, 0, len, (jbyte *) data);
+        jbyteArray dataBuf = (*env)->NewByteArray(env, (jsize) len);
+        (*env)->SetByteArrayRegion(env, dataBuf, 0, (jsize) len, (jbyte *) data);
 
         /* call back */
         (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, dataBuf);
@@ -45,6 +53,11 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
 
 /**
  *
+ * @param object_android
+ * @param core
+ * @param data
+ * @param len
+ * @param user_data
  * @return callback data to java
  */
 int callback_data_to_java(void *object_android, int core, const char *data, ssize_t len,
@@ -56,18 +69,18 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackReadData", "(I[B)V");
-    if (!jmid) {
+    jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData", "(I[B)V");
+    if (!jm_id) {
         LOGE("call back error,can not find methodId callBackReadData");
         return -1;
     }
 
     /* data to byteArray*/
-    jbyteArray dataBuf = (*env)->NewByteArray(env, len);
-    (*env)->SetByteArrayRegion(env, dataBuf, 0, len, (jbyte *) data);
+    jbyteArray dataBuf = (*env)->NewByteArray(env, (jsize) len);
+    (*env)->SetByteArrayRegion(env, dataBuf, 0, (jsize) len, (jbyte *) data);
 
     /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jmid, core, dataBuf);
+    (*env)->CallVoidMethod(env, j_obj, jm_id, core, dataBuf);
 
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
@@ -134,10 +147,10 @@ int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
         jobject entryObj = (*env)->CallObjectMethod(env, iteratorObj, nextMID);
 
         jstring keyString = (*env)->CallObjectMethod(env, entryObj, getKeyMID);
-        const char *keyChar = (*env)->GetStringUTFChars(env, keyString, NULL);
+        const char *keyChar = (*env)->GetStringUTFChars(env, keyString, 0);
 
         jstring valueString = (*env)->CallObjectMethod(env, entryObj, getValueMID);
-        const char *valueChar = (*env)->GetStringUTFChars(env, valueString, NULL);
+        const char *valueChar = (*env)->GetStringUTFChars(env, valueString, 0);
 
         xqc_http_header_t header = {
                 .name = {.iov_base = keyChar, .iov_len = strlen(keyChar)},
@@ -246,7 +259,7 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
 
 
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
-    LOGE("JNI_OnLoad");
+    DEBUG;
     JNIEnv *env = NULL;
     g_jvm = vm;
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_4) != JNI_OK) {
@@ -258,5 +271,5 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM *jvm, void *reserved) {
-    LOGE("JNI_OnUnload");
+    DEBUG;
 }

@@ -39,7 +39,7 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
-    LOGI("0rtt_flag:%d", stats.early_data_flag);
+    LOGI(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
 }
 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,

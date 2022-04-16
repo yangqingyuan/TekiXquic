@@ -408,7 +408,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        callback_data_to_client(user_conn, XQC_FALSE, err_msg);
+        callback_data_to_client(user_conn, XQC_ERROR, err_msg);
     }
 }
 
@@ -553,7 +553,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                     "xqc h3 request create error,please check network or retry,host=%s",
                     user_conn->ctx->args->net_cfg.host);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, XQC_FALSE,err_msg);
+            callback_data_to_client(user_conn, XQC_ERROR,err_msg);
             return;
         }
     } else {

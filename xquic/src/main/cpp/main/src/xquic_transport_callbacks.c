@@ -1,6 +1,5 @@
 #include "xquic_transport_callbacks.h"
 
-
 ssize_t client_write_socket(const unsigned char *buf, size_t size,
                             const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user) {
     //DEBUG;
@@ -31,9 +30,7 @@ void client_save_token(const unsigned char *token, unsigned token_len, void *use
         LOGE("save token error,user_conn is NULL");
         return;
     }
-
-    callback_msg_to_client(user_conn, MSG_TYPE_TOKEN, token, token_len);
-    //LOGI("token data:%s",token);
+    callback_msg_to_client(user_conn, MSG_TYPE_TOKEN, (char *)token, token_len);
 }
 
 void client_save_session_cb(const char *data, size_t data_len, void *user_data) {
@@ -43,9 +40,7 @@ void client_save_session_cb(const char *data, size_t data_len, void *user_data) 
         LOGE("save session error,user_conn is NULL");
         return;
     }
-
     callback_msg_to_client(user_conn, MSG_TYPE_SESSION, data, data_len);
-    //LOGI("session data:%s",data);
 }
 
 void client_save_tp_cb(const char *data, size_t data_len, void *user_data) {
@@ -55,9 +50,7 @@ void client_save_tp_cb(const char *data, size_t data_len, void *user_data) {
         LOGE("save tp cb error,user_conn is NULL");
         return;
     }
-
-    callback_msg_to_client(user_conn, MSG_TYPE_SESSION, data, data_len);
-    //LOGI("tp data:%s",data);
+    callback_msg_to_client(user_conn, MSG_TYPE_TP, data, data_len);
 }
 
 int client_cert_verify_cb(const unsigned char **certs,

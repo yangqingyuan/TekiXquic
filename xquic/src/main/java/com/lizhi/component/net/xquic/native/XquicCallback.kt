@@ -6,11 +6,15 @@ package com.lizhi.component.net.xquic.native
  * 创建日期: 2022/4/1.
  */
 interface XquicCallback {
-    
+    companion object {
+        const val XQC_OK = 0
+        const val XQC_ERROR = -1
+    }
+
     /**
      * 读取后端返回的数据
      */
-    fun callBackReadData(ret: Int, data: ByteArray)
+    fun callBackData(ret: Int, data: ByteArray)
 
 
     /**

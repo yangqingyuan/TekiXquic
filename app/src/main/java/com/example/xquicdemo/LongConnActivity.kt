@@ -84,7 +84,7 @@ class LongConnActivity : AppCompatActivity() {
         Thread {
             xquicLongNative.clientCtx =
                 xquicLongNative.connect(sendParamsBuilder.build(), object : XquicCallback {
-                    override fun callBackReadData(ret: Int, data: ByteArray) {
+                    override fun callBackData(ret: Int, data: ByteArray) {
                         XLogUtils.error("callBackReadData ret=$ret, content=${String(data)}")
                     }
 

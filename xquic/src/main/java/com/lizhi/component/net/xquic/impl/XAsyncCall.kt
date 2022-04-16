@@ -156,7 +156,8 @@ class XAsyncCall(
 
     }
 
-    override fun callBackReadData(ret: Int, data: ByteArray) {
+    override fun callBackData(ret: Int, data: ByteArray) {
+
         synchronized(isCallback) {
             if (isCallback) {
                 XLogUtils.error(
@@ -169,7 +170,7 @@ class XAsyncCall(
                 return@synchronized
             }
             isCallback = true
-            if (ret == 1) {
+            if (ret == XquicCallback.XQC_OK) {
                 val xResponse = XResponse.Builder()
                     .headers(originalRequest.headers.build())
                     .responseBody(XResponseBody(data))
