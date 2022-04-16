@@ -33,12 +33,7 @@ int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
         char err_msg[1024];
         sprintf(err_msg, "get addr info from hostname:%s, url:%s", gai_strerror(rv), url);
         LOGE("%s\n", err_msg);
-        if (user_callback != NULL) {
-            user_callback->user_data_callback.callback_read_data(
-                    user_callback->user_data_callback.env_android,
-                    user_callback->user_data_callback.object_android, rv, err_msg,
-                    strlen(err_msg));
-        }
+        callback_data_to_client_2(user_callback, XQC_FALSE, err_msg);
         return -1;
     }
     memcpy(&cfg->addr, result->ai_addr, result->ai_addrlen);

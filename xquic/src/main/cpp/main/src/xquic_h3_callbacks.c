@@ -121,7 +121,6 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         }
         LOGD("============ response head end ================");
 
-
         if (fin) {
             user_stream->recv_fin = 1;
             LOGW("client_h3_request_read_notify fin");
@@ -187,20 +186,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
              (now_us - user_stream->start_time),
              stats.send_body_size, stats.recv_body_size);
 
-        /* data size */
-        int body_size = stats.recv_body_size;
-        if (body_size > user_stream->recv_body_max_len) {
-            body_size = user_stream->recv_body_max_len;
-        }
-
         /* call back to client */
-        xqc_cli_user_data_params_t *user_callback = user_stream->user_conn->ctx->args->user_callback;
-        if (user_callback) {
-            user_callback->user_data_callback.callback_read_data(
-                    user_callback->user_data_callback.env_android,
-                    user_callback->user_data_callback.object_android, 0,
-                    user_stream->recv_body, body_size);
-        }
+        callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body);
 
         /* auto to close request */
         int ret = xqc_h3_request_close(h3_request);

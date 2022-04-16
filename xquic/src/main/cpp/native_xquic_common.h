@@ -14,18 +14,6 @@ extern "C"{
 #endif
 
 
-/**
- * meg type
- */
-typedef enum client_msg_type {
-    MSG_TYPE_TOKEN,//token
-    MSG_TYPE_SESSION,//session
-    MSG_TYPE_TP,//tp
-    MSG_TYPE_HEAD,//head
-    MSG_TYPE_PING//ping data
-} MSG_TYPE;
-
-
 xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback);
 
 #ifdef __cplusplus

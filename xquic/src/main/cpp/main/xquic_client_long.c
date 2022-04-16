@@ -9,18 +9,6 @@
 #include "xquic_h3_callbacks.h"
 #include "xquic_h3_ctrl.h"
 
-/**
- *
- * @param user_conn
- * @param errMsg
- */
-void callback_long_err_msg_to_client(xqc_cli_user_conn_t *user_conn, char *err_msg) {
-    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
-    user_callback->user_data_callback.callback_read_data(
-            user_callback->user_data_callback.env_android,
-            user_callback->user_data_callback.object_android, 0,
-            err_msg, strlen(err_msg));
-}
 
 /**
  * 打开log文件
@@ -337,6 +325,9 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
         return -1;
     }
 
+    /* to free jni object */
+    callback_msg_to_client(user_conn, MSG_TYPE_DESTROY, NULL, 0);
+
     /* remove task event handle */
     ev_io_stop(ctx->eb, &user_conn->ev_socket);
     ev_timer_stop(ctx->eb, &user_conn->ev_timeout);
@@ -417,7 +408,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        callback_long_err_msg_to_client(user_conn, err_msg);
+        callback_data_to_client(user_conn, XQC_FALSE, err_msg);
     }
 }
 
@@ -562,7 +553,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                     "xqc h3 request create error,please check network or retry,host=%s",
                     user_conn->ctx->args->net_cfg.host);
             LOGE("%s", err_msg);
-            callback_long_err_msg_to_client(user_conn, err_msg);
+            callback_data_to_client(user_conn, XQC_FALSE,err_msg);
             return;
         }
     } else {

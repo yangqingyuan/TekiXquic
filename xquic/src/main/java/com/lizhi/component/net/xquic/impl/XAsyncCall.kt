@@ -169,7 +169,7 @@ class XAsyncCall(
                 return@synchronized
             }
             isCallback = true
-            if (ret == 0) {
+            if (ret == 1) {
                 val xResponse = XResponse.Builder()
                     .headers(originalRequest.headers.build())
                     .responseBody(XResponseBody(data))

@@ -4,63 +4,42 @@
 
 static JavaVM *g_jvm;
 
-void callback_to_java(void *ev_android, void *object_android, int msg_type, const unsigned char *data,
-                 unsigned len) {
-    //DEBUG;
-    if (len <= 0) {
-        LOGW("call back java error,can len = %d", len);
-        return;
-    }
+void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *data,
+                          unsigned len, void *user_data) {
     JNIEnv *env;
-    (*g_jvm)->AttachCurrentThread(g_jvm,&env,NULL);
+    (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
-    /* find class and get method */
-    jclass callbackClass = (*env)->GetObjectClass(env, object_android);
-    jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(I[B)V");
-    if (!jmid) {
-        LOGE("call back java error,can not find methodId callBackMessage");
+    if (msg_type == MSG_TYPE_DESTROY) {//destroy global ref
+        (*env)->DeleteGlobalRef(env, object_android);
         return;
+    } else {
+
+        if (len <= 0) {
+            LOGW("call back java error,can len = %d", len);
+            return;
+        }
+
+        /* find class and get method */
+        jclass callbackClass = (*env)->GetObjectClass(env, object_android);
+        jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
+        jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(I[B)V");
+        if (!jmid) {
+            LOGE("call back java error,can not find methodId callBackMessage");
+            return;
+        }
+
+        /* data to byteArray*/
+        jbyteArray dataBuf = (*env)->NewByteArray(env, len);
+        (*env)->SetByteArrayRegion(env, dataBuf, 0, len, (jbyte *) data);
+
+        /* call back */
+        (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, dataBuf);
+
+        /* free */
+        (*env)->DeleteGlobalRef(env, j_obj);
+        (*env)->DeleteLocalRef(env, dataBuf);
+        (*env)->DeleteLocalRef(env, callbackClass);
     }
-
-    /* data to byteArray*/
-    jbyteArray dataBuf = (*env)->NewByteArray(env, len);
-    (*env)->SetByteArrayRegion(env, dataBuf, 0, len, (jbyte *) data);
-
-    /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, dataBuf);
-
-    /* free */
-    (*env)->DeleteGlobalRef(env, j_obj);
-    (*env)->DeleteLocalRef(env, dataBuf);
-    (*env)->DeleteLocalRef(env, callbackClass);
-}
-
-void callback_token(void *ev_android, void *object_android, const unsigned char *data,
-                    unsigned len) {
-    DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_TOKEN, data, len);
-}
-
-void callback_session(void *ev_android, void *object_android, const char *data, size_t len) {
-    DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_SESSION, data, len);
-}
-
-
-void callback_tp(void *ev_android, void *object_android, const char *data, size_t len) {
-    DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_TP, data, len);
-}
-
-void callback_ping(void *ev_android, void *object_android, const char *data, size_t len) {
-    DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_PING, data, len);
-}
-
-void callback_head(void *ev_android, void *object_android, const char *data, size_t len) {
-    DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_HEAD, data, len);
 }
 
 
@@ -68,10 +47,11 @@ void callback_head(void *ev_android, void *object_android, const char *data, siz
  *
  * @return callback data to java
  */
-int callback_read_data(void *ev_android, void *object_android, int ret, char *data, ssize_t len) {
+int callback_data_to_java(void *object_android, int core, const char *data, ssize_t len,
+                          void *user_data) {
 
     JNIEnv *env;
-    (*g_jvm)->AttachCurrentThread(g_jvm,&env,NULL);
+    (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
@@ -87,7 +67,7 @@ int callback_read_data(void *ev_android, void *object_android, int ret, char *da
     (*env)->SetByteArrayRegion(env, dataBuf, 0, len, (jbyte *) data);
 
     /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jmid, ret, dataBuf);
+    (*env)->CallVoidMethod(env, j_obj, jmid, core, dataBuf);
 
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
@@ -193,7 +173,7 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
         return NULL;
     }
 
-    jobject gl_callback = (*env)->NewGlobalRef(env,callback);
+    jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
     jstring token = getString(env, param, "token");
     jstring session = getString(env, param, "session");
@@ -258,13 +238,9 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     }
 
     /* callback */
-    user_cfg->user_data_callback.env_android = env;
     user_cfg->user_data_callback.object_android = gl_callback;
-    user_cfg->user_data_callback.callback_read_data = callback_read_data;
-    user_cfg->user_data_callback.callback_token = callback_token;
-    user_cfg->user_data_callback.callback_session = callback_session;
-    user_cfg->user_data_callback.callback_pt = callback_tp;
-
+    user_cfg->user_data_callback.callback_data = callback_data_to_java;
+    user_cfg->user_data_callback.callback_msg = callback_msg_to_java;
     return user_cfg;
 }
 
