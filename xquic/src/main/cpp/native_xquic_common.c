@@ -1,15 +1,18 @@
 #include <xquic_common.h>
+#include <assert.h>
 #include "native_xquic_common.h"
 
+static JavaVM *g_jvm;
 
-void
-callback_to_java(void *ev_android, void *object_android, int msg_type, const unsigned char *data,
+void callback_to_java(void *ev_android, void *object_android, int msg_type, const unsigned char *data,
                  unsigned len) {
+    //DEBUG;
     if (len <= 0) {
         LOGW("call back java error,can len = %d", len);
         return;
     }
-    JNIEnv *env = (JNIEnv *) ev_android;
+    JNIEnv *env;
+    (*g_jvm)->AttachCurrentThread(g_jvm,&env,NULL);
 
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
@@ -36,28 +39,28 @@ callback_to_java(void *ev_android, void *object_android, int msg_type, const uns
 void callback_token(void *ev_android, void *object_android, const unsigned char *data,
                     unsigned len) {
     DEBUG;
-    //callback_to_java(ev_android, object_android, MSG_TYPE_TOKEN, data, len);//FIXME 长链接会有问题
+    callback_to_java(ev_android, object_android, MSG_TYPE_TOKEN, data, len);
 }
 
 void callback_session(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    //callback_to_java(ev_android, object_android, MSG_TYPE_SESSION, data, len);//FIXME 长链接会有问题
+    callback_to_java(ev_android, object_android, MSG_TYPE_SESSION, data, len);
 }
 
 
 void callback_tp(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    //callback_to_java(ev_android, object_android, MSG_TYPE_TP, data, len);//FIXME 长链接会有问题
+    callback_to_java(ev_android, object_android, MSG_TYPE_TP, data, len);
 }
 
 void callback_ping(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    //callback_to_java(ev_android, object_android, MSG_TYPE_PING, data, len);//FIXME 长链接会有问题
+    callback_to_java(ev_android, object_android, MSG_TYPE_PING, data, len);
 }
 
 void callback_head(void *ev_android, void *object_android, const char *data, size_t len) {
     DEBUG;
-    callback_to_java(ev_android, object_android, MSG_TYPE_HEAD, data, len);//FIXME 长链接会有问题
+    callback_to_java(ev_android, object_android, MSG_TYPE_HEAD, data, len);
 }
 
 
@@ -66,10 +69,9 @@ void callback_head(void *ev_android, void *object_android, const char *data, siz
  * @return callback data to java
  */
 int callback_read_data(void *ev_android, void *object_android, int ret, char *data, ssize_t len) {
-    if(1){//FIXME 长链接会有问题
-        return 0;
-    }
-    JNIEnv *env = (JNIEnv *) ev_android;
+
+    JNIEnv *env;
+    (*g_jvm)->AttachCurrentThread(g_jvm,&env,NULL);
 
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
@@ -100,7 +102,7 @@ jstring getString(JNIEnv *env, jobject param, const char *field) {
     if (!jfieldId) {
         return NULL;
     }
-    jstring string = (jstring)(*env)->GetObjectField(env, param, jfieldId);
+    jstring string = (jstring) (*env)->GetObjectField(env, param, jfieldId);
     (*env)->DeleteLocalRef(env, sendParamsClass);
     return string;
 }
@@ -191,6 +193,8 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
         return NULL;
     }
 
+    jobject gl_callback = (*env)->NewGlobalRef(env,callback);
+
     jstring token = getString(env, param, "token");
     jstring session = getString(env, param, "session");
     jint time_out = getInt(env, param, "timeOut");
@@ -255,11 +259,28 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
 
     /* callback */
     user_cfg->user_data_callback.env_android = env;
-    user_cfg->user_data_callback.object_android = callback;
+    user_cfg->user_data_callback.object_android = gl_callback;
     user_cfg->user_data_callback.callback_read_data = callback_read_data;
     user_cfg->user_data_callback.callback_token = callback_token;
     user_cfg->user_data_callback.callback_session = callback_session;
     user_cfg->user_data_callback.callback_pt = callback_tp;
 
     return user_cfg;
+}
+
+
+JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
+    LOGE("JNI_OnLoad");
+    JNIEnv *env = NULL;
+    g_jvm = vm;
+    if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_4) != JNI_OK) {
+        return -1;
+    }
+    assert(env != NULL);
+
+    return JNI_VERSION_1_4;
+}
+
+JNIEXPORT void JNI_OnUnload(JavaVM *jvm, void *reserved) {
+    LOGE("JNI_OnUnload");
 }
