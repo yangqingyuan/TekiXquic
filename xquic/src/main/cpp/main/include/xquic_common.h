@@ -518,7 +518,7 @@ inline void callback_msg_to_client(xqc_cli_user_conn_t *user_conn, MSG_TYPE msg_
 
 /**
  * call back data to client
- * @param core XQC_OK(1) success other fail
+ * @param core XQC_OK(0) success other fail
  * @param user_conn
  * @param errMsg
  */

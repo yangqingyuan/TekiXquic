@@ -34,22 +34,6 @@ class XAsyncCall(
 ) : XNamedRunnable(), XquicCallback {
 
     companion object {
-
-        /**
-         * token
-         */
-        private val tokenMap by lazy { LruCache<String, String>(100) }
-
-        /**
-         * session
-         */
-        private val sessionMap by lazy { LruCache<String, String>(100) }
-
-        /**
-         * tp
-         */
-        private val tpMap by lazy { LruCache<String, String>(100) }
-
         /**
          * create index
          */
@@ -131,8 +115,8 @@ class XAsyncCall(
             XLogUtils.debug("=======> execute start index(${index})<========")
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
-                .setToken(tokenMap[url()])
-                .setSession(sessionMap[url()])
+                .setToken(XRttInfoCache.tokenMap[url()])
+                .setSession(XRttInfoCache.sessionMap[url()])
                 .setTimeOut(xquicClient.connectTimeOut)
                 .setMaxRecvLenght(1024 * 1024)
                 .setCCType(xquicClient.ccType)
@@ -193,13 +177,13 @@ class XAsyncCall(
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.TOKEN.ordinal -> {
-                    tokenMap.put(url(), String(data))
+                    XRttInfoCache.tokenMap.put(url(), String(data))
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    sessionMap.put(url(), String(data))
+                    XRttInfoCache.sessionMap.put(url(), String(data))
                 }
                 XquicMsgType.TP.ordinal -> {
-                    tpMap.put(url(), String(data))
+                    XRttInfoCache.tpMap.put(url(), String(data))
                 }
                 else -> {
                     XLogUtils.error("un know callback msg")

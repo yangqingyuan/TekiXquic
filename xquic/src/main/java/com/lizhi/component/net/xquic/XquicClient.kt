@@ -2,10 +2,13 @@ package com.lizhi.component.net.xquic
 
 import com.lizhi.component.net.xquic.impl.XDispatcher
 import com.lizhi.component.net.xquic.impl.XRealCall
+import com.lizhi.component.net.xquic.impl.XRealWebSocket
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XInterceptor
+import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.CCType
+import java.util.*
 
 /**
  * 作用: 短链接
@@ -100,6 +103,16 @@ class XquicClient {
 
     fun dispatcher(): XDispatcher {
         return dispatcher
+    }
+
+
+    /**
+     * new webSocket
+     */
+    fun newWebSocket(xRequest: XRequest, listener: XWebSocketListener): XRealWebSocket {
+        val xRealWebSocket = XRealWebSocket(xRequest, listener, Random(), pingInterval)
+        xRealWebSocket.connect(this)
+        return xRealWebSocket
     }
 
 

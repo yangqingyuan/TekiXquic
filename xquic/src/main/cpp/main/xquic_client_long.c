@@ -670,6 +670,7 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             }
             break;
         case CMD_TYPE_DESTROY:
+            LOGE("send cancel");
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
                 client_long_close_task(ctx, task);

@@ -17,36 +17,34 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
     JNIEnv *env;
     (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
+    if (len <= 0) {
+        LOGW("call back java error,can len = %d", len);
+        return;
+    }
+
+    /* find class and get method */
+    jclass callbackClass = (*env)->GetObjectClass(env, object_android);
+    jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
+    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(I[B)V");
+    if (!jmid) {
+        LOGE("call back java error,can not find methodId callBackMessage");
+        return;
+    }
+
+    /* data to byteArray*/
+    jbyteArray dataBuf = (*env)->NewByteArray(env, (jsize) len);
+    (*env)->SetByteArrayRegion(env, dataBuf, 0, (jsize) len, (jbyte *) data);
+
+    /* call back */
+    (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, dataBuf);
+
+    /* free */
+    (*env)->DeleteGlobalRef(env, j_obj);
+    (*env)->DeleteLocalRef(env, dataBuf);
+    (*env)->DeleteLocalRef(env, callbackClass);
+
     if (msg_type == MSG_TYPE_DESTROY) {//destroy global ref
         (*env)->DeleteGlobalRef(env, object_android);
-        return;
-    } else {
-
-        if (len <= 0) {
-            LOGW("call back java error,can len = %d", len);
-            return;
-        }
-
-        /* find class and get method */
-        jclass callbackClass = (*env)->GetObjectClass(env, object_android);
-        jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-        jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(I[B)V");
-        if (!jmid) {
-            LOGE("call back java error,can not find methodId callBackMessage");
-            return;
-        }
-
-        /* data to byteArray*/
-        jbyteArray dataBuf = (*env)->NewByteArray(env, (jsize) len);
-        (*env)->SetByteArrayRegion(env, dataBuf, 0, (jsize) len, (jbyte *) data);
-
-        /* call back */
-        (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, dataBuf);
-
-        /* free */
-        (*env)->DeleteGlobalRef(env, j_obj);
-        (*env)->DeleteLocalRef(env, dataBuf);
-        (*env)->DeleteLocalRef(env, callbackClass);
     }
 }
 

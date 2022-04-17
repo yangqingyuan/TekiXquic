@@ -1,6 +1,5 @@
 package com.lizhi.component.net.xquic.mode
 
-import java.lang.NullPointerException
 
 /**
  * 作用:
@@ -8,7 +7,6 @@ import java.lang.NullPointerException
  * 创建日期: 2022/4/1.
  */
 class XRequest {
-
     lateinit var url: XHttpUrl
     lateinit var body: XRequestBody
 
@@ -17,7 +15,6 @@ class XRequest {
 
     class Builder {
         private val xRequest = XRequest()
-
         fun build(): XRequest {
             return xRequest
         }

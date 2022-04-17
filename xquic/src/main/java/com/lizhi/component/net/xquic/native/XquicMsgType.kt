@@ -25,5 +25,10 @@ enum class XquicMsgType {
     /**
      * ping msg
      */
-    PING
+    PING,
+
+    /**
+     * native destroy
+     */
+    DESTROY
 }
