@@ -33,7 +33,11 @@ class LongConnActivity : AppCompatActivity() {
         initWebSocket()
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
-            webSocket.send("哈哈哈")
+            val testCount = SetCache.getTestCount(applicationContext)
+            for (i in (1..testCount)) {
+                XLogUtils.debug("send index =$i")
+                webSocket.send("test :$i")
+            }
         }
 
         findViewById<Button>(R.id.btn_set).setOnClickListener {
@@ -125,4 +129,8 @@ class LongConnActivity : AppCompatActivity() {
         appendText(content)
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        webSocket.cancel()
+    }
 }

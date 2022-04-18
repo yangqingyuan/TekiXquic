@@ -184,9 +184,8 @@ class XAsyncCall(
                 XquicMsgType.TP.ordinal -> {
                     XRttInfoCache.tpMap.put(url(), String(data))
                 }
-
                 else -> {
-                    XLogUtils.error("un know callback msg")
+                    //XLogUtils.error("un know callback msg")
                 }
             }
         }

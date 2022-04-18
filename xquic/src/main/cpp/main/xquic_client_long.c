@@ -611,7 +611,7 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
  * @param what
  */
 void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
-    DEBUG;
+    //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
 
     switch (ctx->msg_data.cmd_type) {
@@ -657,16 +657,14 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             }
             break;
         case CMD_TYPE_CANCEL://cancel conn
-            LOGE("send cancel");
             /* when timeout, close which not fin */
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
-                LOGE("xqc_h3_conn_close");
+                LOGW("auto close h3 conn,and wait to destroy");
                 xqc_h3_conn_close(task->user_conn->ctx->engine, &task->user_conn->cid);
             }
             break;
         case CMD_TYPE_DESTROY:
-            LOGE("send cancel");
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
                 client_long_close_task(ctx, task);

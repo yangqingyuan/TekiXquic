@@ -31,7 +31,6 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
     /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_DESTROY;
     ev_async_send(ctx->eb, &ctx->ev_task);
-
     return 0;
 }
 
@@ -44,8 +43,11 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
                                       void *ping_user_data, void *user_data) {
-    DEBUG;
+    //DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    uint64_t recv_time = xqc_now();
+    user_conn->last_sock_read_time = recv_time;
+
     size_t len = 0;
     if (ping_user_data != NULL) {
         len = strlen(ping_user_data);
