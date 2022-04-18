@@ -37,16 +37,6 @@
         tools:ignore="HardcodedText" />
 
     <Button
-        android:id="@+id/btn_ping"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_marginLeft="20dp"
-        android:layout_marginRight="20dp"
-        android:text="发送心跳"
-        android:textAllCaps="false"
-        tools:ignore="HardcodedText" />
-
-    <Button
         android:id="@+id/btn_set"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"

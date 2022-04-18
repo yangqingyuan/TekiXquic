@@ -1,35 +1,14 @@
 package com.lizhi.component.net.xquic.native
 
-import com.lizhi.component.net.xquic.utils.XLogUtils
-import java.lang.Exception
-
 /**
  * 长链接
  */
 class XquicLongNative {
 
-    companion object {
-        var libLoaded: Boolean = false
-        fun loadLib() {
-            try {
-                synchronized(this) {
-                    if (!libLoaded) {
-                        System.loadLibrary("xnet-lib")
-                        System.loadLibrary("xquic")
-                        libLoaded = true
-                    }
-                }
-            } catch (e: Exception) {
-                XLogUtils.error(e)
-            }
-        }
-    }
-
     init {
-        loadLib()
+        XquicLoader.loadLib()
     }
 
-    var clientCtx: Long = 0L
 
     /**
      * 链接

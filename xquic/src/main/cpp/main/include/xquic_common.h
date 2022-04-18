@@ -27,6 +27,7 @@ typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
 #define MAX_REC_DATA_LEN           1024*1024     /* recv data max len */
 #define XQC_PACKET_TMP_BUF_LEN     1500
+#define MAX_SEND_DATA_LEN          1024*512
 
 /* the congestion control types */
 typedef enum cc_type_s {
@@ -431,7 +432,8 @@ typedef struct xqc_cli_task_ctx_s {
  */
 typedef struct xqc_cli_user_data_msg_s {
     CMD_TYPE cmd_type;
-    char data[1024 * 512];
+    char data[MAX_SEND_DATA_LEN];
+    size_t data_len;
 } xqc_cli_user_data_msg_t;
 
 /***
@@ -524,7 +526,7 @@ inline void callback_msg_to_client(xqc_cli_user_conn_t *user_conn, MSG_TYPE msg_
  */
 inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data) {
     xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
-    if (user_callback && data != NULL) {
+    if (user_callback) {
         user_callback->user_data_callback.callback_data(
                 user_callback->user_data_callback.object_android, core,
                 data, strlen(data), NULL);

@@ -17,11 +17,6 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
     JNIEnv *env;
     (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
 
-    if (len <= 0) {
-        LOGW("call back java error,can len = %d", len);
-        return;
-    }
-
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃

@@ -1,6 +1,5 @@
 package com.lizhi.component.net.xquic.impl
 
-import android.util.LruCache
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
@@ -185,6 +184,7 @@ class XAsyncCall(
                 XquicMsgType.TP.ordinal -> {
                     XRttInfoCache.tpMap.put(url(), String(data))
                 }
+
                 else -> {
                     XLogUtils.error("un know callback msg")
                 }

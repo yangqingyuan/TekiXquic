@@ -33,9 +33,9 @@ class XquicClient {
     var writeTimeout: Int = 0
 
     /**
-     * unit second TODO 待实现
+     * unit second
      */
-    var pingInterval: Int = 0
+    var pingInterval: Long = 0L
 
     /**
      * 拥塞算法
@@ -81,7 +81,7 @@ class XquicClient {
             return this
         }
 
-        fun pingInterval(pingInterval: Int): Builder {
+        fun pingInterval(pingInterval: Long): Builder {
             xquicClient.pingInterval = pingInterval
             return this
         }

@@ -48,10 +48,6 @@ class LongConnActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_stop).setOnClickListener {
             webSocket.cancel()
         }
-
-        findViewById<Button>(R.id.btn_ping).setOnClickListener {
-            webSocket.send("ping")
-        }
     }
 
     private fun initWebSocket() {
@@ -60,7 +56,7 @@ class LongConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .setReadTimeOut(23) //TODO 未实现
             .writeTimeout(15)//TODO 未实现
-            .pingInterval(15)//TODO 未实现
+            .pingInterval(5000)//
             .build()
 
         val url = SetCache.getUrl(applicationContext)

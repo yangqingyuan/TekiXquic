@@ -616,10 +616,8 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
 
     switch (ctx->msg_data.cmd_type) {
         case CMD_TYPE_NONE:
-            LOGE("send none");
             break;
         case CMD_TYPE_INIT_TASK: {//init task data
-            LOGE("send init start");
             uint8_t idle_flag = 1;
             int idle_waiting_task_id = -1;
 
@@ -641,16 +639,12 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
                     ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
                 }
             }
-
-            LOGE("send init end");
-
         }
             break;
         case CMD_TYPE_SEND_PING://send ping
-            LOGE("send ping");
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
-                client_send_H3_ping(task->user_conn);
+                client_send_H3_ping(task->user_conn, ctx->msg_data.data);
             }
             break;
         case CMD_TYPE_SEND_DATA: //send data
@@ -862,14 +856,20 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
  * @return
  */
 int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
-    DEBUG;
+    //DEBUG;
     if (ctx == NULL) {
         LOGE("client long send ping error: ctx is NULL");
         return -1;
     }
+    size_t len = strlen(ping_content);
+    if (MAX_SEND_DATA_LEN < len) {
+        LOGE("send data is to lang %ld >max %d", len, MAX_SEND_DATA_LEN);
+        return -1;
+    }
     /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_PING;
-    memcpy(ctx->msg_data.data, ping_content, strlen(ping_content));
+    memset(ctx->msg_data.data, 0, MAX_SEND_DATA_LEN);
+    strcpy(ctx->msg_data.data, ping_content);
     ev_async_send(ctx->eb, &ctx->ev_task);
     return 0;
 }
@@ -880,15 +880,21 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
  * @param content
  * @return
  */
-int client_long_send(xqc_cli_ctx_t *ctx, char *content) {
+int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     DEBUG;
     if (ctx == NULL) {
         LOGE("client long send error: ctx is NULL");
         return -1;
     }
+    size_t len = strlen(content);
+    if (MAX_SEND_DATA_LEN < len) {
+        LOGE("send data is to lang %ld >max %d", len, MAX_SEND_DATA_LEN);
+        return -1;
+    }
     /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;
-    memcpy(ctx->msg_data.data, content, strlen(content));
+    memset(ctx->msg_data.data, 0, MAX_SEND_DATA_LEN);
+    strcpy(ctx->msg_data.data, content);
     ev_async_send(ctx->eb, &ctx->ev_task);
     return 0;
 }

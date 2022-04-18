@@ -45,7 +45,12 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
                                       void *ping_user_data, void *user_data) {
     DEBUG;
-
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    size_t len = 0;
+    if (ping_user_data != NULL) {
+        len = strlen(ping_user_data);
+    }
+    callback_msg_to_client(user_conn, MSG_TYPE_PING, ping_user_data, len);
 }
 
 

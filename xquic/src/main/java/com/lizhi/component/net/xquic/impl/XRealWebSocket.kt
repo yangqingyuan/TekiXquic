@@ -10,11 +10,11 @@ import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicLongNative
 import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.utils.XLogUtils
-import java.lang.Exception
 import java.util.*
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
+import java.util.concurrent.TimeUnit
 
 /**
  * 作用: 长链接
@@ -25,12 +25,26 @@ class XRealWebSocket(
     private val xRequest: XRequest,
     private val listener: XWebSocketListener,
     random: Random,
-    private val pingInterval: Int
+    pingInterval: Long
 ) : XWebSocket, XquicCallback {
 
-    private var xquicLongNative: XquicLongNative = XquicLongNative()
-    private val executor: ScheduledExecutorService
+    companion object {
+        private const val MAX_QUEUE_SIZE = (16 * 1024 * 1024 // 16 MiB.
+                ).toLong()
+    }
+
+    private val xquicLongNative: XquicLongNative = XquicLongNative()
+    private var executor: ScheduledExecutorService
     private val key: String
+    private var failed = false
+    private var queueSize: Long = 0
+    private var clientCtx: Long = 0L
+    private var enqueuedClose = false
+
+    private val xResponse: XResponse
+
+    private val messageQueue = ArrayDeque<Message>()
+
 
     private fun threadFactory(name: String?, daemon: Boolean): ThreadFactory {
         return ThreadFactory { runnable ->
@@ -42,10 +56,29 @@ class XRealWebSocket(
 
     init {
         val name = "OkHttp WebSocket " + xRequest.url
-        this.executor = ScheduledThreadPoolExecutor(1, threadFactory(name, false))
+        this.executor = ScheduledThreadPoolExecutor(2, threadFactory(name, false))
+        if (pingInterval > 0) {
+            executor.scheduleAtFixedRate(
+                PingRunnable(this),
+                pingInterval,
+                pingInterval,
+                TimeUnit.MILLISECONDS
+            )
+        }
         val nonce = ByteArray(16)
         random.nextBytes(nonce)
         this.key = String(nonce)
+
+        xResponse = XResponse.Builder()
+            .headers(xRequest.headers.build())
+            .request(xRequest)
+            .build()
+    }
+
+    class PingRunnable(private val xRealWebSocket: XRealWebSocket) : Runnable {
+        override fun run() {
+            xRealWebSocket.sendPing("pong")
+        }
     }
 
     fun url(): String {
@@ -70,6 +103,7 @@ class XRealWebSocket(
 
     fun connect(xquicClient: XquicClient) {
         executor.execute {
+            XLogUtils.error("connect start")
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
                 .setToken(XRttInfoCache.tokenMap[url()])
@@ -80,29 +114,103 @@ class XRealWebSocket(
 
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
-            xquicLongNative.clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
-            xquicLongNative.start(xquicLongNative.clientCtx)
+            clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
+            xquicLongNative.start(clientCtx)
+            XLogUtils.error("connect end")
         }
     }
 
-
-    override fun send(text: String) {
+    private fun writeOneFrame() {
         synchronized(this) {
-            if (xquicLongNative.clientCtx <= 0) {
+            if (!check()) {
                 return
             }
-            xquicLongNative.send(xquicLongNative.clientCtx, text)
+            try {
+                val msg = messageQueue.poll()
+                if (msg == null) {
+                    XLogUtils.error("msg is null")
+                    return
+                }
+                when (msg.msgType) {
+                    Message.MSG_TYPE_SEND -> {
+                        xquicLongNative.send(clientCtx, msg.msgContent)
+                        synchronized(this) { queueSize -= msg.msgContent.length }
+                    }
+
+                    Message.MSG_TYPE_CLOSE -> {
+                        messageQueue.clear()
+                        xquicLongNative.cancel(clientCtx)
+                    }
+                    else -> {
+                        XLogUtils.error("unKnow message type")
+                    }
+                }
+            } catch (e: java.lang.Exception) {
+                XLogUtils.error(e)
+            }
         }
     }
+
+    class Message(var msgType: Int, var msgContent: String) {
+        companion object {
+            const val MSG_TYPE_SEND = 0
+            const val MSG_TYPE_CLOSE = 1
+        }
+    }
+
+    private fun check(): Boolean {
+        if (clientCtx <= 0 || failed) {
+            listener.onFailure(this, Exception("web socket is closed"), xResponse)
+            return false
+        }
+        return true
+    }
+
+    override fun send(data: String): Boolean {
+        synchronized(this) {
+            // Don't send new frames after we've failed or enqueued a close frame.
+            if (failed || enqueuedClose) return false
+
+            // If this frame overflows the buffer, reject it and close the web socket.
+            if (queueSize + data.length > MAX_QUEUE_SIZE) {
+                close()
+                return false
+            }
+
+            queueSize += data.length
+            messageQueue.add(Message(Message.MSG_TYPE_SEND, data))
+            writeOneFrame()
+            return true
+        }
+    }
+
+    private fun sendPing(pingContent: String) {
+        synchronized(this) {
+            if (!check()) return
+            //xquicLongNative.sendPing(clientCtx, pingContent)
+        }
+    }
+
+    private fun close(): Boolean {
+        synchronized(this) {
+            if (failed || enqueuedClose) return false
+            enqueuedClose = true
+
+            // Enqueue the close frame.
+            messageQueue.add(
+                Message(
+                    Message.MSG_TYPE_CLOSE, "close"
+                )
+            )
+            writeOneFrame()
+            executor.shutdown()
+            return true
+        }
+    }
+
 
     override fun cancel() {
-        synchronized(this) {
-            if (xquicLongNative.clientCtx <= 0) {
-                return
-            }
-            xquicLongNative.cancel(xquicLongNative.clientCtx)
-            xquicLongNative.clientCtx = 0
-        }
+        close()
     }
 
     override fun callBackData(ret: Int, data: ByteArray) {
@@ -110,11 +218,9 @@ class XRealWebSocket(
             if (ret == XquicCallback.XQC_OK) {
                 listener.onMessage(this, data)
             } else {
+                clientCtx = 0
+                failed = true
                 val errMsg = String(data)
-                val xResponse = XResponse.Builder()
-                    .headers(xRequest.headers.build())
-                    .request(xRequest)
-                    .build()
                 listener.onFailure(this, Exception(errMsg), xResponse)
             }
         }
@@ -132,10 +238,12 @@ class XRealWebSocket(
                 XquicMsgType.TP.ordinal -> {
                     XRttInfoCache.tpMap.put(url(), String(data))
                 }
-
+                XquicMsgType.PING.ordinal -> {
+                    XLogUtils.debug("ping callback =" + String(data))
+                }
                 XquicMsgType.DESTROY.ordinal -> {
                     synchronized(this) {
-                        xquicLongNative.clientCtx = 0
+                        clientCtx = 0
                     }
                 }
                 else -> {

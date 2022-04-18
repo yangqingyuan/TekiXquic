@@ -32,16 +32,26 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative
     return client_long_start(jlong_to_ptr(clientCtx));
 }
 
+/**
+ * 发送ping数据
+ * @param env
+ * @param cls
+ * @param clientCtx
+ * @param pingContent
+ * @return
+ */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_sendPing
         (JNIEnv *env, jclass cls, jlong clientCtx, jstring pingContent) {
-    return client_long_send_ping(jlong_to_ptr(clientCtx), pingContent);
+    return client_long_send_ping(jlong_to_ptr(clientCtx),
+                                 (*env)->GetStringUTFChars(env, pingContent, 0));
 }
+
 /**
 * 发送数据
  */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_send
         (JNIEnv *env, jclass cls, jlong clientCtx, jstring content) {
-    return client_long_send(jlong_to_ptr(clientCtx), content);
+    return client_long_send(jlong_to_ptr(clientCtx), (*env)->GetStringUTFChars(env, content, 0));
 }
 
 /**
