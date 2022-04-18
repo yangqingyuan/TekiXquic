@@ -553,7 +553,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                     "xqc h3 request create error,please check network or retry,host=%s",
                     user_conn->ctx->args->net_cfg.host);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, XQC_ERROR,err_msg);
+            callback_data_to_client(user_conn, XQC_ERROR, err_msg);
             return;
         }
     } else {
@@ -648,9 +648,12 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             break;
         case CMD_TYPE_SEND_PING://send ping
             LOGE("send ping");
-
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
+                client_send_H3_ping(task->user_conn);
+            }
             break;
-        case CMD_TYPE_SEND_DATA: {//send data
+        case CMD_TYPE_SEND_DATA: //send data
             LOGE("send data");
             //FIXME 如果是多链接的时候，永远只用第一个conn来进行请求，例如非 MODE_SCMR模式
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
@@ -658,7 +661,6 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
                 client_long_send_requests(task->user_conn, ctx->args, task->reqs,
                                           ctx->msg_data.data);
             }
-        }
             break;
         case CMD_TYPE_CANCEL://cancel conn
             LOGE("send cancel");

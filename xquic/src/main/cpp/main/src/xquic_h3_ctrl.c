@@ -89,3 +89,13 @@ int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
     }
     return 0;
 }
+
+/**
+ * send ping
+ * @param user_conn
+ * @return
+ */
+int client_send_H3_ping(xqc_cli_user_conn_t *user_conn) {
+    xqc_h3_conn_send_ping(user_conn->ctx->engine, &user_conn->cid, "abc");
+    return 0;
+}
