@@ -22,6 +22,7 @@
 #include <netdb.h>
 #include <string.h>
 #include "common.h"
+#include <pthread.h>
 
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
@@ -431,9 +432,11 @@ typedef struct xqc_cli_task_ctx_s {
  * user msg data,long conn user
  */
 typedef struct xqc_cli_user_data_msg_s {
+    int current_status;//当前状态，1 正在使用，0 闲置中，可以使用
     CMD_TYPE cmd_type;
+    char ping_data[256];
+
     char data[MAX_SEND_DATA_LEN];
-    size_t data_len;
 } xqc_cli_user_data_msg_t;
 
 /***
@@ -448,6 +451,8 @@ typedef struct xqc_cli_ctx_s {
     struct ev_async ev_task;
     struct ev_timer ev_kill;
     struct ev_loop *eb;  /* handle of libevent */
+
+    pthread_mutex_t mutex;
 
     /* log context */
     int log_fd;

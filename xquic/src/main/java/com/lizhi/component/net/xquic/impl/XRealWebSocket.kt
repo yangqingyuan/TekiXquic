@@ -47,6 +47,7 @@ class XRealWebSocket(
 
     private val messageQueue = ArrayDeque<Message>()
 
+    private val writerRunnable: Runnable
 
     private fun threadFactory(): ThreadFactory {
         return ThreadFactory { runnable ->
@@ -74,6 +75,16 @@ class XRealWebSocket(
             .headers(xRequest.headers.build())
             .request(xRequest)
             .build()
+
+        writerRunnable = Runnable {
+            while (writeOneFrame()) {
+            }
+        }
+    }
+
+    private fun runWriter() {
+        assert(Thread.holdsLock(this))
+        executor.execute(writerRunnable)
     }
 
     /**
@@ -134,23 +145,33 @@ class XRealWebSocket(
         }
     }
 
-    private fun writeOneFrame() {
+    private fun writeOneFrame(): Boolean {
         synchronized(this) {
             try {
                 val msg = messageQueue.poll()
                 if (msg == null) {
                     XLogUtils.error("msg is null")
-                    return
+                    return false
                 }
                 when (msg.msgType) {
                     Message.MSG_TYPE_SEND -> {
-                        if (clientCtx > 0) {
-                            xquicLongNative.send(clientCtx, msg.msgContent)
-                            synchronized(this) { queueSize -= msg.msgContent.length }
+                        if (clientCtx > 0 && !failed && !enqueuedClose) {
+                            XLogUtils.error("tag send" + msg.msgContent)
+                            val ret = xquicLongNative.send(clientCtx, msg.msgContent)
+                            if (XquicCallback.XQC_OK == ret) {
+                                synchronized(this) { queueSize -= msg.msgContent.length }
+                            } else {
+                                /*put into queue again wait next poll*/
+                                messageQueue.add(msg)
+
+                                /* sleep */
+                                Thread.sleep(50)
+                            }
                         }
                     }
 
                     Message.MSG_TYPE_CLOSE -> {
+                        enqueuedClose = true
                         messageQueue.clear()
                         if (clientCtx > 0) {
                             xquicLongNative.cancel(clientCtx)
@@ -160,10 +181,13 @@ class XRealWebSocket(
                         XLogUtils.error("unKnow message type")
                     }
                 }
+
+                return true
             } catch (e: java.lang.Exception) {
                 XLogUtils.error(e)
             }
         }
+        return false
     }
 
     class Message(var msgType: Int, var msgContent: String) {
@@ -194,7 +218,8 @@ class XRealWebSocket(
 
             queueSize += data.length
             messageQueue.add(Message(Message.MSG_TYPE_SEND, data))
-            writeOneFrame()
+
+            runWriter()
             return true
         }
     }
@@ -203,15 +228,13 @@ class XRealWebSocket(
     private fun close(): Boolean {
         synchronized(this) {
             if (failed || enqueuedClose) return false
-            enqueuedClose = true
-
             // Enqueue the close frame.
             messageQueue.add(
                 Message(
                     Message.MSG_TYPE_CLOSE, "close"
                 )
             )
-            writeOneFrame()
+            runWriter()
             return true
         }
     }

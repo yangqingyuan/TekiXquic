@@ -29,7 +29,7 @@ class XquicClient {
             }
 
             override fun pong(data: String) {
-                XLogUtils.debug("pong callBack= $data")
+                //XLogUtils.debug("pong callBack= $data")
             }
         }
     }

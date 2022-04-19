@@ -648,13 +648,16 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             }
             break;
         case CMD_TYPE_SEND_DATA: //send data
-            LOGE("send data");
+            //LOGE("send data %s", ctx->msg_data.data);
+            pthread_mutex_lock(&ctx->mutex);
             //FIXME 如果是多链接的时候，永远只用第一个conn来进行请求，例如非 MODE_SCMR模式
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
                 client_long_send_requests(task->user_conn, ctx->args, task->reqs,
                                           ctx->msg_data.data);
             }
+            ctx->msg_data.current_status = 0;
+            pthread_mutex_unlock(&ctx->mutex);
             break;
         case CMD_TYPE_CANCEL://cancel conn
             /* when timeout, close which not fin */
@@ -805,6 +808,9 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
     client_long_init_ctx(ctx, args);
 
+    /* init lock */
+    pthread_mutex_init(&ctx->mutex, NULL);
+
     return ctx;
 }
 
@@ -864,11 +870,13 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
         LOGE("send data is to lang %ld >max %d", len, MAX_SEND_DATA_LEN);
         return -1;
     }
+    //pthread_mutex_lock(&ctx->mutex);
     /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_PING;
-    memset(ctx->msg_data.data, 0, MAX_SEND_DATA_LEN);
-    strcpy(ctx->msg_data.data, ping_content);
+    memset(ctx->msg_data.ping_data, 0, 256);
+    strcpy(ctx->msg_data.ping_data, ping_content);
     ev_async_send(ctx->eb, &ctx->ev_task);
+    //pthread_mutex_unlock(&ctx->mutex);
     return 0;
 }
 
@@ -884,6 +892,15 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
         LOGE("client long send error: ctx is NULL");
         return -1;
     }
+
+    if (ctx->msg_data.current_status){
+        LOGW("ev async sending ,wait a moment");
+        return -1;
+    }
+
+    /* change status to using */
+    ctx->msg_data.current_status = 1;
+
     size_t len = strlen(content);
     if (MAX_SEND_DATA_LEN < len) {
         LOGE("send data is to lang %ld >max %d", len, MAX_SEND_DATA_LEN);
