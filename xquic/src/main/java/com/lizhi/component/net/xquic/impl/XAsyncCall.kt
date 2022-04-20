@@ -91,11 +91,9 @@ class XAsyncCall(
         val headers = hashMapOf<String, String>()
         headers[":method"] = originalRequest.method
         headers[":scheme"] = originalRequest.url.scheme
+        headers[":authority"] = originalRequest.url.authority
         originalRequest.url.path?.let {
             headers[":path"] = it
-        }
-        originalRequest.url.authority?.let {
-            headers[":authority"] = it
         }
 
         headers.putAll(originalRequest.headers.build().headersMap)
