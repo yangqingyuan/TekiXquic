@@ -79,7 +79,7 @@ class XHttpUrl {
      * sample:https://www.google.com.hk/?gws_rd=ssl
      * authority = www.google.com.hk
      */
-    var authority: String? = null
+    lateinit var authority: String
 
     //private val pathSegments by lazy { mutableListOf<String>() }
 
@@ -118,6 +118,7 @@ class XHttpUrl {
             var list = url.substring(pos, limit).split(":")
             if (list.isNotEmpty()) {
                 xHttpUrl.host = list[0]
+                xHttpUrl.authority = list[0]
             } else {
                 throw IllegalArgumentException(
                     "Expected URL host url:$url"
