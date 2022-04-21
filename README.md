@@ -21,19 +21,21 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 **注意：tekixquic跟其他开源 server 互通测试**
 |  server   | 互通结果  | 备注  |
 |  ----  | ----  |----  |
-| quic-go  | quic-go 可以收到消息 <br /> xquic socket可以收到消息但是无法解析 | tekixquic表现为超时，底层原因：xquic 未支持retry header解析|
+| quic-go  | https://zhuanlan.zhihu.com/p/502352169 |关闭accpetToken可以正常通讯 |
 | 待补充  | 待补充 | |
 
 # sdk 接入
 
-第一步：引入maven 在allprojects中引入（目前是snapshot版本暂时需要）
+第一步：引入maven 在allprojects中引入< /br>
 
-maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+```
+maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
+```
 
-第二步：导入sdk
-
-implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
-
+第二步：导入sdk</br>
+```
+implementation 'io.github.yangqingyuan:teki-quic:1.0.0'
+```
 
 # 使用方式
 ## Get 请求
@@ -127,6 +129,10 @@ XquicClient->类： 短链接API入口
 XAsyncCall->类：真正的执行逻辑类
 
 XQuicShortNative->类：JNI接口
+
+# demo 下载
+<img width="112" alt="WX20220421-114302@2x" src="https://user-images.githubusercontent.com/6867757/164369885-29671ead-5fee-431a-b7a6-8cda29d833c4.png">
+
 
 # 其他
 有任何问题，欢迎留言，同时也希望找志同道合的人，一同完善tekixquic，毕竟一个人的力量是有限的！！本人wx
