@@ -26,14 +26,16 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 # sdk 接入
 
-第一步：引入maven 在allprojects中引入（目前是snapshot版本暂时需要）
+第一步：引入maven 在allprojects中引入< /br>
 
-maven { url "https://s01.oss.sonatype.org/content/repositories/snapshots/" }
+```
+maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
+```
 
-第二步：导入sdk
-
-implementation 'io.github.yangqingyuan:teki-quic:1.0.0.1-SNAPSHOT'
-
+第二步：导入sdk</br>
+```
+implementation 'io.github.yangqingyuan:teki-quic:1.0.0'
+```
 
 # 使用方式
 ## Get 请求
