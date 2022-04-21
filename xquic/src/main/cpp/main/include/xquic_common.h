@@ -22,6 +22,7 @@
 #include <netdb.h>
 #include <string.h>
 #include "common.h"
+#include <cJSON.h>
 #include <pthread.h>
 
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;

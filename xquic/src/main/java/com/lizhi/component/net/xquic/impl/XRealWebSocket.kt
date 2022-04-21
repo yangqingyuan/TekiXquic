@@ -4,6 +4,7 @@ import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
+import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.native.SendParams
@@ -11,6 +12,7 @@ import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicLongNative
 import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.utils.XLogUtils
+import org.json.JSONObject
 import java.util.*
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -76,6 +78,9 @@ class XRealWebSocket(
             .request(xRequest)
             .build()
 
+        /**
+         * writer Runnable
+         */
         writerRunnable = Runnable {
             while (writeOneFrame()) {
             }
@@ -115,6 +120,14 @@ class XRealWebSocket(
         headers["Connection"] = "Upgrade"
         headers["Sec-WebSocket-Key"] = "key"
         headers["Sec-WebSocket-Version"] = "13"
+
+        /* set headers */
+        headers[":method"] = xRequest.method
+        headers[":scheme"] = xRequest.url.scheme
+        headers[":authority"] = xRequest.url.authority
+        xRequest.url.path?.let {
+            headers[":path"] = it
+        }
 
         headers.putAll(xRequest.headers.build().headersMap)
         return headers
@@ -268,6 +281,18 @@ class XRealWebSocket(
                 }
                 XquicMsgType.TP.ordinal -> {
                     XRttInfoCache.tpMap.put(url(), String(data))
+                }
+                XquicMsgType.HEAD.ordinal -> {
+                    try {
+                        val headJson = JSONObject(String(data))
+                        val xHeaderBuild = XHeaders.Builder()
+                        for (key in headJson.keys()) {
+                            xHeaderBuild.add(key, headJson.getString(key))
+                        }
+                        xResponse.xHeaders = xHeaderBuild.build()
+                    } catch (e: java.lang.Exception) {
+                        XLogUtils.error(e)
+                    }
                 }
                 XquicMsgType.PING.ordinal -> {
                     pingListener.pong(String(data))

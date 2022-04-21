@@ -3,6 +3,7 @@ package com.lizhi.component.net.xquic.impl
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
+import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
@@ -11,6 +12,7 @@ import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.native.XquicShortNative
 import com.lizhi.component.net.xquic.utils.XLogUtils
+import org.json.JSONObject
 import java.io.InterruptedIOException
 import java.lang.Exception
 import java.util.*
@@ -52,10 +54,21 @@ class XAsyncCall(
      */
     private var isCallback = false
 
+    /**
+     * xResponse
+     */
+    private var xResponse: XResponse
 
     init {
         index = atomicInteger.incrementAndGet()
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
+
+        xResponse = XResponse.Builder()
+            .headers(originalRequest.headers.build())
+            .request(originalRequest)
+            .delayTime(delayTime)
+            .index(index)
+            .build()
     }
 
     fun executeOn(executorService: ExecutorService?) {
@@ -152,13 +165,7 @@ class XAsyncCall(
             }
             isCallback = true
             if (ret == XquicCallback.XQC_OK) {
-                val xResponse = XResponse.Builder()
-                    .headers(originalRequest.headers.build())
-                    .responseBody(XResponseBody(data))
-                    .request(originalRequest)
-                    .delayTime(delayTime)
-                    .index(index)
-                    .build()
+                xResponse.xResponseBody = XResponseBody(data)
                 xResponse.code = ret
                 responseCallback?.onResponse(xCall, xResponse)
             } else {
@@ -181,6 +188,18 @@ class XAsyncCall(
                 }
                 XquicMsgType.TP.ordinal -> {
                     XRttInfoCache.tpMap.put(url(), String(data))
+                }
+                XquicMsgType.HEAD.ordinal -> {
+                    try {
+                        val headJson = JSONObject(String(data))
+                        val xHeaderBuild = XHeaders.Builder()
+                        for (key in headJson.keys()) {
+                            xHeaderBuild.add(key, headJson.getString(key))
+                        }
+                        xResponse.xHeaders = xHeaderBuild.build()
+                    } catch (e: Exception) {
+                        XLogUtils.error(e)
+                    }
                 }
                 else -> {
                     //XLogUtils.error("un know callback msg")

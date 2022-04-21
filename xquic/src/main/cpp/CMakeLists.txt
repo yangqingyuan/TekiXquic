@@ -10,8 +10,9 @@ cmake_minimum_required(VERSION 3.10.2)
 #C++编译器 CMAKE_CXX_FLAGS_DEBUG
 SET(CMAKE_C_FLAGS_DEBUG "-g -std=c++11")
 
-include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/ev) # 头文件
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/xquic) # 头文件
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/ev) # 头文件
+include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include) # 头文件
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/main/include) # 头文件
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/main) # 头文件
 
@@ -43,7 +44,7 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST} share_libs/src/ev/ev.c share_libs/src/ev/event.c)
+             ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST} share_libs/src/cJSON.c share_libs/src/ev/ev.c share_libs/src/ev/event.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by
