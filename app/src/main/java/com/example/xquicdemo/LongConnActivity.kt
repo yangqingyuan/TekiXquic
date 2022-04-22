@@ -36,7 +36,7 @@ class LongConnActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
             val testCount = SetCache.getTestCount(applicationContext)
             for (i in (1..testCount)) {
-                webSocket.send(etContent.text.toString())
+                webSocket.send(etContent.text.toString() + ",index=" + i)
             }
         }
 

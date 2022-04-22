@@ -44,6 +44,7 @@ class XRealWebSocket(
     private var queueSize: Long = 0
     private var clientCtx: Long = 0L
     private var enqueuedClose = false
+    private var isWriterRunning = false
 
     private val xResponse: XResponse
 
@@ -82,6 +83,7 @@ class XRealWebSocket(
          * writer Runnable
          */
         writerRunnable = Runnable {
+            isWriterRunning = true
             while (writeOneFrame()) {
             }
         }
@@ -89,6 +91,11 @@ class XRealWebSocket(
 
     private fun runWriter() {
         assert(Thread.holdsLock(this))
+        if (isWriterRunning) {
+            if (!messageQueue.isEmpty()) {
+                return
+            }
+        }
         executor.execute(writerRunnable)
     }
 
@@ -165,19 +172,17 @@ class XRealWebSocket(
     private fun writeOneFrame(): Boolean {
         synchronized(this) {
             try {
-                val msg = messageQueue.poll() ?: return false
+                val msg = messageQueue.poll()
+                if (msg == null) {
+                    isWriterRunning = false
+                    return false
+                }
                 when (msg.msgType) {
                     Message.MSG_TYPE_SEND -> {//
                         if (clientCtx > 0 && !failed && !enqueuedClose) {
                             when (xquicLongNative.send(clientCtx, msg.msgContent)) {
                                 XquicCallback.XQC_OK -> {
                                     synchronized(this) { queueSize -= msg.msgContent.length }
-                                }
-                                -1 -> {
-                                    /*put into queue again wait next poll*/
-                                    messageQueue.add(msg)
-                                    /* sleep */
-                                    Thread.sleep(50)
                                 }
                                 else -> {
                                     listener.onFailure(
@@ -196,6 +201,7 @@ class XRealWebSocket(
                         if (clientCtx > 0) {
                             xquicLongNative.cancel(clientCtx)
                         }
+                        isWriterRunning = false
                         return false
                     }
                     else -> {

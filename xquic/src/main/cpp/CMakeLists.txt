@@ -44,7 +44,11 @@ add_library( # Sets the name of the library.
              SHARED
 
              # Provides a relative path to your source file(s).
-             ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST} share_libs/src/cJSON.c share_libs/src/ev/ev.c share_libs/src/ev/event.c)
+             ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST}
+            share_libs/src/cQueue.c
+            share_libs/src/cJSON.c
+            share_libs/src/ev/ev.c
+            share_libs/src/ev/event.c)
 
 # Searches for a specified prebuilt library and stores the path as a
 # variable. Because CMake includes system libraries in the search path by

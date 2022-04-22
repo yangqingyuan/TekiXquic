@@ -141,7 +141,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         for (int i = 0; i < headers->count; ++i) {
             cJSON_AddStringToObject(usr, (char *) headers->headers[i].name.iov_base,
                                     (char *) headers->headers[i].value.iov_base);
-            LOGD("= header %s = %s \n", (char *) headers->headers[i].name.iov_base,
+            LOGD("--> %s, %s \n", (char *) headers->headers[i].name.iov_base,
                  (char *) headers->headers[i].value.iov_base);
         }
         char *out = cJSON_Print(usr);

@@ -24,6 +24,7 @@
 #include "common.h"
 #include <cJSON.h>
 #include <pthread.h>
+#include <cQueue.h>
 
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
@@ -433,11 +434,14 @@ typedef struct xqc_cli_task_ctx_s {
  * user msg data,long conn user
  */
 typedef struct xqc_cli_user_data_msg_s {
-    int current_status;//当前状态，1 正在使用，0 闲置中，可以使用
+    /* msg type */
     CMD_TYPE cmd_type;
+
+    /* cache ping data */
     char ping_data[256];
 
-    char data[MAX_SEND_DATA_LEN];
+    /* queue to cache send data */
+    queue_t queue;
 } xqc_cli_user_data_msg_t;
 
 /***
