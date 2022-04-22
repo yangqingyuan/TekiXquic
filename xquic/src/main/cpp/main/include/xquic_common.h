@@ -444,6 +444,10 @@ typedef struct xqc_cli_user_data_msg_s {
  * client 上下文
  */
 typedef struct xqc_cli_ctx_s {
+
+    /* is active 1:yes 0 not */
+    int active;
+
     /* xquic engine context */
     xqc_engine_t *engine;
 

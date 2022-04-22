@@ -244,8 +244,9 @@ void client_long_free_ctx(xqc_cli_ctx_t *ctx) {
         free(ctx->task_ctx.schedule.schedule_info);
         ctx->task_ctx.schedule.schedule_info = NULL;
     }
-
+    ctx->engine = NULL;
     free(ctx);
+    ctx = NULL;
 }
 
 
@@ -811,6 +812,8 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
     /* init lock */
     pthread_mutex_init(&ctx->mutex, NULL);
 
+    /* active */
+    ctx->active = 1;
     return ctx;
 }
 
@@ -821,8 +824,8 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
  */
 int client_long_start(xqc_cli_ctx_t *ctx) {
     DEBUG;
-    if (ctx == NULL) {
-        LOGE("client long start error: ctx is NULL");
+    if (ctx == NULL || ctx->active <= 0) {
+        LOGE("client long start error: ctx = %p,active = %d", ctx, ctx->active);
         return -1;
     }
     /*engine event*/
@@ -861,22 +864,14 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
  */
 int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
     //DEBUG;
-    if (ctx == NULL) {
-        LOGE("client long send ping error: ctx is NULL");
+    if (ctx == NULL || ctx->active <= 0) {
+        LOGE("client long send ping error:  ctx = %p,active = %d", ctx, ctx->active);
         return -1;
     }
-    size_t len = strlen(ping_content);
-    if (MAX_SEND_DATA_LEN < len) {
-        LOGE("send data is to lang %ld >max %d", len, MAX_SEND_DATA_LEN);
-        return -1;
-    }
-    //pthread_mutex_lock(&ctx->mutex);
-    /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_PING;
     memset(ctx->msg_data.ping_data, 0, 256);
     strcpy(ctx->msg_data.ping_data, ping_content);
     ev_async_send(ctx->eb, &ctx->ev_task);
-    //pthread_mutex_unlock(&ctx->mutex);
     return 0;
 }
 
@@ -888,12 +883,13 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
  */
 int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     DEBUG;
-    if (ctx == NULL) {
-        LOGE("client long send error: ctx is NULL");
-        return -1;
+
+    if (ctx == NULL || ctx->active <= 0) {
+        LOGE("client long send error:  ctx = %p,active = %d ", ctx, ctx->active);
+        return -2;
     }
 
-    if (ctx->msg_data.current_status){
+    if (ctx->msg_data.current_status) {
         LOGW("ev async sending ,wait a moment");
         return -1;
     }
@@ -920,8 +916,8 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
  */
 int client_long_cancel(xqc_cli_ctx_t *ctx) {
     DEBUG;
-    if (ctx == NULL) {
-        LOGE("client long cancel error: ctx is NULL");
+    if (ctx == NULL || ctx->active <= 0) {
+        LOGE("client long cancel error: ctx = %p,active = %d", ctx, ctx->active);
         return -1;
     }
     /* call method client_task_schedule_callback */

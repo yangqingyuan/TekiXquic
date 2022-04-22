@@ -169,16 +169,23 @@ class XRealWebSocket(
                 when (msg.msgType) {
                     Message.MSG_TYPE_SEND -> {//
                         if (clientCtx > 0 && !failed && !enqueuedClose) {
-                            XLogUtils.error("tag send" + msg.msgContent)
-                            val ret = xquicLongNative.send(clientCtx, msg.msgContent)
-                            if (XquicCallback.XQC_OK == ret) {
-                                synchronized(this) { queueSize -= msg.msgContent.length }
-                            } else {
-                                /*put into queue again wait next poll*/
-                                messageQueue.add(msg)
-
-                                /* sleep */
-                                Thread.sleep(50)
+                            when (xquicLongNative.send(clientCtx, msg.msgContent)) {
+                                XquicCallback.XQC_OK -> {
+                                    synchronized(this) { queueSize -= msg.msgContent.length }
+                                }
+                                -1 -> {
+                                    /*put into queue again wait next poll*/
+                                    messageQueue.add(msg)
+                                    /* sleep */
+                                    Thread.sleep(50)
+                                }
+                                else -> {
+                                    listener.onFailure(
+                                        this,
+                                        java.lang.Exception("connect is close"),
+                                        xResponse
+                                    )
+                                }
                             }
                         }
                     }
