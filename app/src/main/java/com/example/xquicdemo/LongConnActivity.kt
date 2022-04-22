@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XWebSocket
@@ -35,8 +36,7 @@ class LongConnActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
             val testCount = SetCache.getTestCount(applicationContext)
             for (i in (1..testCount)) {
-                XLogUtils.debug("send index =$i")
-                webSocket.send("test :$i")
+                webSocket.send(etContent.text.toString())
             }
         }
 
@@ -95,6 +95,14 @@ class LongConnActivity : AppCompatActivity() {
             }
         })
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val methodGet = SetCache.getMethod(applicationContext) == "GET"
+        if (methodGet) {
+            etContent.visibility = View.GONE
+        }
     }
 
     @SuppressLint("SimpleDateFormat")

@@ -134,6 +134,10 @@ class XRealWebSocket(
     }
 
     fun connect(xquicClient: XquicClient) {
+        if (clientCtx > 0) {
+            XLogUtils.warn("is connect ")
+            return
+        }
         XLogUtils.debug("=======> connect start <========")
         executor.execute {
             val sendParamsBuilder = SendParams.Builder()
@@ -161,13 +165,9 @@ class XRealWebSocket(
     private fun writeOneFrame(): Boolean {
         synchronized(this) {
             try {
-                val msg = messageQueue.poll()
-                if (msg == null) {
-                    XLogUtils.error("msg is null")
-                    return false
-                }
+                val msg = messageQueue.poll() ?: return false
                 when (msg.msgType) {
-                    Message.MSG_TYPE_SEND -> {
+                    Message.MSG_TYPE_SEND -> {//
                         if (clientCtx > 0 && !failed && !enqueuedClose) {
                             XLogUtils.error("tag send" + msg.msgContent)
                             val ret = xquicLongNative.send(clientCtx, msg.msgContent)
@@ -183,12 +183,13 @@ class XRealWebSocket(
                         }
                     }
 
-                    Message.MSG_TYPE_CLOSE -> {
+                    Message.MSG_TYPE_CLOSE -> {//close
                         enqueuedClose = true
                         messageQueue.clear()
                         if (clientCtx > 0) {
                             xquicLongNative.cancel(clientCtx)
                         }
+                        return false
                     }
                     else -> {
                         XLogUtils.error("unKnow message type")
@@ -203,6 +204,9 @@ class XRealWebSocket(
         return false
     }
 
+    /**
+     * message object
+     */
     class Message(var msgType: Int, var msgContent: String) {
         companion object {
             const val MSG_TYPE_SEND = 0
@@ -210,6 +214,9 @@ class XRealWebSocket(
         }
     }
 
+    /**
+     * check
+     */
     private fun check(): Boolean {
         if (clientCtx <= 0 || failed || enqueuedClose) {
             listener.onFailure(this, Exception("web socket is closed"), xResponse)
@@ -218,6 +225,10 @@ class XRealWebSocket(
         return true
     }
 
+
+    /**
+     * send data
+     */
     override fun send(data: String): Boolean {
         synchronized(this) {
             // Don't send new frames after we've failed or enqueued a close frame.
@@ -238,6 +249,9 @@ class XRealWebSocket(
     }
 
 
+    /**
+     * close
+     */
     private fun close(): Boolean {
         synchronized(this) {
             if (failed || enqueuedClose) return false
@@ -253,10 +267,16 @@ class XRealWebSocket(
     }
 
 
+    /**
+     * cancel conn
+     */
     override fun cancel() {
         close()
     }
 
+    /**
+     * callback data
+     */
     override fun callBackData(ret: Int, data: ByteArray) {
         synchronized(this) {
             if (ret == XquicCallback.XQC_OK) {
@@ -270,6 +290,9 @@ class XRealWebSocket(
         }
     }
 
+    /**
+     * call back message
+     */
     override fun callBackMessage(msgType: Int, data: ByteArray) {
         synchronized(this) {
             when (msgType) {

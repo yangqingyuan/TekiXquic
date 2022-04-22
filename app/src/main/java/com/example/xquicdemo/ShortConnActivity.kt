@@ -4,6 +4,7 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import android.view.View
 import android.widget.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
@@ -30,6 +31,7 @@ class ShortConnActivity : AppCompatActivity() {
         title = "Short Conn"
 
         textView = findViewById(R.id.tv_result)
+
         etContent = findViewById(R.id.et_content)
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
@@ -53,6 +55,14 @@ class ShortConnActivity : AppCompatActivity() {
             textView.text = "返回结果：\n"
         }
 
+    }
+
+    override fun onResume() {
+        super.onResume()
+        val methodGet = SetCache.getMethod(applicationContext) == "GET"
+        if (methodGet) {
+            etContent.visibility = View.GONE
+        }
     }
 
     @SuppressLint("SimpleDateFormat")

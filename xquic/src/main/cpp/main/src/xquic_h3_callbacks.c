@@ -79,8 +79,23 @@ void client_on_stream_fin(xqc_cli_user_stream_t *user_stream) {
          ctx->schedule.schedule_info[task_idx].req_fin_cnt,
          ctx->schedule.schedule_info[task_idx].fin_flag);
 
+    if (user_stream->user_conn->ctx->args->net_cfg.conn_type == CONN_TYPE_LONG) {
+
+        if (user_stream->send_body != NULL) {
+            free(user_stream->send_body);
+            user_stream->send_body = NULL;
+        }
+        if (user_stream->recv_body != NULL) {
+            free(user_stream->recv_body);
+            user_stream->recv_body = NULL;
+        }
+        free(user_stream);
+        user_stream = NULL;
+        LOGD("free stream success");
+    }
+
     /* TODO: fix MAX_STREAMS */
-    if (ctx->schedule.schedule_info[task_idx].req_create_cnt
+    /*if (ctx->schedule.schedule_info[task_idx].req_create_cnt
         < ctx->tasks[task_idx].user_conn->task->req_cnt) {
         xqc_cli_user_conn_t *user_conn = user_stream->user_conn;
         xqc_cli_ctx_t *ctx = user_conn->ctx;
@@ -90,7 +105,7 @@ void client_on_stream_fin(xqc_cli_user_stream_t *user_stream) {
         if (req_cnt < 0) {
             LOGE("等待补充逻辑");
         }
-    }
+    }*/
 }
 
 int client_h3_request_close_notify(xqc_h3_request_t *h3_request, void *user_data) {
@@ -212,18 +227,6 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
             ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine,
                                     &user_stream->user_conn->cid);
             LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
-        } else {
-            if (user_stream->send_body != NULL) {
-                free(user_stream->send_body);
-                user_stream->send_body = NULL;
-            }
-            if (user_stream->recv_body != NULL) {
-                free(user_stream->recv_body);
-                user_stream->recv_body = NULL;
-            }
-            free(user_stream);
-            user_stream = NULL;
-            LOGD("free stream success");
         }
     }
     return 0;
