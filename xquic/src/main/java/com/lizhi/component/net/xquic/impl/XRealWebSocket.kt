@@ -44,7 +44,6 @@ class XRealWebSocket(
     private var queueSize: Long = 0
     private var clientCtx: Long = 0L
     private var enqueuedClose = false
-    private var isWriterRunning = false
 
     private val xResponse: XResponse
 
@@ -84,21 +83,14 @@ class XRealWebSocket(
          */
         writerRunnable = Runnable {
             synchronized(this) {
-                isWriterRunning = true
                 while (writeOneFrame()) {
                 }
-                isWriterRunning = false
             }
         }
     }
 
     private fun runWriter() {
         assert(Thread.holdsLock(this))
-        if (isWriterRunning) {
-            if (!messageQueue.isEmpty()) {
-                return
-            }
-        }
         executor.execute(writerRunnable)
     }
 
@@ -161,9 +153,12 @@ class XRealWebSocket(
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
             clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
-
-            /* 注意：这里是阻塞的 */
-            xquicLongNative.start(clientCtx)
+            if (clientCtx <= 0) {
+                listener.onFailure(this, java.lang.Exception("connect error"), xResponse)
+            } else {
+                /* 注意：这里是阻塞的 */
+                xquicLongNative.start(clientCtx)
+            }
 
             /* 注意：阻塞结束说明已经内部已经结束了 */
             executor.shutdownNow()
@@ -237,41 +232,39 @@ class XRealWebSocket(
     /**
      * send data
      */
+    @Synchronized
     override fun send(data: String): Boolean {
-        synchronized(this) {
-            // Don't send new frames after we've failed or enqueued a close frame.
-            if (!check()) return false
+        // Don't send new frames after we've failed or enqueued a close frame.
+        if (!check()) return false
 
-            // If this frame overflows the buffer, reject it and close the web socket.
-            if (queueSize + data.length > MAX_QUEUE_SIZE) {
-                close()
-                return false
-            }
-
-            queueSize += data.length
-            messageQueue.add(Message(Message.MSG_TYPE_SEND, data))
-
-            runWriter()
-            return true
+        // If this frame overflows the buffer, reject it and close the web socket.
+        if (queueSize + data.length > MAX_QUEUE_SIZE) {
+            close()
+            return false
         }
+
+        queueSize += data.length
+        messageQueue.add(Message(Message.MSG_TYPE_SEND, data))
+
+        runWriter()
+        return true
     }
 
 
     /**
      * close
      */
+    @Synchronized
     private fun close(): Boolean {
-        synchronized(this) {
-            if (failed || enqueuedClose) return false
-            // Enqueue the close frame.
-            messageQueue.add(
-                Message(
-                    Message.MSG_TYPE_CLOSE, "close"
-                )
+        if (failed || enqueuedClose) return false
+        // Enqueue the close frame.
+        messageQueue.add(
+            Message(
+                Message.MSG_TYPE_CLOSE, "close"
             )
-            runWriter()
-            return true
-        }
+        )
+        runWriter()
+        return true
     }
 
 
@@ -285,16 +278,15 @@ class XRealWebSocket(
     /**
      * callback data
      */
+    @Synchronized
     override fun callBackData(ret: Int, data: ByteArray) {
-        synchronized(this) {
-            if (ret == XquicCallback.XQC_OK) {
-                listener.onMessage(this, data)
-            } else {
-                clientCtx = 0
-                failed = true
-                val errMsg = String(data)
-                listener.onFailure(this, Exception(errMsg), xResponse)
-            }
+        if (ret == XquicCallback.XQC_OK) {
+            listener.onMessage(this, data)
+        } else {
+            clientCtx = 0
+            failed = true
+            val errMsg = String(data)
+            listener.onFailure(this, Exception(errMsg), xResponse)
         }
     }
 
