@@ -53,11 +53,21 @@ class XAsyncCall(
      * isCallback
      */
     private var isCallback = false
-
     /**
      * xResponse
      */
     private var xResponse: XResponse
+
+    /**
+     * is finish
+     */
+    private var isFinish = false
+
+    /**
+     * short native
+     */
+    private val xquicShortNative = XquicShortNative()
+
 
     init {
         index = atomicInteger.incrementAndGet()
@@ -138,13 +148,14 @@ class XAsyncCall(
             }
 
             /* native to send */
-            XquicShortNative().send(
+            xquicShortNative.send(
                 sendParamsBuilder.build(), this
             )
         } catch (e: Exception) {
             cancel()
         } finally {
             XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
+            isFinish = true
             xquicClient.dispatcher().finished(this)
         }
 
@@ -206,15 +217,16 @@ class XAsyncCall(
                 }
             }
         }
-
     }
 
-    fun get(): XAsyncCall {
-        return this
+    fun get(): XCall {
+        return xCall
     }
 
     fun cancel() {
-        XLogUtils.info("cancel")
+        if (!isFinish) {
+            //xquicShortNative.cancel()
+        }
     }
 
 }

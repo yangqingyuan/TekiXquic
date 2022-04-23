@@ -1,5 +1,6 @@
 package com.lizhi.component.net.xquic.mode
 
+import androidx.fragment.app.FragmentActivity
 
 /**
  * 作用:
@@ -7,22 +8,34 @@ package com.lizhi.component.net.xquic.mode
  * 创建日期: 2022/4/1.
  */
 class XRequest {
+
     lateinit var url: XHttpUrl
     lateinit var body: XRequestBody
+
+    private var key = System.currentTimeMillis().toString()
+    private val tags by lazy { mutableMapOf<String, String>() }
 
     var method: String = "GET" // or POST
     var headers: XHeaders.Builder = XHeaders.Builder()
 
+
+    fun tag(): String? {
+        return tags[key]
+    }
+
+    /**
+     * to observer activity life
+     */
+    var life: FragmentActivity? = null
+
     class Builder {
         private val xRequest = XRequest()
+
         fun build(): XRequest {
             return xRequest
         }
 
         fun url(url: String): Builder {
-            if (url.isNullOrBlank()) {
-                throw NullPointerException("url == null")
-            }
             xRequest.url = XHttpUrl.get(url)
             return this
         }
@@ -41,6 +54,16 @@ class XRequest {
 
         fun removeHeader(name: String, value: String): Builder {
             xRequest.headers.set(name, value)
+            return this
+        }
+
+        fun tag(tag: String): Builder {
+            xRequest.tags[xRequest.key] = tag
+            return this
+        }
+
+        fun life(activity: FragmentActivity): Builder {
+            xRequest.life = activity
             return this
         }
 
