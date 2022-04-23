@@ -2,6 +2,8 @@ package com.lizhi.component.net.xquic.native
 
 enum class XquicMsgType {
 
+    INIT,
+
     /**
      * token
      */

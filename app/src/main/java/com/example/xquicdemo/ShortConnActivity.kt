@@ -95,6 +95,8 @@ class ShortConnActivity : AppCompatActivity() {
             .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .get() //Default
             .addHeader("testA", "testA")
+            .tag("tag")
+            .life(this)
             .build()
         request(index, xRequest)
     }
@@ -113,6 +115,8 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequest = XRequest.Builder()
             .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .post(xRequestBody) //Default
+            .tag("tag")
+            .life(this)
             .build()
         request(index, xRequest)
     }

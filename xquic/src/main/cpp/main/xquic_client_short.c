@@ -260,7 +260,7 @@ void client_init_tasks_scmr(xqc_cli_task_ctx_t *tctx, xqc_cli_client_args_t *arg
     tctx->tasks = calloc(1, sizeof(xqc_cli_task_t) * 1);
 
     /*请求总数*/
-    tctx->tasks->req_cnt = args->req_cfg.request_cnt;
+    //tctx->tasks->req_cnt = args->req_cfg.request_cnt;
     tctx->tasks->reqs = args->req_cfg.reqs;
 
     /*init schedule 初始化调度器*/
@@ -279,7 +279,7 @@ void client_init_tasks_scsr(xqc_cli_task_ctx_t *tctx, xqc_cli_client_args_t *arg
     tctx->tasks = calloc(1, sizeof(xqc_cli_task_t) * tctx->task_cnt);
     for (int i = 0; i < tctx->task_cnt; i++) {
         tctx->tasks[i].task_idx = i;
-        tctx->tasks[i].req_cnt = 1;
+        //tctx->tasks[i].req_cnt = 1;
         tctx->tasks[i].reqs = (xqc_cli_request_t *) args->req_cfg.reqs + i;
     }
 
@@ -320,7 +320,7 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     xqc_cli_user_conn_t *user_conn = task->user_conn;
 
     /* to free jni object */
-    callback_msg_to_client(user_conn, MSG_TYPE_DESTROY, NULL, 0);
+    callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_DESTROY, NULL, 0);
 
     if (!user_conn) {
         LOGW("is closed task,no need to close again!");
@@ -625,56 +625,80 @@ int client_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 void client_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
     //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
-    uint8_t all_task_fin_flag = 1;
-    uint8_t idle_flag = 1;
-    int idle_waiting_task_id = -1;
 
-    for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
-        /* if task finished,close task */
-        if (ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
-            client_close_task(ctx, ctx->task_ctx.tasks + i);
-            //ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
-        }
-
-        /* if task finished,close task */
-        if (ctx->task_ctx.schedule.schedule_info[i].status <= TASK_STATUS_RUNNING) {
-            all_task_fin_flag = 0;
-        }
-
-        /* record the first waiting task */
-        if (idle_waiting_task_id == -1
-            && ctx->task_ctx.schedule.schedule_info[i].status == TASK_STATUS_WAITTING) {
-            idle_waiting_task_id = i;
-        }
-    }
-
-    if (all_task_fin_flag) {
-        /* when timeout, close which not fin */
-        for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
-            if (!ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
+    switch (ctx->msg_data.cmd_type) {
+        case CMD_TYPE_CANCEL:
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
+                LOGW("auto close h3 conn,and wait to destroy");
+                xqc_h3_conn_close(task->user_conn->ctx->engine, &task->user_conn->cid);
+            }
+            break;
+        case CMD_TYPE_DESTROY:
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 client_close_task(ctx, ctx->task_ctx.tasks + i);
                 ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
             }
+            LOGW("all tasks are finished,will break loop and exit!!");
+            ev_break(main_loop, EVBREAK_ALL);
+            break;
+        default: {
+            uint8_t all_task_fin_flag = 1;
+            uint8_t idle_flag = 1;
+            int idle_waiting_task_id = -1;
+
+            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                /* if task finished,close task */
+                if (ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
+                    client_close_task(ctx, ctx->task_ctx.tasks + i);
+                    //ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+                }
+
+                /* if task finished,close task */
+                if (ctx->task_ctx.schedule.schedule_info[i].status <= TASK_STATUS_RUNNING) {
+                    all_task_fin_flag = 0;
+                }
+
+                /* record the first waiting task */
+                if (idle_waiting_task_id == -1
+                    && ctx->task_ctx.schedule.schedule_info[i].status == TASK_STATUS_WAITTING) {
+                    idle_waiting_task_id = i;
+                }
+            }
+
+            if (all_task_fin_flag) {
+                /* when timeout, close which not fin */
+                for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+                    if (!ctx->task_ctx.schedule.schedule_info[i].fin_flag) {
+                        client_close_task(ctx, ctx->task_ctx.tasks + i);
+                        ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+                    }
+                }
+                LOGW("all tasks are finished,will break loop and exit!!");
+                ev_break(main_loop, EVBREAK_ALL);
+                return;
+            }
+
+            /* if dle and got a waiting task, run the task */
+            if (idle_flag && idle_waiting_task_id >= 0) {
+                /* handle task and set status to RUNNING */
+
+                ctx->task_ctx.tasks[idle_waiting_task_id].req_cnt = 1;
+
+                int ret = client_handle_task(ctx, ctx->task_ctx.tasks + idle_waiting_task_id);
+
+                if (0 == ret) {
+                    ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_RUNNING;
+                } else {
+                    ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
+                }
+            }
         }
-        LOGW("all tasks are finished,will break loop and exit!!");
-        ev_break(main_loop, EVBREAK_ALL);
-        return;
+
+            /* start next round 开始下一轮检查,搬迁到链接关闭再调用，避免死循环占用cpu过高*/
+            //ev_async_send(main_loop, io_w);
+            break;
     }
-
-    /* if dle and got a waiting task, run the task */
-    if (idle_flag && idle_waiting_task_id >= 0) {
-        /* handle task and set status to RUNNING */
-        int ret = client_handle_task(ctx, ctx->task_ctx.tasks + idle_waiting_task_id);
-
-        if (0 == ret) {
-            ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_RUNNING;
-        } else {
-            ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
-        }
-    }
-
-    /* start next round 开始下一轮检查,搬迁到链接关闭再调用，避免死循环占用cpu过高*/
-    //ev_async_send(main_loop, io_w);
 }
 
 /**
@@ -830,6 +854,13 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
         goto fail;
     }
 
+    char addr[64];
+    memset(addr, 0, 64);
+    sprintf(addr, "%ld", ptr_to_jlong(ctx));
+    callback_msg_to_client(ctx->args, MSG_TYPE_INIT, addr, strlen(addr));
+
+    ctx->active = 1;
+
     /* start task scheduler */
     client_start_task_manager(ctx);
     ev_run(ctx->eb, 0);
@@ -847,4 +878,21 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
     end:
     LOGW("client send end(发送结束),总时间：%lu us", (xqc_now() - start_time));
     return XQC_OK;
+}
+
+/**
+ * cancel
+ * @param ctx
+ * @return
+ */
+int client_short_cancel(xqc_cli_ctx_t *ctx) {
+    DEBUG;
+    if (ctx == NULL || ctx->active <= 0) {
+        LOGE("client short cancel error: ctx = %p,active = %d", ctx, ctx->active);
+        return -1;
+    }
+    /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_CANCEL;
+    ev_async_send(ctx->eb, &ctx->ev_task);
+    return 0;
 }

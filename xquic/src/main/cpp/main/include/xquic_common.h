@@ -63,6 +63,7 @@ typedef enum cmd_type_s {
  * msg type
  */
 typedef enum msg_type_s {
+    MSG_TYPE_INIT,//init
     MSG_TYPE_TOKEN,//token
     MSG_TYPE_SESSION,//session
     MSG_TYPE_TP,//tp
@@ -517,11 +518,11 @@ inline uint64_t xqc_now() {
  * @param data
  * @param data_len
  */
-inline void callback_msg_to_client(xqc_cli_user_conn_t *user_conn, MSG_TYPE msg_type,
+inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_type,
                                    const char *data,
                                    unsigned data_len) {
 
-    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = args->user_callback;
 
     /* callback to client */
     if (user_callback) {

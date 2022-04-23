@@ -52,7 +52,7 @@ void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
     if (ping_user_data != NULL) {
         len = strlen(ping_user_data);
     }
-    callback_msg_to_client(user_conn, MSG_TYPE_PING, ping_user_data, len);
+    callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_PING, ping_user_data, len);
 }
 
 
@@ -145,7 +145,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
                  (char *) headers->headers[i].value.iov_base);
         }
         char *out = cJSON_Print(usr);
-        callback_msg_to_client(user_stream->user_conn, MSG_TYPE_HEAD, out, strlen(out));
+        callback_msg_to_client(user_stream->user_conn->ctx->args, MSG_TYPE_HEAD, out, strlen(out));
         cJSON_Delete(usr);
         free(out);
         LOGD("============ response head end ================");

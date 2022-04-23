@@ -17,4 +17,9 @@ class XquicShortNative {
         param: SendParams,
         xquicCallback: XquicCallback,
     ): Int
+
+    /**
+     * cancel
+     */
+    external fun cancel(clientCtx: Long): Int
 }

@@ -19,3 +19,9 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNativ
     client_short_send(user_param);
     return 0;
 }
+
+
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNative_cancel
+        (JNIEnv *env, jclass cls, jlong clientCtx) {
+    return client_short_cancel(jlong_to_ptr(clientCtx));
+}

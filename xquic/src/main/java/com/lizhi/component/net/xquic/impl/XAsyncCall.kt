@@ -53,6 +53,7 @@ class XAsyncCall(
      * isCallback
      */
     private var isCallback = false
+
     /**
      * xResponse
      */
@@ -67,6 +68,8 @@ class XAsyncCall(
      * short native
      */
     private val xquicShortNative = XquicShortNative()
+
+    private var clientCtx: Long = 0L
 
 
     init {
@@ -151,6 +154,7 @@ class XAsyncCall(
             xquicShortNative.send(
                 sendParamsBuilder.build(), this
             )
+            clientCtx = 0L
         } catch (e: Exception) {
             cancel()
         } finally {
@@ -191,12 +195,25 @@ class XAsyncCall(
 
         synchronized(this) {
             when (msgType) {
+                XquicMsgType.INIT.ordinal -> {
+                    try {
+                        clientCtx = String(data).toLong()
+                    } catch (e: Exception) {
+                        XLogUtils.error(e)
+                    }
+                }
+
                 XquicMsgType.TOKEN.ordinal -> {
                     XRttInfoCache.tokenMap.put(url(), String(data))
                 }
                 XquicMsgType.SESSION.ordinal -> {
                     XRttInfoCache.sessionMap.put(url(), String(data))
                 }
+
+                XquicMsgType.DESTROY.ordinal -> {
+                    clientCtx = 0L
+                }
+
                 XquicMsgType.TP.ordinal -> {
                     XRttInfoCache.tpMap.put(url(), String(data))
                 }
@@ -224,8 +241,8 @@ class XAsyncCall(
     }
 
     fun cancel() {
-        if (!isFinish) {
-            //xquicShortNative.cancel()
+        if (!isFinish && clientCtx > 0) {
+            xquicShortNative.cancel(clientCtx)
         }
     }
 

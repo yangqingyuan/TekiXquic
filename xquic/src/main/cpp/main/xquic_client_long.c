@@ -327,7 +327,7 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     }
 
     /* to free jni object */
-    callback_msg_to_client(user_conn, MSG_TYPE_DESTROY, NULL, 0);
+    callback_msg_to_client(ctx->args, MSG_TYPE_DESTROY, NULL, 0);
 
     /* remove task event handle */
     ev_io_stop(ctx->eb, &user_conn->ev_socket);
