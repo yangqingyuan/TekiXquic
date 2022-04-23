@@ -83,8 +83,11 @@ class XRealWebSocket(
          * writer Runnable
          */
         writerRunnable = Runnable {
-            isWriterRunning = true
-            while (writeOneFrame()) {
+            synchronized(this) {
+                isWriterRunning = true
+                while (writeOneFrame()) {
+                }
+                isWriterRunning = false
             }
         }
     }
@@ -170,49 +173,41 @@ class XRealWebSocket(
     }
 
     private fun writeOneFrame(): Boolean {
-        synchronized(this) {
-            try {
-                val msg = messageQueue.poll()
-                if (msg == null) {
-                    isWriterRunning = false
-                    return false
-                }
-                when (msg.msgType) {
-                    Message.MSG_TYPE_SEND -> {//
-                        if (clientCtx > 0 && !failed && !enqueuedClose) {
-                            when (xquicLongNative.send(clientCtx, msg.msgContent)) {
-                                XquicCallback.XQC_OK -> {
-                                    synchronized(this) { queueSize -= msg.msgContent.length }
-                                }
-                                else -> {
-                                    listener.onFailure(
-                                        this,
-                                        java.lang.Exception("connect is close"),
-                                        xResponse
-                                    )
-                                }
+        try {
+            val msg = messageQueue.poll() ?: return false
+            when (msg.msgType) {
+                Message.MSG_TYPE_SEND -> {//
+                    if (clientCtx > 0 && !failed && !enqueuedClose) {
+                        when (xquicLongNative.send(clientCtx, msg.msgContent)) {
+                            XquicCallback.XQC_OK -> {
+                                synchronized(this) { queueSize -= msg.msgContent.length }
+                            }
+                            else -> {
+                                listener.onFailure(
+                                    this,
+                                    java.lang.Exception("connect is close"),
+                                    xResponse
+                                )
                             }
                         }
                     }
-
-                    Message.MSG_TYPE_CLOSE -> {//close
-                        enqueuedClose = true
-                        messageQueue.clear()
-                        if (clientCtx > 0) {
-                            xquicLongNative.cancel(clientCtx)
-                        }
-                        isWriterRunning = false
-                        return false
-                    }
-                    else -> {
-                        XLogUtils.error("unKnow message type")
-                    }
                 }
 
-                return true
-            } catch (e: java.lang.Exception) {
-                XLogUtils.error(e)
+                Message.MSG_TYPE_CLOSE -> {//close
+                    enqueuedClose = true
+                    messageQueue.clear()
+                    if (clientCtx > 0) {
+                        xquicLongNative.cancel(clientCtx)
+                    }
+                    return false
+                }
+                else -> {
+                    XLogUtils.error("unKnow message type")
+                }
             }
+            return true
+        } catch (e: java.lang.Exception) {
+            XLogUtils.error(e)
         }
         return false
     }
