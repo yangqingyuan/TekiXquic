@@ -25,10 +25,19 @@ class ShortConnActivity : AppCompatActivity() {
     private lateinit var textView: TextView
     private lateinit var etContent: EditText
 
+    private lateinit var xquicClient: XquicClient
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_short)
         title = "Short Conn"
+
+        xquicClient = XquicClient.Builder()
+            .connectTimeOut(SetCache.getConnTimeout(applicationContext))
+            .ccType(SetCache.getCCType(applicationContext))
+            .setReadTimeOut(23) //TODO 未实现
+            .writeTimeout(15)//TODO 未实现
+            .build()
 
         textView = findViewById(R.id.tv_result)
 
@@ -92,11 +101,11 @@ class ShortConnActivity : AppCompatActivity() {
             return
         }
         val xRequest = XRequest.Builder()
-            .url(url)//127.0.0.1:6121 //192.168.10.245:8443
+            .url(url)
             .get() //Default
             .addHeader("testA", "testA")
             .tag("tag")
-            .life(this)
+            .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
             .build()
         request(index, xRequest)
     }
@@ -113,10 +122,10 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content.toString())
         val xRequest = XRequest.Builder()
-            .url(url)//127.0.0.1:6121 //192.168.10.245:8443
+            .url(url)
             .post(xRequestBody) //Default
             .tag("tag")
-            .life(this)
+            .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
             .build()
         request(index, xRequest)
     }
@@ -133,13 +142,7 @@ class ShortConnActivity : AppCompatActivity() {
             appendText(requestInfo.toString())
         }
 
-        val xquicClient = XquicClient.Builder()
-            .connectTimeOut(SetCache.getConnTimeout(applicationContext))
-            .ccType(SetCache.getCCType(applicationContext))
-            .setReadTimeOut(23) //TODO 未实现
-            .writeTimeout(15)//TODO 未实现
-            .pingInterval(15)//TODO 未实现
-            .build()
+
         val startTime = System.currentTimeMillis()
         xquicClient.newCall(xRequest).enqueue(object : XCallBack {
             override fun onFailure(call: XCall, exception: Exception) {
