@@ -69,6 +69,16 @@ class XAsyncCall(
      */
     private var isCallback = false
 
+    /**
+     * is finish
+     */
+    private var isFinish = false
+
+    /**
+     * short native
+     */
+    private val xquicShortNative = XquicShortNative()
+
 
     init {
         index = atomicInteger.incrementAndGet()
@@ -142,13 +152,14 @@ class XAsyncCall(
             }
 
             /* native to send */
-            XquicShortNative().send(
+            xquicShortNative.send(
                 sendParamsBuilder.build(), this
             )
         } catch (e: Exception) {
             cancel()
         } finally {
             XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
+            isFinish = true
             xquicClient.dispatcher().finished(this)
         }
 
@@ -184,34 +195,34 @@ class XAsyncCall(
         }
     }
 
+    @Synchronized
     override fun callBackMessage(msgType: Int, data: ByteArray) {
         XLogUtils.debug("callBackMessage msgType=$msgType")
 
-        synchronized(this) {
-            when (msgType) {
-                XquicMsgType.TOKEN.ordinal -> {
-                    tokenMap.put(url(), String(data))
-                }
-                XquicMsgType.SESSION.ordinal -> {
-                    sessionMap.put(url(), String(data))
-                }
-                XquicMsgType.TP.ordinal -> {
-                    tpMap.put(url(), String(data))
-                }
-                else -> {
-                    XLogUtils.error("un know callback msg")
-                }
+        when (msgType) {
+            XquicMsgType.TOKEN.ordinal -> {
+                tokenMap.put(url(), String(data))
+            }
+            XquicMsgType.SESSION.ordinal -> {
+                sessionMap.put(url(), String(data))
+            }
+            XquicMsgType.TP.ordinal -> {
+                tpMap.put(url(), String(data))
+            }
+            else -> {
+                XLogUtils.error("un know callback msg")
             }
         }
-
     }
 
-    fun get(): XAsyncCall {
-        return this
+    fun get(): XCall {
+        return xCall
     }
 
     fun cancel() {
-        XLogUtils.info("cancel")
+        if (!isFinish) {
+            //xquicShortNative.cancel()
+        }
     }
 
 }

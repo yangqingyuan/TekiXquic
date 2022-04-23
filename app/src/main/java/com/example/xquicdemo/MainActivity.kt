@@ -82,7 +82,9 @@ class MainActivity : AppCompatActivity() {
         }
         val xRequest = XRequest.Builder()
             .url(url)//127.0.0.1:6121 //192.168.10.245:8443
+            .tag("tag")
             .get() //Default
+            .life(this)
             .addHeader("testA", "testA")
             .build()
         request(index, xRequest)
@@ -102,6 +104,9 @@ class MainActivity : AppCompatActivity() {
         val xRequest = XRequest.Builder()
             .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .post(xRequestBody) //Default
+            .get() //Default
+            .tag("tag")
+            .life(this)
             .build()
         request(index, xRequest)
     }
