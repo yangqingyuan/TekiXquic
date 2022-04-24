@@ -10,6 +10,9 @@ object SetCache {
     private const val KEY_CC_TYPE = "cc_type"
     private const val KEY_METHOD = "method"
     private const val KEY_URL = "url"
+    private const val KEY_URL1 = "url1"
+    private const val KEY_URL2 = "url2"
+    private const val KEY_SELECT = "select"
     private const val KEY_CONN_TIMEOUT = "conn_time_out"
     private const val KEY_TEST_COUNT = "conn_test_count"
 
@@ -42,6 +45,31 @@ object SetCache {
         return context.getSharedPreferences(key, 0).getString(KEY_METHOD, "GET")!!
     }
 
+    fun getSelectUrl(context: Context): String? {
+        when (getSelect(context)) {
+            0 -> {
+                return getUrl(context)
+            }
+            1 -> {
+                return getUrl1(context)
+            }
+            2 -> {
+                return getUrl2(context)
+            }
+        }
+        return null
+    }
+
+
+    fun getSelect(context: Context): Int {
+        return context.getSharedPreferences(key, 0).getInt(KEY_SELECT, 0)
+    }
+
+    fun setSelect(context: Context, index: Int) {
+        context.getSharedPreferences(key, 0).edit().putInt(KEY_SELECT, index).apply()
+    }
+
+
     fun setUrl(context: Context, url: String) {
         context.getSharedPreferences(key, 0).edit().putString(KEY_URL, url).apply()
     }
@@ -49,6 +77,25 @@ object SetCache {
     fun getUrl(context: Context): String? {
         return context.getSharedPreferences(key, 0).getString(KEY_URL, "https://192.168.8.120:8443")
     }
+
+
+    fun setUrl1(context: Context, url: String) {
+        context.getSharedPreferences(key, 0).edit().putString(KEY_URL1, url).apply()
+    }
+
+    fun getUrl1(context: Context): String? {
+        return context.getSharedPreferences(key, 0).getString(KEY_URL1, "")
+    }
+
+
+    fun setUrl2(context: Context, url: String) {
+        context.getSharedPreferences(key, 0).edit().putString(KEY_URL2, url).apply()
+    }
+
+    fun getUrl2(context: Context): String? {
+        return context.getSharedPreferences(key, 0).getString(KEY_URL2, "")
+    }
+
 
     fun setConnTimeOut(context: Context, timeout: Int) {
         context.getSharedPreferences(key, 0).edit().putInt(KEY_CONN_TIMEOUT, timeout).apply()

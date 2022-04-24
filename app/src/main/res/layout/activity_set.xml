@@ -173,6 +173,12 @@
         android:gravity="center_vertical"
         android:orientation="horizontal">
 
+        <CheckBox
+            android:id="@+id/checkbox"
+            android:checked="true"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
@@ -182,6 +188,68 @@
 
         <EditText
             android:id="@+id/etUrl"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://192.168.8.120:8443"
+            android:text=""
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/checkbox1"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:text="请求url:"
+            tools:ignore="HardcodedText" />
+
+        <EditText
+            android:id="@+id/etUrl1"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="https://192.168.8.120:8443"
+            android:text=""
+            tools:ignore="HardcodedText" />
+    </LinearLayout>
+
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="10dp"
+        android:layout_marginTop="10dp"
+        android:layout_marginBottom="10dp"
+        android:gravity="center_vertical"
+        android:orientation="horizontal">
+
+        <CheckBox
+            android:id="@+id/checkbox2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginRight="10dp"
+            android:text="请求url:"
+            tools:ignore="HardcodedText" />
+
+        <EditText
+            android:id="@+id/etUrl2"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="https://192.168.8.120:8443"

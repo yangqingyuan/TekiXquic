@@ -112,7 +112,7 @@ class ShortConnActivity : AppCompatActivity() {
 
     private fun post(index: Int) {
 
-        val url = SetCache.getUrl(applicationContext)
+        val url = SetCache.getSelectUrl(applicationContext)
         if (url.isNullOrEmpty()) {
             Toast.makeText(applicationContext, "请先设置url", Toast.LENGTH_SHORT).show()
             return

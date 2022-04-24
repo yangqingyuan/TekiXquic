@@ -1,5 +1,7 @@
 package com.lizhi.component.net.xquic.impl
 
+import android.os.Handler
+import android.os.Looper
 import androidx.lifecycle.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
@@ -20,6 +22,9 @@ class XRealCall : XCall {
     private var executed = false
 
     companion object {
+
+        private val handle = Handler(Looper.getMainLooper())
+
         fun newCall(xquicClient: XquicClient, xRequest: XRequest): XRealCall {
             val xRealCall = XRealCall()
             xRealCall.xquicClient = xquicClient
@@ -27,14 +32,19 @@ class XRealCall : XCall {
 
             /* auto cancel by activity left */
             if (xRealCall.originalRequest.life is LifecycleOwner) {
-                xRealCall.originalRequest.life?.lifecycle?.addObserver(object :
-                    LifecycleEventObserver {
-                    override fun onStateChanged(source: LifecycleOwner, event: Lifecycle.Event) {
-                        if (event == Lifecycle.Event.ON_DESTROY) {
-                            xRealCall.cancel()
+                handle.post {
+                    xRealCall.originalRequest.life?.lifecycle?.addObserver(object :
+                        LifecycleEventObserver {
+                        override fun onStateChanged(
+                            source: LifecycleOwner,
+                            event: Lifecycle.Event
+                        ) {
+                            if (event == Lifecycle.Event.ON_DESTROY) {
+                                xRealCall.cancel()
+                            }
                         }
-                    }
-                })
+                    })
+                }
             }
 
             return xRealCall
