@@ -34,13 +34,13 @@ maven { url "https://s01.oss.sonatype.org/content/repositories/releases/" }
 
 第二步：导入sdk</br>
 ```
-implementation 'io.github.yangqingyuan:teki-quic:1.0.0'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.1.1-SNAPSHOT'
 ```
 
 # 版本更新
 |  version   | 更新内容  | 时间  |
 |  ----  | ----  |----  |
-| 1.0.1-SNAPSHOT  | 1.支持长链接</br> 2.支持生命周期感知</br> 3.支持取消</br> | 待定 |
+| 1.0.1.1-SNAPSHOT  | 1.支持长链接</br> 2.支持生命周期感知</br> 3.支持取消</br> | 2022/04/21 |
 | 1.0.0  | 支持短链接 |2022/04/21|
 
 # 使用方式
@@ -183,12 +183,6 @@ XAsyncCall->类：真正的执行逻辑类
 XQuicShortNative->类：JNI接口
 
 
-
 # 其他
 有任何问题，欢迎留言，同时也希望找志同道合的人，一同完善tekixquic，毕竟一个人的力量是有限的！！本人wx
 ![image](https://user-images.githubusercontent.com/6867757/162711742-7cfd5e4b-54d8-4c4f-b80e-4d9c9af34ba5.png)
-
-
-
-
-
