@@ -71,6 +71,7 @@ class XAsyncCall(
 
     private var clientCtx: Long = 0L
 
+    private var executed = false
 
     init {
         index = atomicInteger.incrementAndGet()
@@ -134,6 +135,7 @@ class XAsyncCall(
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
+        executed = true
         try {
             XLogUtils.debug("=======> execute start index(${index})<========")
             val sendParamsBuilder = SendParams.Builder()
@@ -147,6 +149,7 @@ class XAsyncCall(
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
             if (originalRequest.method == "POST") {
+                XLogUtils.error("content =" + originalRequest.body.content)
                 sendParamsBuilder.setContent(originalRequest.body.content)
             }
 
@@ -243,6 +246,10 @@ class XAsyncCall(
     fun cancel() {
         if (!isFinish && clientCtx > 0) {
             xquicShortNative.cancel(clientCtx)
+        }
+
+        if (!executed) {
+            xquicClient.dispatcher().finished(this)
         }
     }
 

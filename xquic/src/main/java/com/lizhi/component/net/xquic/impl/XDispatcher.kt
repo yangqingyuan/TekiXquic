@@ -126,7 +126,12 @@ class XDispatcher {
     }
 
     fun finished(xAsyncCall: XAsyncCall) {
-        finished(runningAsyncCalls, xAsyncCall)
+        if (runningAsyncCalls.contains(xAsyncCall)) {
+            finished(runningAsyncCalls, xAsyncCall)
+        } else {
+            //移除没有执行的
+            readyAsyncCalls.remove(xAsyncCall)
+        }
     }
 
 
