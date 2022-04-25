@@ -5,6 +5,11 @@ enum class XquicMsgType {
     INIT,
 
     /**
+     * hand_shake
+     */
+    HANDSHAKE,
+
+    /**
      * token
      */
     TOKEN,

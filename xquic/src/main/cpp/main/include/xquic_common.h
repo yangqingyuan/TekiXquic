@@ -64,6 +64,7 @@ typedef enum cmd_type_s {
  */
 typedef enum msg_type_s {
     MSG_TYPE_INIT,//init
+    MSG_TYPE_HANDSHAKE,//init
     MSG_TYPE_TOKEN,//token
     MSG_TYPE_SESSION,//session
     MSG_TYPE_TP,//tp

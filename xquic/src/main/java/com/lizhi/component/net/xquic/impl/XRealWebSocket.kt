@@ -296,6 +296,9 @@ class XRealWebSocket(
     override fun callBackMessage(msgType: Int, data: ByteArray) {
         synchronized(this) {
             when (msgType) {
+                XquicMsgType.HANDSHAKE.ordinal -> {
+                    listener.onOpen(this, xResponse)
+                }
                 XquicMsgType.TOKEN.ordinal -> {
                     XRttInfoCache.tokenMap.put(url(), String(data))
                 }

@@ -118,7 +118,7 @@ class ShortConnActivity : AppCompatActivity() {
             return
         }
 
-        val content = etContent.text.toString() + ",index=" + index
+        val content = etContent.text.toString()
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content.toString())
         val xRequest = XRequest.Builder()

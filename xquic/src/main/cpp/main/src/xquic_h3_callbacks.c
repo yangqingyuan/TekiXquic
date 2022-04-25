@@ -38,6 +38,7 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
+    callback_msg_to_client(user_conn->ctx->args,MSG_TYPE_HANDSHAKE,"handshake_finished",18);
     LOGI(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
 }
 

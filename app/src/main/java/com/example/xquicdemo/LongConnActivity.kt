@@ -7,6 +7,7 @@ import android.os.Bundle
 import android.view.View
 import android.widget.*
 import com.lizhi.component.net.xquic.XquicClient
+import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
@@ -58,9 +59,18 @@ class LongConnActivity : AppCompatActivity() {
         val xquicClient = XquicClient.Builder()
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
             .ccType(SetCache.getCCType(applicationContext))
-            .setReadTimeOut(23) //TODO 未实现
-            .writeTimeout(15)//TODO 未实现
             .pingInterval(5000)//
+            .addPingListener(object : XPingListener {
+                //可选
+                override fun ping(): String {
+                    return "ping data"
+                }
+
+                override fun pong(data: String) {
+                    //XLogUtils.info("data=$data")
+                }
+
+            })
             .build()
 
         val url = SetCache.getSelectUrl(applicationContext)

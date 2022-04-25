@@ -114,8 +114,9 @@ class XquicClient {
             return this
         }
 
-        fun addPingListener(pingListener: XPingListener) {
+        fun addPingListener(pingListener: XPingListener):Builder {
             xquicClient.pingListener = pingListener
+            return this
         }
 
         fun addNetworkInterceptor(xInterceptor: XInterceptor): Builder {
