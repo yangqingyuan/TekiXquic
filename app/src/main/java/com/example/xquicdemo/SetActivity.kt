@@ -12,7 +12,13 @@ class SetActivity : AppCompatActivity() {
     private lateinit var rgMethod: RadioGroup
     private lateinit var etTimeout: EditText
     private lateinit var etUrl: EditText
+    private lateinit var etUrl1: EditText
+    private lateinit var etUrl2: EditText
     private lateinit var etTestCount: EditText
+
+    private lateinit var checkBox: CheckBox
+    private lateinit var checkBox1: CheckBox
+    private lateinit var checkBox2: CheckBox
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -76,6 +82,13 @@ class SetActivity : AppCompatActivity() {
         etUrl = findViewById(R.id.etUrl)
         etUrl.text.append(SetCache.getUrl(applicationContext) ?: "")
 
+        etUrl1 = findViewById(R.id.etUrl1)
+        etUrl1.text.append(SetCache.getUrl1(applicationContext) ?: "")
+
+        etUrl2 = findViewById(R.id.etUrl2)
+        etUrl2.text.append(SetCache.getUrl2(applicationContext) ?: "")
+
+
         etTestCount = findViewById(R.id.etTestCount)
         etTestCount.text.append("" + SetCache.getTestCount(applicationContext))
 
@@ -90,6 +103,16 @@ class SetActivity : AppCompatActivity() {
                 SetCache.setUrl(applicationContext, etUrl.text.toString())
             }
 
+
+            if (etUrl1.text.isNotEmpty()) {
+                SetCache.setUrl1(applicationContext, etUrl1.text.toString())
+            }
+
+            if (etUrl2.text.isNotEmpty()) {
+                SetCache.setUrl2(applicationContext, etUrl2.text.toString())
+            }
+
+
             if (etTestCount.text.isNotEmpty()) {
                 val count = etTestCount.text.toString().toInt()
                 if (count in 1..1000) {
@@ -99,6 +122,45 @@ class SetActivity : AppCompatActivity() {
 
             Toast.makeText(applicationContext, "设置成功", Toast.LENGTH_SHORT).show()
             finish()
+        }
+
+        checkBox = findViewById(R.id.checkbox)
+        checkBox.setOnCheckedChangeListener { _, isChecked ->
+
+            if (isChecked) {
+                checkBox1.isChecked = false
+                checkBox2.isChecked = false
+                SetCache.setSelect(applicationContext, 0)
+            }
+
+        }
+        checkBox1 = findViewById(R.id.checkbox1)
+        checkBox1.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                checkBox.isChecked = false
+                checkBox2.isChecked = false
+                SetCache.setSelect(applicationContext, 1)
+            }
+        }
+        checkBox2 = findViewById(R.id.checkbox2)
+        checkBox2.setOnCheckedChangeListener { _, isChecked ->
+            if (isChecked) {
+                checkBox1.isChecked = false
+                checkBox.isChecked = false
+                SetCache.setSelect(applicationContext, 2)
+            }
+        }
+
+        when(SetCache.getSelect(applicationContext)){
+            0->{
+                checkBox.isChecked = true
+            }
+            1->{
+                checkBox1.isChecked = true
+            }
+            2->{
+                checkBox2.isChecked = true
+            }
         }
 
     }

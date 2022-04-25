@@ -22,11 +22,15 @@
 #include <netdb.h>
 #include <string.h>
 #include "common.h"
+#include <cJSON.h>
+#include <pthread.h>
+#include <cQueue.h>
 
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
 #define MAX_REC_DATA_LEN           1024*1024     /* recv data max len */
 #define XQC_PACKET_TMP_BUF_LEN     1500
+#define MAX_SEND_DATA_LEN          1024*512
 
 /* the congestion control types */
 typedef enum cc_type_s {
@@ -34,6 +38,40 @@ typedef enum cc_type_s {
     CC_TYPE_CUBIC,
     CC_TYPE_RENO
 } CC_TYPE;
+
+
+/* the conn types */
+typedef enum conn_type_s {
+    CONN_TYPE_SHORT,
+    CONN_TYPE_LONG,
+} CONN_TYPE;
+
+/**
+ * cmd type（指令类型）
+ */
+typedef enum cmd_type_s {
+    CMD_TYPE_NONE,
+    CMD_TYPE_INIT_TASK,
+    CMD_TYPE_SEND_PING,
+    CMD_TYPE_SEND_DATA,
+    CMD_TYPE_CANCEL,//disconnect
+    CMD_TYPE_DESTROY,//destroy
+} CMD_TYPE;
+
+
+/**
+ * msg type
+ */
+typedef enum msg_type_s {
+    MSG_TYPE_INIT,//init
+    MSG_TYPE_HANDSHAKE,//init
+    MSG_TYPE_TOKEN,//token
+    MSG_TYPE_SESSION,//session
+    MSG_TYPE_TP,//tp
+    MSG_TYPE_HEAD,//head
+    MSG_TYPE_PING,//ping data
+    MSG_TYPE_DESTROY
+} MSG_TYPE;
 
 
 /**
@@ -109,6 +147,9 @@ typedef struct xqc_cli_net_config_s {
 
     /** 任务模式*/
     xqc_cli_task_mode_t mode;
+
+    /* conn type */
+    CONN_TYPE conn_type;
 } xqc_cli_net_config_t;
 
 
@@ -193,7 +234,7 @@ typedef struct xqc_cli_env_config_s {
     int key_output_flag;
     char key_out_path[256];
 
-    /* life cycle */
+    /* life cycle TODO 目前没有用到*/
     int life;
 } xqc_cli_env_config_t;
 
@@ -246,41 +287,25 @@ typedef struct xqc_cli_requests_s {
  * rev service data back to client
  * android
  */
-typedef int (*xqc_cli_callback_read_data)(void *env, void *jclass, int core, char *data,
-                                          ssize_t len);
+typedef int (*xqc_cli_callback_data)(void *jclass, int core, const char *data,
+                                     ssize_t len, void *user_data);
 
-typedef void (*xcc_cli_callback_token)(void *env, void *jclass, const unsigned char *token,
-                                       uint32_t token_len);
-
-typedef void (*xqc_cli_callback_pt)(void *env, void *jclass, const char *data, size_t data_len);
-
-typedef void (*xqc_cli_callback_session)(void *env, void *jclass, const char *data,
-                                         size_t data_len);
+typedef void (*xcc_cli_callback_msg)(void *jclass, MSG_TYPE msg_type, const char *data,
+                                     uint32_t data_len, void *user_data);
 
 typedef struct xqc_cli_user_data_callback_s {
     /* android */
-    void *env_android;
     void *object_android;
 
     /**
      * callback to client to save
      */
-    xqc_cli_callback_read_data callback_read_data;
+    xqc_cli_callback_data callback_data;
 
     /**
      * callback to client to save
      */
-    xcc_cli_callback_token callback_token;
-
-    /**
-     * callback to client to save
-     */
-    xqc_cli_callback_session callback_session;
-
-    /**
-     * callback to client to save
-     */
-    xqc_cli_callback_pt callback_pt;
+    xcc_cli_callback_msg callback_msg;
 
     /* ios */
     //FIXME
@@ -407,11 +432,28 @@ typedef struct xqc_cli_task_ctx_s {
     xqc_cli_task_schedule_t schedule; /* current task index */
 } xqc_cli_task_ctx_t;
 
+/**
+ * user msg data,long conn user
+ */
+typedef struct xqc_cli_user_data_msg_s {
+    /* msg type */
+    CMD_TYPE cmd_type;
+
+    /* cache ping data */
+    char ping_data[256];
+
+    /* queue to cache send data */
+    queue_t queue;
+} xqc_cli_user_data_msg_t;
 
 /***
  * client 上下文
  */
 typedef struct xqc_cli_ctx_s {
+
+    /* is active 1:yes 0 not */
+    int active;
+
     /* xquic engine context */
     xqc_engine_t *engine;
 
@@ -420,6 +462,8 @@ typedef struct xqc_cli_ctx_s {
     struct ev_async ev_task;
     struct ev_timer ev_kill;
     struct ev_loop *eb;  /* handle of libevent */
+
+    pthread_mutex_t mutex;
 
     /* log context */
     int log_fd;
@@ -433,6 +477,9 @@ typedef struct xqc_cli_ctx_s {
 
     /* task schedule context */
     xqc_cli_task_ctx_t task_ctx;
+
+    /* long conn use */
+    xqc_cli_user_data_msg_t msg_data;
 } xqc_cli_ctx_t;
 
 
@@ -463,6 +510,58 @@ inline uint64_t xqc_now() {
     gettimeofday(&tv, NULL);
     uint64_t ul = tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
     return ul;
+}
+
+/**
+ * call back msg to client(Android/IOS)
+ * @param user_conn
+ * @param msg_type
+ * @param data
+ * @param data_len
+ */
+inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_type,
+                                   const char *data,
+                                   unsigned data_len) {
+
+    xqc_cli_user_data_params_t *user_callback = args->user_callback;
+
+    /* callback to client */
+    if (user_callback) {
+        user_callback->user_data_callback.callback_msg(
+                user_callback->user_data_callback.object_android, msg_type, data,
+                data_len, NULL);
+    }
+}
+
+
+/**
+ * call back data to client
+ * @param core XQC_OK(0) success other fail
+ * @param user_conn
+ * @param errMsg
+ */
+inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data) {
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
+    if (user_callback) {
+        user_callback->user_data_callback.callback_data(
+                user_callback->user_data_callback.object_android, core,
+                data, strlen(data), NULL);
+    }
+}
+
+/**
+ * call back data to client
+ * @param user_callback
+ * @param core
+ * @param err_msg
+ */
+inline void
+callback_data_to_client_2(xqc_cli_user_data_params_t *user_callback, int core, char *data) {
+    if (user_callback && data != NULL) {
+        user_callback->user_data_callback.callback_data(
+                user_callback->user_data_callback.object_android, core,
+                data, strlen(data), NULL);
+    }
 }
 
 

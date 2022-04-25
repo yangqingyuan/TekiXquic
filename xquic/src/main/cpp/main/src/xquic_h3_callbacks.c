@@ -29,8 +29,8 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
          ctx->task_ctx.schedule.schedule_info[task->task_idx].req_create_cnt);
 
     /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_DESTROY;
     ev_async_send(ctx->eb, &ctx->ev_task);
-
     return 0;
 }
 
@@ -38,13 +38,22 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
-    LOGI("0rtt_flag:%d", stats.early_data_flag);
+    callback_msg_to_client(user_conn->ctx->args,MSG_TYPE_HANDSHAKE,"handshake_finished",18);
+    LOGI(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
 }
 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
                                       void *ping_user_data, void *user_data) {
-    DEBUG;
+    //DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    uint64_t recv_time = xqc_now();
+    user_conn->last_sock_read_time = recv_time;
 
+    size_t len = 0;
+    if (ping_user_data != NULL) {
+        len = strlen(ping_user_data);
+    }
+    callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_PING, ping_user_data, len);
 }
 
 
@@ -71,8 +80,23 @@ void client_on_stream_fin(xqc_cli_user_stream_t *user_stream) {
          ctx->schedule.schedule_info[task_idx].req_fin_cnt,
          ctx->schedule.schedule_info[task_idx].fin_flag);
 
+    if (user_stream->user_conn->ctx->args->net_cfg.conn_type == CONN_TYPE_LONG) {
+
+        if (user_stream->send_body != NULL) {
+            free(user_stream->send_body);
+            user_stream->send_body = NULL;
+        }
+        if (user_stream->recv_body != NULL) {
+            free(user_stream->recv_body);
+            user_stream->recv_body = NULL;
+        }
+        free(user_stream);
+        user_stream = NULL;
+        LOGD("free stream success");
+    }
+
     /* TODO: fix MAX_STREAMS */
-    if (ctx->schedule.schedule_info[task_idx].req_create_cnt
+    /*if (ctx->schedule.schedule_info[task_idx].req_create_cnt
         < ctx->tasks[task_idx].user_conn->task->req_cnt) {
         xqc_cli_user_conn_t *user_conn = user_stream->user_conn;
         xqc_cli_ctx_t *ctx = user_conn->ctx;
@@ -82,7 +106,7 @@ void client_on_stream_fin(xqc_cli_user_stream_t *user_stream) {
         if (req_cnt < 0) {
             LOGE("等待补充逻辑");
         }
-    }
+    }*/
 }
 
 int client_h3_request_close_notify(xqc_h3_request_t *h3_request, void *user_data) {
@@ -113,13 +137,19 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
             return -1;
         }
 
+        cJSON *usr = cJSON_CreateObject();
         LOGD("============ response head start ================");
         for (int i = 0; i < headers->count; ++i) {
-            LOGD("= header %s = %s \n", (char *) headers->headers[i].name.iov_base,
+            cJSON_AddStringToObject(usr, (char *) headers->headers[i].name.iov_base,
+                                    (char *) headers->headers[i].value.iov_base);
+            LOGD("--> %s, %s \n", (char *) headers->headers[i].name.iov_base,
                  (char *) headers->headers[i].value.iov_base);
         }
+        char *out = cJSON_Print(usr);
+        callback_msg_to_client(user_stream->user_conn->ctx->args, MSG_TYPE_HEAD, out, strlen(out));
+        cJSON_Delete(usr);
+        free(out);
         LOGD("============ response head end ================");
-
 
         if (fin) {
             user_stream->recv_fin = 1;
@@ -186,26 +216,19 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
              (now_us - user_stream->start_time),
              stats.send_body_size, stats.recv_body_size);
 
-        /* data size */
-        int body_size = stats.recv_body_size;
-        if (body_size > user_stream->recv_body_max_len) {
-            body_size = user_stream->recv_body_max_len;
-        }
-
         /* call back to client */
-        xqc_cli_user_data_params_t *user_callback = user_stream->user_conn->ctx->args->user_callback;
-        user_callback->user_data_callback.callback_read_data(
-                user_callback->user_data_callback.env_android,
-                user_callback->user_data_callback.object_android, 0,
-                user_stream->recv_body, body_size);
+        callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body);
 
         /* auto to close request */
         int ret = xqc_h3_request_close(h3_request);
         LOGI("auto to call xqc_h3_request_close ret=%d", ret);
 
-        /* auto to close conn */
-        ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine, &user_stream->user_conn->cid);
-        LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
+        if (user_stream->user_conn->ctx->args->net_cfg.conn_type == CONN_TYPE_SHORT) {
+            /* auto to close conn */
+            ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine,
+                                    &user_stream->user_conn->cid);
+            LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
+        }
     }
     return 0;
 }

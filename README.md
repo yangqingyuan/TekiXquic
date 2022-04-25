@@ -34,67 +34,119 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 第二步：导入sdk</br>
 ```
-implementation 'io.github.yangqingyuan:teki-quic:1.0.0'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.1.1-SNAPSHOT'
 ```
 
+# 版本更新
+|  version   | 更新内容  | 时间  |
+|  ----  | ----  |----  |
+| 1.0.1.1-SNAPSHOT  | 1.支持长链接</br> 2.支持生命周期感知</br> 3.支持取消</br> | 2022/04/21 |
+| 1.0.0  | 支持短链接 |2022/04/21|
+
 # 使用方式
-## Get 请求
- 
-          val xquicClient = XquicClient.Builder()
-                .connectTimeOut(13)
-                .setReadTimeOut(23)//TODO 待实现
-                .writeTimeout(15)//TODO 待实现
-                .pingInterval(15)//TODO 待实现
-                .ccType(CCType.BBR) //拥塞算法
-                .build()
-            val xRequest = XRequest.Builder()
-                .url("https://192.168.10.245:8443")
-                .addHeader("testA", "testA")// 可选，携带自定义头信息
-                .get() //Default
-                .build()
+## 短链接
+### Get 请求
+ ```
+  val xquicClient = XquicClient.Builder()
+        .connectTimeOut(13)
+        .tag("tag")//可选
+        .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
+        .ccType(CCType.BBR) //可选，拥塞算法
+        .build()
+    val xRequest = XRequest.Builder()
+        .url("https://192.168.10.245:8443")
+        .addHeader("testA", "testA")// 可选，携带自定义头信息
+        .get() //Default
+        .build()
 
-            val startTime = System.currentTimeMillis()
-            xquicClient.newCall(xRequest).enqueue(object : XCallBack {
-                override fun onFailure(call: XCall, exception: Exception) {
-                    XLogUtils.error(exception.message)
+    val startTime = System.currentTimeMillis()
+    xquicClient.newCall(xRequest).enqueue(object : XCallBack {
+        override fun onFailure(call: XCall, exception: Exception) {
+            XLogUtils.error(exception.message)
+        }
+
+        override fun onResponse(call: XCall, xResponse: XResponse) {
+            XLogUtils.info(
+                " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody.getData()}"
+            )
+        }
+    })
+```
+### POST 请求
+```
+val xquicClient = XquicClient.Builder()
+    .connectTimeOut(13)
+    .tag("tag")//可选
+    .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
+    .ccType(CCType.BBR) //可选，拥塞算法
+    .build()
+
+val xRequestBody =XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), "test")
+val xRequest = XRequest.Builder()
+    .url("https://192.168.10.245:8443")
+    .addHeader("testA", "testA")// 可选，携带自定义头信息
+    .post(xRequestBody)
+    .build()
+
+val startTime = System.currentTimeMillis()
+xquicClient.newCall(xRequest).enqueue(object : XCallBack {
+    override fun onFailure(call: XCall, exception: Exception) {
+        XLogUtils.error(exception.message)
+    }
+
+    override fun onResponse(call: XCall, xResponse: XResponse) {
+        XLogUtils.info(
+            " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody.getData()}"
+        )
+    }
+})
+
+```
+
+## 长链接
+
+```
+val xquicClient = XquicClient.Builder()
+    .connectTimeOut(SetCache.getConnTimeout(applicationContext))
+    .ccType(SetCache.getCCType(applicationContext))
+    .pingInterval(5000)//
+    .build()
+
+ val xRequest = XRequest.Builder()
+            .url(url)//127.0.0.1:6121 //192.168.10.245:8443
+            .addHeader("testA", "testA")
+            .addPingListener(object : XPingListener {//可选
+                override fun ping(): String {
+                    return "ping data"
                 }
 
-                override fun onResponse(call: XCall, xResponse: XResponse) {
-                    XLogUtils.info(
-                        " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody.getData()}"
-                    )
+                override fun pong(data: String) {
+                    XLogUtils.info("data=$data")
                 }
+
             })
+            .build()
 
-## POST 请求
-          val xquicClient = XquicClient.Builder()
-                .connectTimeOut(13)
-                .setReadTimeOut(23)//TODO 待实现
-                .writeTimeout(15)//TODO 待实现
-                .pingInterval(15)//TODO 待实现
-                .ccType(CCType.BBR) //拥塞算法
-                .build()
-                
-            val xRequestBody =XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), "test")
-            val xRequest = XRequest.Builder()
-                .url("https://192.168.10.245:8443")
-                .addHeader("testA", "testA")// 可选，携带自定义头信息
-                .post(xRequestBody)
-                .build()
+        webSocket = xquicClient.newWebSocket(xRequest, object : XWebSocketListener {
+            override fun onOpen(webSocket: XWebSocket, response: XResponse) {
 
-            val startTime = System.currentTimeMillis()
-            xquicClient.newCall(xRequest).enqueue(object : XCallBack {
-                override fun onFailure(call: XCall, exception: Exception) {
-                    XLogUtils.error(exception.message)
-                }
+            }
 
-                override fun onResponse(call: XCall, xResponse: XResponse) {
-                    XLogUtils.info(
-                        " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody.getData()}"
-                    )
-                }
-            })
+            override fun onMessage(webSocket: XWebSocket, data: ByteArray) {
 
+            }
+
+            override fun onFailure(
+                webSocket: XWebSocket,
+                exception: Throwable,
+                response: XResponse
+            ) {
+                exception.printStackTrace()
+                XLogUtils.error(exception.message)
+            }
+        })
+
+```
 
 ## log check
 可以过滤tag lzXquic 会打印所有跟tekixquic相关的log，比如下图
@@ -130,15 +182,7 @@ XAsyncCall->类：真正的执行逻辑类
 
 XQuicShortNative->类：JNI接口
 
-# demo 下载
-<img width="112" alt="WX20220421-114302@2x" src="https://user-images.githubusercontent.com/6867757/164369885-29671ead-5fee-431a-b7a6-8cda29d833c4.png">
-
 
 # 其他
 有任何问题，欢迎留言，同时也希望找志同道合的人，一同完善tekixquic，毕竟一个人的力量是有限的！！本人wx
 ![image](https://user-images.githubusercontent.com/6867757/162711742-7cfd5e4b-54d8-4c4f-b80e-4d9c9af34ba5.png)
-
-
-
-
-

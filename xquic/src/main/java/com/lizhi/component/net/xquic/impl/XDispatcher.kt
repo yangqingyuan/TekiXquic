@@ -1,5 +1,6 @@
 package com.lizhi.component.net.xquic.impl
 
+import com.lizhi.component.net.xquic.listener.XCall
 import java.util.*
 import java.util.concurrent.*
 
@@ -53,6 +54,7 @@ class XDispatcher {
         promoteAndExecute()
     }
 
+
     private fun promoteAndExecute(): Boolean {
         assert(!Thread.holdsLock(this))
         val executableCalls: MutableList<XAsyncCall> = ArrayList<XAsyncCall>()
@@ -105,13 +107,31 @@ class XDispatcher {
         }
     }
 
+
+    @Synchronized
+    fun queuedCalls(): List<XCall> {
+        val result: MutableList<XCall> = ArrayList<XCall>()
+        for (asyncCall in readyAsyncCalls) {
+            result.add(asyncCall.get())
+        }
+        for (asyncCall in runningAsyncCalls) {
+            result.add(asyncCall.get())
+        }
+        return Collections.unmodifiableList(result)
+    }
+
     @Synchronized
     fun runningCallsCount(): Int {
         return runningAsyncCalls.size + runningSyncCalls.size
     }
 
     fun finished(xAsyncCall: XAsyncCall) {
-        finished(runningAsyncCalls, xAsyncCall)
+        if (runningAsyncCalls.contains(xAsyncCall)) {
+            finished(runningAsyncCalls, xAsyncCall)
+        } else {
+            //移除没有执行的
+            readyAsyncCalls.remove(xAsyncCall)
+        }
     }
 
 

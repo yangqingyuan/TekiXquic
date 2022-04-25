@@ -2,10 +2,15 @@ package com.lizhi.component.net.xquic
 
 import com.lizhi.component.net.xquic.impl.XDispatcher
 import com.lizhi.component.net.xquic.impl.XRealCall
+import com.lizhi.component.net.xquic.impl.XRealWebSocket
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XInterceptor
+import com.lizhi.component.net.xquic.listener.XPingListener
+import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.CCType
+import com.lizhi.component.net.xquic.utils.XLogUtils
+import java.util.*
 
 /**
  * 作用: 短链接
@@ -13,6 +18,21 @@ import com.lizhi.component.net.xquic.native.CCType
  * 创建日期: 2022/4/1.
  */
 class XquicClient {
+
+    companion object {
+        /**
+         * 默认的ping实现
+         */
+        private var DEFAULT_PING_LISTENER: XPingListener = object : XPingListener {
+            override fun ping(): String {
+                return "ping"
+            }
+
+            override fun pong(data: String) {
+                //XLogUtils.debug("pong callBack= $data")
+            }
+        }
+    }
 
     /**
      * unit second
@@ -30,9 +50,9 @@ class XquicClient {
     var writeTimeout: Int = 0
 
     /**
-     * unit second TODO 待实现
+     * unit second
      */
-    var pingInterval: Int = 0
+    var pingInterval: Long = 0L
 
     /**
      * 拥塞算法
@@ -50,6 +70,12 @@ class XquicClient {
      * 网络拦截器
      */
     private val networkInterceptors by lazy { mutableListOf<XInterceptor>() }
+
+    /**
+     * ping listener
+     */
+    private var pingListener = DEFAULT_PING_LISTENER
+
 
     class Builder {
         private val xquicClient = XquicClient()
@@ -78,13 +104,18 @@ class XquicClient {
             return this
         }
 
-        fun pingInterval(pingInterval: Int): Builder {
+        fun pingInterval(pingInterval: Long): Builder {
             xquicClient.pingInterval = pingInterval
             return this
         }
 
         fun addInterceptor(xInterceptor: XInterceptor): Builder {
             xquicClient.interceptors.add(xInterceptor)
+            return this
+        }
+
+        fun addPingListener(pingListener: XPingListener):Builder {
+            xquicClient.pingListener = pingListener
             return this
         }
 
@@ -100,6 +131,17 @@ class XquicClient {
 
     fun dispatcher(): XDispatcher {
         return dispatcher
+    }
+
+
+    /**
+     * new webSocket
+     */
+    fun newWebSocket(xRequest: XRequest, listener: XWebSocketListener): XRealWebSocket {
+        val xRealWebSocket =
+            XRealWebSocket(xRequest, listener, Random(), pingInterval, pingListener)
+        xRealWebSocket.connect(this)
+        return xRealWebSocket
     }
 
 

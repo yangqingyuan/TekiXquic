@@ -2,6 +2,13 @@ package com.lizhi.component.net.xquic.native
 
 enum class XquicMsgType {
 
+    INIT,
+
+    /**
+     * hand_shake
+     */
+    HANDSHAKE,
+
     /**
      * token
      */
@@ -20,5 +27,15 @@ enum class XquicMsgType {
     /**
      * Headers
      */
-    HEAD
+    HEAD,
+
+    /**
+     * ping msg
+     */
+    PING,
+
+    /**
+     * native destroy
+     */
+    DESTROY
 }

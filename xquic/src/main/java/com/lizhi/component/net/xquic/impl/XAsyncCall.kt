@@ -1,9 +1,9 @@
 package com.lizhi.component.net.xquic.impl
 
-import android.util.LruCache
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
+import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
@@ -12,6 +12,7 @@ import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.native.XquicShortNative
 import com.lizhi.component.net.xquic.utils.XLogUtils
+import org.json.JSONObject
 import java.io.InterruptedIOException
 import java.lang.Exception
 import java.util.*
@@ -34,22 +35,6 @@ class XAsyncCall(
 ) : XNamedRunnable(), XquicCallback {
 
     companion object {
-
-        /**
-         * token
-         */
-        private val tokenMap by lazy { LruCache<String, String>(100) }
-
-        /**
-         * session
-         */
-        private val sessionMap by lazy { LruCache<String, String>(100) }
-
-        /**
-         * tp
-         */
-        private val tpMap by lazy { LruCache<String, String>(100) }
-
         /**
          * create index
          */
@@ -69,10 +54,35 @@ class XAsyncCall(
      */
     private var isCallback = false
 
+    /**
+     * xResponse
+     */
+    private var xResponse: XResponse
+
+    /**
+     * is finish
+     */
+    private var isFinish = false
+
+    /**
+     * short native
+     */
+    private val xquicShortNative = XquicShortNative()
+
+    private var clientCtx: Long = 0L
+
+    private var executed = false
 
     init {
         index = atomicInteger.incrementAndGet()
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
+
+        xResponse = XResponse.Builder()
+            .headers(originalRequest.headers.build())
+            .request(originalRequest)
+            .delayTime(delayTime)
+            .index(index)
+            .build()
     }
 
     fun executeOn(executorService: ExecutorService?) {
@@ -125,12 +135,13 @@ class XAsyncCall(
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
+        executed = true
         try {
             XLogUtils.debug("=======> execute start index(${index})<========")
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
-                .setToken(tokenMap[url()])
-                .setSession(sessionMap[url()])
+                .setToken(XRttInfoCache.tokenMap[url()])
+                .setSession(XRttInfoCache.sessionMap[url()])
                 .setTimeOut(xquicClient.connectTimeOut)
                 .setMaxRecvLenght(1024 * 1024)
                 .setCCType(xquicClient.ccType)
@@ -138,23 +149,27 @@ class XAsyncCall(
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
             if (originalRequest.method == "POST") {
+                XLogUtils.error("content =" + originalRequest.body.content)
                 sendParamsBuilder.setContent(originalRequest.body.content)
             }
 
             /* native to send */
-            XquicShortNative().send(
+            xquicShortNative.send(
                 sendParamsBuilder.build(), this
             )
+            clientCtx = 0L
         } catch (e: Exception) {
             cancel()
         } finally {
             XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
+            isFinish = true
             xquicClient.dispatcher().finished(this)
         }
 
     }
 
-    override fun callBackReadData(ret: Int, data: ByteArray) {
+    override fun callBackData(ret: Int, data: ByteArray) {
+
         synchronized(isCallback) {
             if (isCallback) {
                 XLogUtils.error(
@@ -167,14 +182,8 @@ class XAsyncCall(
                 return@synchronized
             }
             isCallback = true
-            if (ret == 0) {
-                val xResponse = XResponse.Builder()
-                    .headers(originalRequest.headers.build())
-                    .responseBody(XResponseBody(data))
-                    .request(originalRequest)
-                    .delayTime(delayTime)
-                    .index(index)
-                    .build()
+            if (ret == XquicCallback.XQC_OK) {
+                xResponse.xResponseBody = XResponseBody(data)
                 xResponse.code = ret
                 responseCallback?.onResponse(xCall, xResponse)
             } else {
@@ -189,29 +198,59 @@ class XAsyncCall(
 
         synchronized(this) {
             when (msgType) {
+                XquicMsgType.INIT.ordinal -> {
+                    try {
+                        clientCtx = String(data).toLong()
+                    } catch (e: Exception) {
+                        XLogUtils.error(e)
+                    }
+                }
+
                 XquicMsgType.TOKEN.ordinal -> {
-                    tokenMap.put(url(), String(data))
+                    XRttInfoCache.tokenMap.put(url(), String(data))
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    sessionMap.put(url(), String(data))
+                    XRttInfoCache.sessionMap.put(url(), String(data))
                 }
+
+                XquicMsgType.DESTROY.ordinal -> {
+                    clientCtx = 0L
+                }
+
                 XquicMsgType.TP.ordinal -> {
-                    tpMap.put(url(), String(data))
+                    XRttInfoCache.tpMap.put(url(), String(data))
+                }
+                XquicMsgType.HEAD.ordinal -> {
+                    try {
+                        val headJson = JSONObject(String(data))
+                        val xHeaderBuild = XHeaders.Builder()
+                        for (key in headJson.keys()) {
+                            xHeaderBuild.add(key, headJson.getString(key))
+                        }
+                        xResponse.xHeaders = xHeaderBuild.build()
+                    } catch (e: Exception) {
+                        XLogUtils.error(e)
+                    }
                 }
                 else -> {
-                    XLogUtils.error("un know callback msg")
+                    //XLogUtils.error("un know callback msg")
                 }
             }
         }
-
     }
 
-    fun get(): XAsyncCall {
-        return this
+    fun get(): XCall {
+        return xCall
     }
 
     fun cancel() {
-        XLogUtils.info("cancel")
+        if (!isFinish && clientCtx > 0) {
+            xquicShortNative.cancel(clientCtx)
+        }
+
+        if (!executed) {
+            xquicClient.dispatcher().finished(this)
+        }
     }
 
 }

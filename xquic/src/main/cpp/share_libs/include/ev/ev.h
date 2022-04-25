@@ -460,6 +460,8 @@ typedef struct ev_async
   EV_WATCHER (ev_async)
 
   EV_ATOMIC_T sent; /* private */
+
+  void *user_data;
 } ev_async;
 
 # define ev_async_pending(w) (+(w)->sent)

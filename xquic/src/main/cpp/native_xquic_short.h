@@ -20,6 +20,9 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNativ
         (JNIEnv *env, jclass cls,jobject params,
          jobject callback);
 
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicShortNative_cancel
+        (JNIEnv *env, jclass cls,jlong clientCtx);
+
 
 #ifdef __cplusplus
 }
