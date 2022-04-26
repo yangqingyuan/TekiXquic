@@ -161,9 +161,9 @@ typedef struct xqc_cli_net_config_s {
  * ============================================================================
  */
 /* definition for quic */
-#define MAX_SESSION_TICKET_LEN      2048    /* session ticket len */
-#define MAX_TRANSPORT_PARAMS_LEN    2048    /* transport parameter len */
-#define XQC_MAX_TOKEN_LEN           256     /* token len */
+#define MAX_SESSION_TICKET_LEN      1024*10    /* session ticket len */
+#define MAX_TRANSPORT_PARAMS_LEN    2048   /* transport parameter len */
+#define XQC_MAX_TOKEN_LEN           256*10     /* token len */
 
 /**
  * 协议类型

@@ -776,13 +776,21 @@ int client_long_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_
 int client_long_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *user_param) {
     if (user_param->token != NULL) {
         size_t token_len = strlen(user_param->token);
-        strcpy(args->quic_cfg.token, user_param->token);//拷贝token
-        args->quic_cfg.token_len = token_len;
+        if (token_len < XQC_MAX_TOKEN_LEN) {
+            strcpy(args->quic_cfg.token, user_param->token);//拷贝token
+            args->quic_cfg.token_len = token_len;
+        } else {
+            LOGE("token set error : to lang > %d", XQC_MAX_TOKEN_LEN);
+        }
     }
     if (user_param->session != NULL) {
         size_t session_len = strlen(user_param->session);
-        strcpy(args->quic_cfg.st, user_param->session);//拷贝session
-        args->quic_cfg.st_len = session_len;
+        if (session_len < MAX_SESSION_TICKET_LEN) {
+            strcpy(args->quic_cfg.st, user_param->session);//拷贝session
+            args->quic_cfg.st_len = session_len;
+        } else {
+            LOGE("session set error : to lang > %d", MAX_SESSION_TICKET_LEN);
+        }
     }
 
     /* set callback */
