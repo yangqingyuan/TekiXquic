@@ -115,7 +115,12 @@ class XHttpUrl {
             }
 
             /* parse host */
-            var list = url.substring(pos, limit).split(":")
+            val temp = url.substring(pos, limit)
+            var list = if (temp.contains(":")) {
+                temp.split(":")
+            } else {
+                temp.split("/")
+            }
             if (list.isNotEmpty()) {
                 xHttpUrl.host = list[0]
                 xHttpUrl.authority = list[0]
@@ -130,16 +135,23 @@ class XHttpUrl {
             if (pos <= limit) {
                 list = url.substring(pos, limit).split("/")
                 if (list.isNotEmpty()) {
-                    xHttpUrl.port = list[0].toInt()
-                } else {
-                    throw IllegalArgumentException(
-                        "Expected URL port url:$url"
-                    )
+                    try {
+                        xHttpUrl.port = list[0].toInt()
+                        pos += list[0].length
+                    } catch (e: Exception) {
+                        pos -= 1
+                    }
                 }
             }
 
-            /* parse path */
-            pos += list[0].length
+            if (xHttpUrl.port <= 0) {
+                xHttpUrl.port = if (xHttpUrl.scheme == "https") {
+                    443
+                } else {
+                    80
+                }
+            }
+
             if (pos <= limit) {
                 xHttpUrl.path = url.substring(pos, limit)
             }
@@ -149,6 +161,10 @@ class XHttpUrl {
         fun build(): XHttpUrl {
             return xHttpUrl
         }
+    }
+
+    fun getNewUrl(): String {
+        return "$scheme://$host:$port$path"
     }
 
     override fun toString(): String {

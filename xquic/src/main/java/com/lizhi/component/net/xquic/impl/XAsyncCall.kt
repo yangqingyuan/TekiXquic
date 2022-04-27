@@ -102,7 +102,7 @@ class XAsyncCall(
     }
 
     fun url(): String {
-        return originalRequest.url.url
+        return originalRequest.url.getNewUrl()
     }
 
     fun request(): XRequest {
@@ -138,6 +138,8 @@ class XAsyncCall(
         executed = true
         try {
             XLogUtils.debug("=======> execute start index(${index})<========")
+            XLogUtils.debug(" url ${url()} ")
+
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
                 .setToken(XRttInfoCache.tokenMap[url()])
@@ -149,7 +151,6 @@ class XAsyncCall(
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
             if (originalRequest.method == "POST") {
-                XLogUtils.error("content =" + originalRequest.body.content)
                 sendParamsBuilder.setContent(originalRequest.body.content)
             }
 

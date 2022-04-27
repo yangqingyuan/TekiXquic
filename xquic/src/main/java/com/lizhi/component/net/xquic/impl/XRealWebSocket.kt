@@ -108,7 +108,7 @@ class XRealWebSocket(
     }
 
     fun url(): String {
-        return xRequest.url.url
+        return xRequest.url.getNewUrl()
     }
 
     /**
