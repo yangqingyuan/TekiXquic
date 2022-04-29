@@ -55,4 +55,29 @@ class XResponse {
 
     }
 
+    fun getStatus(): Int {
+        val status = xHeaders.headersMap[":status"]
+        if (!status.isNullOrBlank()) {
+            return status.toInt()
+        }
+        return -1
+    }
+
+    fun getContentType(): String? {
+        return xHeaders.headersMap["content-type"]
+    }
+
+    fun getContentLength(): Int {
+        val status = xHeaders.headersMap["content-length"]
+        if (!status.isNullOrBlank()) {
+            return status.toInt()
+        }
+        return 0
+    }
+
+    fun getValue(key: String): String? {
+        return xHeaders.headersMap[key]
+    }
+
+
 }

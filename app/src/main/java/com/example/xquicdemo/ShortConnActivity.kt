@@ -14,6 +14,7 @@ import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XRequestBody
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.utils.XLogUtils
+import kotlinx.coroutines.*
 import java.lang.Exception
 import java.lang.StringBuilder
 import java.text.SimpleDateFormat
@@ -26,6 +27,8 @@ class ShortConnActivity : AppCompatActivity() {
     private lateinit var etContent: EditText
 
     private lateinit var xquicClient: XquicClient
+
+    private var launch: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -46,11 +49,19 @@ class ShortConnActivity : AppCompatActivity() {
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
             val testCount = SetCache.getTestCount(applicationContext)
             val methodGet = SetCache.getMethod(applicationContext) == "GET"
-            for (i in (1..testCount)) {
-                if (methodGet) {
-                    get(i)
-                } else {
-                    post(i)
+            val timeSpace = SetCache.getTestSpace(applicationContext)
+
+            launch = CoroutineScope(Dispatchers.Default).launch {
+                for (i in (1..testCount)) {
+                    if (methodGet) {
+                        get(i)
+                    } else {
+                        post(i)
+                    }
+
+                    if (timeSpace > 0) {
+                        delay(timeSpace * 1000L)
+                    }
                 }
             }
         }
@@ -103,7 +114,8 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequest = XRequest.Builder()
             .url(url)
             .get() //Default
-            .addHeader("testA", "testA")
+            //.addHeader("testA", "testA")
+            //.addHeader("Keep-Alive", "timeout=300, max=1000")
             .tag("tag")
             .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
             .build()
@@ -169,7 +181,11 @@ class ShortConnActivity : AppCompatActivity() {
             " java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},content=${content}"
         )
 
-        appendText("$content ,index=$index")
+        appendText("$content ,index=$index, time=${now - startTime - xResponse.delayTime}ms ,status=" + xResponse.getStatus())
     }
 
+    override fun onDestroy() {
+        super.onDestroy()
+        launch?.cancel()
+    }
 }

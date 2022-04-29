@@ -15,6 +15,7 @@ object SetCache {
     private const val KEY_SELECT = "select"
     private const val KEY_CONN_TIMEOUT = "conn_time_out"
     private const val KEY_TEST_COUNT = "conn_test_count"
+    private const val KEY_TEST_SPACE = "conn_test_space"
 
 
     fun setCCType(context: Context, ccType: CCType) {
@@ -112,5 +113,13 @@ object SetCache {
 
     fun getTestCount(context: Context): Int {
         return context.getSharedPreferences(key, 0).getInt(KEY_TEST_COUNT, 1)
+    }
+
+    fun getTestSpace(context: Context): Int {
+        return context.getSharedPreferences(key, 0).getInt(KEY_TEST_SPACE, 0)
+    }
+
+    fun setTestSpace(context: Context, count: Int) {
+        context.getSharedPreferences(key, 0).edit().putInt(KEY_TEST_SPACE, count).apply()
     }
 }

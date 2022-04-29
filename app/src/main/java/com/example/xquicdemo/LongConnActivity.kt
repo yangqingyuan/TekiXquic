@@ -13,6 +13,7 @@ import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.utils.XLogUtils
+import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -23,6 +24,8 @@ class LongConnActivity : AppCompatActivity() {
     private lateinit var etContent: EditText
 
     private lateinit var webSocket: XWebSocket
+
+    private var launch: Job? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -36,8 +39,14 @@ class LongConnActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_send_h3).setOnClickListener {
             val testCount = SetCache.getTestCount(applicationContext)
-            for (i in (1..testCount)) {
-                webSocket.send(etContent.text.toString() + ",index=" + i)
+            val timeSpace = SetCache.getTestSpace(applicationContext)
+            launch = CoroutineScope(Dispatchers.Default).launch {
+                for (i in (1..testCount)) {
+                    webSocket.send(etContent.text.toString() + ",index=" + i)
+                    if (timeSpace > 0) {
+                        delay(timeSpace * 1000L)
+                    }
+                }
             }
         }
 
@@ -83,6 +92,7 @@ class LongConnActivity : AppCompatActivity() {
             .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .get() //Default
             .addHeader("testA", "testA")
+            //.addHeader("keep-alive", "timeout=300, max=1000")
             .build()
 
         webSocket = xquicClient.newWebSocket(xRequest, object : XWebSocketListener {
@@ -150,5 +160,6 @@ class LongConnActivity : AppCompatActivity() {
     override fun onDestroy() {
         super.onDestroy()
         webSocket.cancel()
+        launch?.cancel()
     }
 }

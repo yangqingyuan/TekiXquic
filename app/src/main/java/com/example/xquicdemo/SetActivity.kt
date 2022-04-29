@@ -15,6 +15,7 @@ class SetActivity : AppCompatActivity() {
     private lateinit var etUrl1: EditText
     private lateinit var etUrl2: EditText
     private lateinit var etTestCount: EditText
+    private lateinit var etTestSpace: EditText
 
     private lateinit var checkBox: CheckBox
     private lateinit var checkBox1: CheckBox
@@ -93,6 +94,10 @@ class SetActivity : AppCompatActivity() {
         etTestCount.text.append("" + SetCache.getTestCount(applicationContext))
 
 
+        etTestSpace = findViewById(R.id.etTestSpace)
+        etTestSpace.text.append("" + SetCache.getTestSpace(applicationContext))
+
+
         findViewById<Button>(R.id.btn_ok).setOnClickListener {
 
             if (etTimeout.text.isNotEmpty()) {
@@ -117,6 +122,14 @@ class SetActivity : AppCompatActivity() {
                 val count = etTestCount.text.toString().toInt()
                 if (count in 1..1000) {
                     SetCache.setTestCount(applicationContext, count)
+                }
+            }
+
+
+            if (etTestSpace.text.isNotEmpty()) {
+                val count = etTestSpace.text.toString().toInt()
+                if (count in 0..100) {
+                    SetCache.setTestSpace(applicationContext, count)
                 }
             }
 
@@ -151,14 +164,14 @@ class SetActivity : AppCompatActivity() {
             }
         }
 
-        when(SetCache.getSelect(applicationContext)){
-            0->{
+        when (SetCache.getSelect(applicationContext)) {
+            0 -> {
                 checkBox.isChecked = true
             }
-            1->{
+            1 -> {
                 checkBox1.isChecked = true
             }
-            2->{
+            2 -> {
                 checkBox2.isChecked = true
             }
         }

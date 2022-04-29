@@ -71,6 +71,7 @@
             android:layout_marginTop="10dp"
             android:layout_marginRight="10dp"
             android:text="返回结果:\n"
+            android:textSize="12sp"
             tools:ignore="HardcodedText" />
     </ScrollView>
 

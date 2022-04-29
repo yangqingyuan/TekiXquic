@@ -169,6 +169,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
     //TODO 最好根据后端返回动态的调整
     if (user_stream->recv_body == NULL) {
         user_stream->recv_body = malloc(user_stream->recv_body_max_len);
+        memset(user_stream->recv_body,0,user_stream->recv_body_max_len);
     }
     ssize_t read = 0;
     ssize_t read_sum = 0;
