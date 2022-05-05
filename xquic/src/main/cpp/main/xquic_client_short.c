@@ -852,6 +852,7 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
     client_init_ctx(ctx, args);
+    ctx->mutex = user_param->mutex;
 
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);

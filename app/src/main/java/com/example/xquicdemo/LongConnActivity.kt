@@ -88,20 +88,29 @@ class LongConnActivity : AppCompatActivity() {
             return
         }
 
-        val xRequest = XRequest.Builder()
-            .url(url)//127.0.0.1:6121 //192.168.10.245:8443
-            .get() //Default
-            .addHeader("testA", "testA")
-            //.addHeader("keep-alive", "timeout=300, max=1000")
-            .build()
+        val methodGet = SetCache.getMethod(applicationContext) == "GET"
+
+        val xRequest = if (methodGet) {
+            XRequest.Builder()
+                .url(url)
+                .get() //Default
+                .addHeader("testA", "testA")
+                .build()
+        } else {
+            XRequest.Builder()
+                .url(url)
+                .post()
+                .addHeader("testA", "testA")
+                .build()
+        }
 
         webSocket = xquicClient.newWebSocket(xRequest, object : XWebSocketListener {
             override fun onOpen(webSocket: XWebSocket, response: XResponse) {
                 XLogUtils.error("onOpen")
             }
 
-            override fun onMessage(webSocket: XWebSocket, data: ByteArray) {
-                parseResponse(data)
+            override fun onMessage(webSocket: XWebSocket, response: XResponse) {
+                parseResponse(response)
             }
 
             override fun onFailure(
@@ -109,6 +118,7 @@ class LongConnActivity : AppCompatActivity() {
                 exception: Throwable,
                 response: XResponse
             ) {
+                launch?.cancel()
                 exception.printStackTrace()
                 XLogUtils.error(exception.message)
                 appendText("${exception.message}")
@@ -144,8 +154,8 @@ class LongConnActivity : AppCompatActivity() {
         }
     }
 
-    private fun parseResponse(data: ByteArray) {
-        var content = String(data)
+    private fun parseResponse(response: XResponse) {
+        var content = String(response.xResponseBody.data)
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }
@@ -154,7 +164,9 @@ class LongConnActivity : AppCompatActivity() {
             " java ize=${content.length},content=${content}"
         )
 
-        appendText(content)
+        appendText(
+            "$content , status=" + response.getStatus()
+        )
     }
 
     override fun onDestroy() {

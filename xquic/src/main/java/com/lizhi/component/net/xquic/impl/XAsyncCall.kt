@@ -124,8 +124,8 @@ class XAsyncCall(
         }
 
         headers.putAll(originalRequest.headers.build().headersMap)
-        if (originalRequest.method == "POST") {
-            val body = originalRequest.body
+        originalRequest.body?.let {
+            val body = it
             headers["content-type"] = body.mediaType.mediaType
             headers["content-length"] = body.content.length.toString()
         }
@@ -150,8 +150,8 @@ class XAsyncCall(
 
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
-            if (originalRequest.method == "POST") {
-                sendParamsBuilder.setContent(originalRequest.body.content)
+            originalRequest.body?.let {
+                sendParamsBuilder.setContent(it.content)
             }
 
             /* native to send */

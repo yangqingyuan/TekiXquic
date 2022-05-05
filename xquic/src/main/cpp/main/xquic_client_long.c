@@ -655,7 +655,7 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             break;
         case CMD_TYPE_SEND_DATA: //send data
             //LOGE("send data %s", ctx->msg_data.data);
-            pthread_mutex_lock(&ctx->mutex);
+            pthread_mutex_lock(ctx->mutex);
             //FIXME 如果是多链接的时候，永远只用第一个conn来进行请求，例如非 MODE_SCMR模式
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
@@ -669,7 +669,7 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
                                           &ctx->msg_data.queue);
 
             }
-            pthread_mutex_unlock(&ctx->mutex);
+            pthread_mutex_unlock(ctx->mutex);
             break;
         case CMD_TYPE_CANCEL://cancel conn
             /* when timeout, close which not fin */
@@ -825,9 +825,7 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
     client_long_init_ctx(ctx, args);
-
-    /* init lock */
-    pthread_mutex_init(&ctx->mutex, NULL);
+    ctx->mutex = user_param->mutex;
 
     /* init queue */
     queue_init(&ctx->msg_data.queue);
@@ -922,7 +920,7 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     memset(data, 0, len);
     strcpy(data, content);
 
-    pthread_mutex_lock(&ctx->mutex);
+    pthread_mutex_lock(ctx->mutex);
 
     /* push to queue */
     queue_push(&ctx->msg_data.queue, data);
@@ -930,7 +928,7 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     /* notify send */
     ev_async_send(ctx->eb, &ctx->ev_task);
 
-    pthread_mutex_unlock(&ctx->mutex);
+    pthread_mutex_unlock(ctx->mutex);
     return 0;
 }
 

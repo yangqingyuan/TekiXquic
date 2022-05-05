@@ -3,6 +3,7 @@
 #include "native_xquic_common.h"
 
 static JavaVM *g_jvm;
+static pthread_mutex_t mutex;
 
 /**
  * callback msg to java
@@ -224,6 +225,7 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     user_cfg->session = cSession;
     user_cfg->conn_timeout = time_out;
     user_cfg->max_recv_data_len = max_recv_data_len;
+    user_cfg->mutex = &mutex;
 
     /* headers */
     user_cfg->h3_hdrs.headers = headers;
@@ -259,10 +261,12 @@ JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
         return -1;
     }
     assert(env != NULL);
-
+    /* init lock */
+    pthread_mutex_init(&mutex, NULL);
     return JNI_VERSION_1_4;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM *jvm, void *reserved) {
     DEBUG;
+    pthread_mutex_destroy(&mutex);
 }

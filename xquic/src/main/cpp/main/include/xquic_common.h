@@ -329,6 +329,8 @@ typedef struct xqc_cli_user_data_params_s {
     char *url;
     char *content;
 
+    pthread_mutex_t *mutex;
+
     /* congestion control algorithm */
     CC_TYPE cc;
 
@@ -463,7 +465,7 @@ typedef struct xqc_cli_ctx_s {
     struct ev_timer ev_kill;
     struct ev_loop *eb;  /* handle of libevent */
 
-    pthread_mutex_t mutex;
+    pthread_mutex_t *mutex;
 
     /* log context */
     int log_fd;

@@ -7,6 +7,7 @@ import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.mode.XResponseBody
 import com.lizhi.component.net.xquic.native.SendParams
 import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicLongNative
@@ -281,7 +282,8 @@ class XRealWebSocket(
     @Synchronized
     override fun callBackData(ret: Int, data: ByteArray) {
         if (ret == XquicCallback.XQC_OK) {
-            listener.onMessage(this, data)
+            xResponse.xResponseBody = XResponseBody(data)
+            listener.onMessage(this, xResponse)
         } else {
             clientCtx = 0
             failed = true

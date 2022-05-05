@@ -10,7 +10,7 @@ import com.lizhi.component.net.xquic.mode.XResponse
 interface XWebSocketListener {
     fun onOpen(webSocket: XWebSocket, response: XResponse)
 
-    fun onMessage(webSocket: XWebSocket, data: ByteArray)
+    fun onMessage(webSocket: XWebSocket, response: XResponse)
 
     fun onFailure(webSocket: XWebSocket, t: Throwable, response: XResponse)
 }

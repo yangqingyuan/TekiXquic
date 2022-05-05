@@ -10,7 +10,7 @@ import androidx.fragment.app.FragmentActivity
 class XRequest {
 
     lateinit var url: XHttpUrl
-    lateinit var body: XRequestBody
+    var body: XRequestBody? = null
 
     private var key = System.currentTimeMillis().toString()
     private val tags by lazy { mutableMapOf<String, String>() }
@@ -74,6 +74,22 @@ class XRequest {
 
         fun get(): Builder {
             xRequest.method = "GET"
+            return this
+        }
+
+        fun get(xRequestBody: XRequestBody): Builder {
+            xRequest.method = "GET"
+            xRequest.body = xRequestBody
+            return this
+        }
+
+        fun post(): Builder {
+            xRequest.method = "POST"
+            return this
+        }
+
+        fun body(xRequestBody: XRequestBody): Builder {
+            xRequest.body = xRequestBody
             return this
         }
 
