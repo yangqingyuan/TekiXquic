@@ -1,5 +1,8 @@
 package com.lizhi.component.net.xquic.impl
 
+import android.os.Handler
+import android.os.Looper
+import android.os.Message
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
@@ -73,6 +76,15 @@ class XAsyncCall(
 
     private var executed = false
 
+    private val handle:Handler = object :Handler(Looper.getMainLooper()){
+        override fun handleMessage(msg: Message) {
+            super.handleMessage(msg)
+            responseCallback?.onFailure(xCall, Exception("time out"))
+            cancel()
+        }
+    }
+
+
     init {
         index = atomicInteger.incrementAndGet()
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
@@ -83,6 +95,13 @@ class XAsyncCall(
             .delayTime(delayTime)
             .index(index)
             .build()
+
+        /*
+         * set timeout
+         */
+        if (xquicClient.readTimeout > 0) {
+            handle.sendEmptyMessageDelayed(index, xquicClient.readTimeout * 1000L)
+        }
     }
 
     fun executeOn(executorService: ExecutorService?) {
@@ -160,6 +179,7 @@ class XAsyncCall(
                 sendParamsBuilder.build(), this
             )
             clientCtx = 0L
+            handle.removeMessages(index)
         } catch (e: Exception) {
             cancel()
         } finally {
@@ -246,6 +266,7 @@ class XAsyncCall(
     }
 
     fun cancel() {
+        handle.removeMessages(index)
         if (!isFinish && clientCtx > 0) {
             xquicShortNative.cancel(clientCtx)
         }
