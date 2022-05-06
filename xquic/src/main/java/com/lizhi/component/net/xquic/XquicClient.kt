@@ -40,9 +40,9 @@ class XquicClient {
     var connectTimeOut: Int = 30
 
     /**
-     * unit second TODO 待实现
+     * unit second
      */
-    var readTimeout: Int = 0
+    var readTimeout: Int = 30
 
     /**
      * unit second TODO 待实现

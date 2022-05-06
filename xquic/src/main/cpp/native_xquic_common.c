@@ -184,7 +184,8 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
 
     jstring token = getString(env, param, "token");
     jstring session = getString(env, param, "session");
-    jint time_out = getInt(env, param, "timeOut");
+    jint connect_time_out = getInt(env, param, "connectTimeOut");
+    jint read_time_out = getInt(env, param, "readTimeOut");
     jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
     jint cc_type = getInt(env, param, "ccType");
     jint headersSize = getInt(env, param, "headersSize");
@@ -223,7 +224,8 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     /* optional param */
     user_cfg->token = cToken;
     user_cfg->session = cSession;
-    user_cfg->conn_timeout = time_out;
+    user_cfg->conn_timeout = connect_time_out;
+    user_cfg->read_timeout = read_time_out;
     user_cfg->max_recv_data_len = max_recv_data_len;
     user_cfg->mutex = &mutex;
 

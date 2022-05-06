@@ -144,6 +144,7 @@ typedef struct xqc_cli_net_config_s {
 
     /* idle persist timeout */
     int conn_timeout;
+    int read_timeout;
 
     /** 任务模式*/
     xqc_cli_task_mode_t mode;
@@ -320,6 +321,7 @@ typedef struct xqc_cli_user_data_params_s {
 
     /* idle persist timeout unit second*/
     int conn_timeout;
+    int read_timeout;
 
     int max_recv_data_len;
 

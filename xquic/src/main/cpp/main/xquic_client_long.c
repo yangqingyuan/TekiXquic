@@ -451,6 +451,7 @@ client_long_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_clie
 
     memset(settings, 0, sizeof(xqc_conn_settings_t));
     settings->pacing_on = args->net_cfg.pacing;
+    settings->ping_on = 1;
     settings->cong_ctrl_callback = cong_ctrl;//拥塞控制算法
     settings->cc_params.customize_on = 1;//是否打开自定义
     settings->cc_params.init_cwnd = 32;//拥塞窗口数

@@ -464,7 +464,8 @@ void client_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_clie
     settings->cc_params.init_cwnd = 32;//拥塞窗口数
     settings->so_sndbuf = 1024 * 1024;//socket send  buf的大小
     settings->proto_version = XQC_VERSION_V1;
-    settings->init_idle_time_out = (args->net_cfg.conn_timeout + 1) * 1000;//xquic default 10s
+    settings->init_idle_time_out = (args->net_cfg.conn_timeout) * 1000;//xquic default 10s
+    settings->idle_time_out = (args->net_cfg.read_timeout) * 1000;//xquic default 120s
     settings->spurious_loss_detect_on = 1;//散列丢失检测
     settings->keyupdate_pkt_threshold = args->quic_cfg.keyupdate_pkt_threshold;//单个 1-rtt 密钥的数据包限制，0 表示无限制
 }
@@ -753,6 +754,13 @@ int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *us
     } else {
         args->net_cfg.conn_timeout = 30;
     }
+
+    if (user_param->conn_timeout > 0) {
+        args->net_cfg.read_timeout = user_param->read_timeout;
+    } else {
+        args->net_cfg.read_timeout = 30;
+    }
+
     args->net_cfg.mode = MODE_SCMR;
     args->net_cfg.cc = user_param->cc;
     args->net_cfg.conn_type = CONN_TYPE_SHORT;

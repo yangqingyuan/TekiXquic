@@ -147,7 +147,8 @@ class XRealWebSocket(
                 .setUrl(url())
                 .setToken(XRttInfoCache.tokenMap[url()])
                 .setSession(XRttInfoCache.sessionMap[url()])
-                .setTimeOut(xquicClient.connectTimeOut)
+                .setConnectTimeOut(xquicClient.connectTimeOut)
+                .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
                 .setCCType(xquicClient.ccType)
 

@@ -31,7 +31,13 @@ class SendParams {
      * optional param
      * unit：second
      */
-    var timeOut: Int = 30
+    var connectTimeOut: Int = 30
+
+    /**
+     * optional param
+     * unit：second
+     */
+    var readTimeOut: Int = 30
 
     /**
      * optional param
@@ -83,8 +89,13 @@ class SendParams {
             return this
         }
 
-        fun setTimeOut(timeOut: Int): Builder {
-            params.timeOut = timeOut
+        fun setConnectTimeOut(timeOut: Int): Builder {
+            params.connectTimeOut = timeOut
+            return this
+        }
+
+        fun setReadTimeOut(timeOut: Int): Builder {
+            params.readTimeOut = timeOut
             return this
         }
 
@@ -112,7 +123,7 @@ class SendParams {
     }
 
     override fun toString(): String {
-        return "SendParams(url=$url, token=$token, session=$session, content=$content, timeOut=$timeOut, maxRecvDataLen=$maxRecvDataLen, ccType=$ccType)"
+        return "SendParams(url=$url, token=$token, session=$session, content=$content, timeOut=$connectTimeOut, maxRecvDataLen=$maxRecvDataLen, ccType=$ccType)"
     }
 
 }
