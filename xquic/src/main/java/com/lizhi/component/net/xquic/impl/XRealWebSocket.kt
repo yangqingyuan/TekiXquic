@@ -34,6 +34,10 @@ class XRealWebSocket(
 ) : XWebSocket, XquicCallback {
 
     companion object {
+
+        private const val STATUS_CLOSE = 1
+        private const val STATUS_CANCEL = 2
+
         private const val MAX_QUEUE_SIZE = (16 * 1024 * 1024 // 16 MiB.
                 ).toLong()
     }
@@ -51,6 +55,11 @@ class XRealWebSocket(
     private val messageQueue = ArrayDeque<Message>()
 
     private val writerRunnable: Runnable
+
+    private var code: Int = -1
+    private var reason: String? = null
+
+    private var cancelOrClose = 0// 2 cancle 1:close
 
     private fun threadFactory(): ThreadFactory {
         return ThreadFactory { runnable ->
@@ -165,6 +174,12 @@ class XRealWebSocket(
             /* 注意：阻塞结束说明已经内部已经结束了 */
             executor.shutdownNow()
 
+            if (cancelOrClose == STATUS_CLOSE) {
+                listener.onClosed(this, code, reason)
+            } else if (cancelOrClose == STATUS_CANCEL) {
+                listener.onFailure(this, Throwable("cancel"), xResponse)
+            }
+
             XLogUtils.debug("=======> execute end <========")
         }
     }
@@ -274,6 +289,14 @@ class XRealWebSocket(
      * cancel conn
      */
     override fun cancel() {
+        cancelOrClose = STATUS_CANCEL
+        close()
+    }
+
+    override fun close(code: Int, reason: String?) {
+        this.code = code
+        this.reason = reason
+        cancelOrClose = STATUS_CLOSE
         close()
     }
 

@@ -61,6 +61,7 @@ class LongConnActivity : AppCompatActivity() {
 
         findViewById<Button>(R.id.btn_stop).setOnClickListener {
             webSocket.cancel()
+            //webSocket.close(11, "sdsdf")
         }
     }
 
@@ -111,6 +112,11 @@ class LongConnActivity : AppCompatActivity() {
 
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 parseResponse(response)
+            }
+
+            override fun onClosed(webSocket: XWebSocket, code: Int, reason: String?) {
+                launch?.cancel()
+                appendText("closed: code=${code},readson=${reason}")
             }
 
             override fun onFailure(

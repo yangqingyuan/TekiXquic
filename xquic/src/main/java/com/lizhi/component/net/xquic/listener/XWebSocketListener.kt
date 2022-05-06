@@ -12,5 +12,7 @@ interface XWebSocketListener {
 
     fun onMessage(webSocket: XWebSocket, response: XResponse)
 
+    fun onClosed(webSocket: XWebSocket, code: Int, reason: String?)
+
     fun onFailure(webSocket: XWebSocket, t: Throwable, response: XResponse)
 }

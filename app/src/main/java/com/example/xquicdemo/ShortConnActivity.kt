@@ -104,9 +104,13 @@ class ShortConnActivity : AppCompatActivity() {
             Toast.makeText(applicationContext, "请先设置url", Toast.LENGTH_SHORT).show()
             return
         }
+
+        val content = etContent.text.toString()
+        val xRequestBody =
+            XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
             .url(url)
-            .get() //Default
+            .get(xRequestBody) //Default
             //.addHeader("testA", "testA")
             //.addHeader("Keep-Alive", "timeout=300, max=1000")
             .tag("tag")
@@ -125,7 +129,7 @@ class ShortConnActivity : AppCompatActivity() {
 
         val content = etContent.text.toString()
         val xRequestBody =
-            XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content.toString())
+            XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
             .url("$url&index=$index")
             .post(xRequestBody) //Default

@@ -9,4 +9,5 @@ package com.lizhi.component.net.xquic.listener
 interface XWebSocket {
     fun send(text: String): Boolean
     fun cancel()
+    fun close(code: Int, reason: String?)
 }
