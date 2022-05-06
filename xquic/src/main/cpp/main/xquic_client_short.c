@@ -162,7 +162,7 @@ int client_init_alpn(xqc_cli_ctx_t *ctx) {
         LOGE("init h3 context error, ret:%d", ret);
         return XQC_ERROR;
     }
-    LOGI("client init alpn success");
+    LOGD("client init alpn success");
     return XQC_OK;
 }
 
@@ -358,7 +358,7 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     free(user_conn);
     user_conn = NULL;
 
-    LOGI(">>>>>>>> free data success <<<<<<<<<");
+    LOGD(">>>>>>>> free data success <<<<<<<<<");
     return 0;
 }
 

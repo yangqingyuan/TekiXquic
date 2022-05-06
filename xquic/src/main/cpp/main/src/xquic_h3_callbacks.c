@@ -4,7 +4,7 @@
 int client_h3_conn_create_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void *user_data) {
     DEBUG;
     int ret = xqc_h3_conn_is_ready_to_send_early_data(conn);
-    LOGI("xqc_h3_conn_is_ready_to_send_early_data:%d\n", ret);
+    LOGD("xqc_h3_conn_is_ready_to_send_early_data:%d\n", ret);
     return 0;
 }
 
@@ -12,7 +12,7 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, cid);
-    LOGI("send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%lu early_data_flag:%d, conn_err:%d, ack_info:%s\n",
+    LOGD("send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%lu early_data_flag:%d, conn_err:%d, ack_info:%s\n",
          stats.send_count, stats.lost_count,
          stats.tlp_count, stats.recv_count, stats.srtt, stats.early_data_flag, stats.conn_err,
          stats.ack_info);
@@ -39,7 +39,7 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
     callback_msg_to_client(user_conn->ctx->args,MSG_TYPE_HANDSHAKE,"handshake_finished",18);
-    LOGI(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
+    LOGD(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
 }
 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,
@@ -76,7 +76,7 @@ void client_on_stream_fin(xqc_cli_user_stream_t *user_stream) {
         ctx->schedule.schedule_info[task_idx].fin_flag = 1;
     }
 
-    LOGI("client stream fin task[%d], fin_cnt: %d, fin_flag: %d\n", task_idx,
+    LOGD("client stream fin task[%d], fin_cnt: %d, fin_flag: %d\n", task_idx,
          ctx->schedule.schedule_info[task_idx].req_fin_cnt,
          ctx->schedule.schedule_info[task_idx].fin_flag);
 
@@ -222,13 +222,13 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
 
         /* auto to close request */
         int ret = xqc_h3_request_close(h3_request);
-        LOGI("auto to call xqc_h3_request_close ret=%d", ret);
+        LOGD("auto to call xqc_h3_request_close ret=%d", ret);
 
         if (user_stream->user_conn->ctx->args->net_cfg.conn_type == CONN_TYPE_SHORT) {
             /* auto to close conn */
             ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine,
                                     &user_stream->user_conn->cid);
-            LOGI("auto to call xqc_h3_conn_close ret=%d", ret);
+            LOGD("auto to call xqc_h3_conn_close ret=%d", ret);
         }
     }
     return 0;

@@ -77,13 +77,6 @@ class ShortConnActivity : AppCompatActivity() {
 
     }
 
-    override fun onResume() {
-        super.onResume()
-        val methodGet = SetCache.getMethod(applicationContext) == "GET"
-        if (methodGet) {
-            etContent.visibility = View.GONE
-        }
-    }
 
     @SuppressLint("SimpleDateFormat")
     private fun getData(): String {
@@ -134,7 +127,7 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content.toString())
         val xRequest = XRequest.Builder()
-            .url(url)
+            .url("$url&index=$index")
             .post(xRequestBody) //Default
             .tag("tag")
             .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时

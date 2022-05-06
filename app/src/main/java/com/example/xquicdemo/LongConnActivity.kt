@@ -127,13 +127,6 @@ class LongConnActivity : AppCompatActivity() {
 
     }
 
-    override fun onResume() {
-        super.onResume()
-        val methodGet = SetCache.getMethod(applicationContext) == "GET"
-        if (methodGet) {
-            etContent.visibility = View.GONE
-        }
-    }
 
     @SuppressLint("SimpleDateFormat")
     private fun getData(): String {

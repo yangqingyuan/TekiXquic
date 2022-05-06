@@ -131,12 +131,13 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
         recv_sum += recv_size;
         uint64_t recv_time = xqc_now();
         //user_conn->last_sock_read_time = recv_time;
-
-        if (xqc_engine_packet_process(user_conn->ctx->engine, packet_buf, recv_size,
-                                      (struct sockaddr *) (&user_conn->local_addr),
-                                      user_conn->local_addrlen, (struct sockaddr *) (&addr),
-                                      addr_len, (xqc_msec_t) recv_time, user_conn) != XQC_OK) {
+        ret = xqc_engine_packet_process(user_conn->ctx->engine, packet_buf, recv_size,
+                                        (struct sockaddr *) (&user_conn->local_addr),
+                                        user_conn->local_addrlen, (struct sockaddr *) (&addr),
+                                        addr_len, (xqc_msec_t) recv_time, user_conn);
+        if (ret != XQC_OK) {
             LOGE("xqc_engine_packet_process error");
+            //callback_data_to_client(user_conn, ret, "xqc_engine_packet_process error");
             return;
         }
 

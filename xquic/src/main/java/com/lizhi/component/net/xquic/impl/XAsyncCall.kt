@@ -176,13 +176,12 @@ class XAsyncCall(
                 XLogUtils.error(
                     "is callback on need to callback again!! ret=${ret},data=${
                         String(
-                            byteArrayOf()
+                            data
                         )
                     }"
                 )
                 return@synchronized
             }
-            isCallback = true
             if (ret == XquicCallback.XQC_OK) {
                 xResponse.xResponseBody = XResponseBody(data)
                 xResponse.code = ret
@@ -191,6 +190,7 @@ class XAsyncCall(
                 val errMsg = String(data)
                 responseCallback?.onFailure(xCall, Exception(errMsg))
             }
+            isCallback = true
         }
     }
 

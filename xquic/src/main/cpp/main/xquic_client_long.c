@@ -162,7 +162,7 @@ int client_long_init_alpn(xqc_cli_ctx_t *ctx) {
         LOGE("init h3 context error, ret:%d", ret);
         return XQC_ERROR;
     }
-    LOGI("client init alpn success");
+    LOGD("client init alpn success");
     return XQC_OK;
 }
 
