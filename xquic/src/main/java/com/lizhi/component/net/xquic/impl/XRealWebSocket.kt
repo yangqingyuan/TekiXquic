@@ -154,8 +154,8 @@ class XRealWebSocket(
         executor.execute {
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
-                .setToken(XRttInfoCache.tokenMap[url()])
-                .setSession(XRttInfoCache.sessionMap[url()])
+                .setToken(XRttInfoCache.tokenMap[xRequest.url.host])
+                .setSession(XRttInfoCache.sessionMap[xRequest.url.host])
                 .setConnectTimeOut(xquicClient.connectTimeOut)
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
@@ -326,13 +326,13 @@ class XRealWebSocket(
                     listener.onOpen(this, xResponse)
                 }
                 XquicMsgType.TOKEN.ordinal -> {
-                    XRttInfoCache.tokenMap.put(url(), String(data))
+                    XRttInfoCache.tokenMap.put(xRequest.url.host, String(data))
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    XRttInfoCache.sessionMap.put(url(), String(data))
+                    XRttInfoCache.sessionMap.put(xRequest.url.host, String(data))
                 }
                 XquicMsgType.TP.ordinal -> {
-                    XRttInfoCache.tpMap.put(url(), String(data))
+                    XRttInfoCache.tpMap.put(xRequest.url.host, String(data))
                 }
                 XquicMsgType.HEAD.ordinal -> {
                     try {

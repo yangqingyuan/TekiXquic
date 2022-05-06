@@ -142,8 +142,8 @@ class XAsyncCall(
 
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url())
-                .setToken(XRttInfoCache.tokenMap[url()])
-                .setSession(XRttInfoCache.sessionMap[url()])
+                .setToken(XRttInfoCache.tokenMap[originalRequest.url.host])
+                .setSession(XRttInfoCache.sessionMap[originalRequest.url.host])
                 .setConnectTimeOut(xquicClient.connectTimeOut)
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
@@ -209,10 +209,10 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TOKEN.ordinal -> {
-                    XRttInfoCache.tokenMap.put(url(), String(data))
+                    XRttInfoCache.tokenMap.put(originalRequest.url.host, String(data))
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    XRttInfoCache.sessionMap.put(url(), String(data))
+                    XRttInfoCache.sessionMap.put(originalRequest.url.host, String(data))
                 }
 
                 XquicMsgType.DESTROY.ordinal -> {
