@@ -42,7 +42,10 @@ class LongConnActivity : AppCompatActivity() {
             val timeSpace = SetCache.getTestSpace(applicationContext)
             launch = CoroutineScope(Dispatchers.Default).launch {
                 for (i in (1..testCount)) {
-                    webSocket.send(etContent.text.toString() + ",index=" + i)
+                    webSocket.send(
+                        etContent.text.toString() + ",index=" + i,
+                        System.currentTimeMillis().toString() //这里使用当前时间来做tag发送，是为了收到消息的时候计算耗时
+                    )
                     if (timeSpace > 0) {
                         delay(timeSpace * 1000L)
                     }
@@ -154,7 +157,13 @@ class LongConnActivity : AppCompatActivity() {
     }
 
     private fun parseResponse(response: XResponse) {
-        var content = String(response.xResponseBody.data)
+        var content = response.xResponseBody.body
+        val tag = response.xResponseBody.tag
+
+        var costTime = 0L
+        tag?.let {
+            costTime = System.currentTimeMillis() - tag.toLong()
+        }
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }
@@ -164,7 +173,7 @@ class LongConnActivity : AppCompatActivity() {
         )
 
         appendText(
-            "$content , status=" + response.getStatus()
+            "$content ,time=${costTime} ms, status=" + response.getStatus()
         )
     }
 

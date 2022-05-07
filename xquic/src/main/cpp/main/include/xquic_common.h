@@ -85,6 +85,7 @@ typedef struct xqc_cli_user_stream_s {
     size_t send_body_len;//发送的长度
     uint64_t send_offset;//已经发送的内容坐标
 
+    char user_tag[512];//用户标签
 
     size_t recv_body_len;
     char *recv_body;
@@ -508,14 +509,6 @@ typedef struct xqc_cli_user_conn_s {
 } xqc_cli_user_conn_t;
 
 
-inline uint64_t xqc_now() {
-    /* get microsecond unit time */
-    struct timeval tv;
-    gettimeofday(&tv, NULL);
-    uint64_t ul = tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
-    return ul;
-}
-
 /**
  * call back msg to client(Android/IOS)
  * @param user_conn
@@ -544,7 +537,7 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
  * @param user_conn
  * @param errMsg
  */
-inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data) {
+inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data,void* user_data) {
     xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
     if (user_callback) {
         int len = 0;
@@ -553,7 +546,7 @@ inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, ch
         }
         user_callback->user_data_callback.callback_data(
                 user_callback->user_data_callback.object_android, core,
-                data, len, NULL);
+                data, len, user_data);
     }
 }
 

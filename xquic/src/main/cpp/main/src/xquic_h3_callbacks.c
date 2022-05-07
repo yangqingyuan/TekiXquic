@@ -218,7 +218,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
              stats.send_body_size, stats.recv_body_size);
 
         /* call back to client */
-        callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body);
+        callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                user_stream->user_tag);
 
         /* auto to close request */
         int ret = xqc_h3_request_finish(h3_request);

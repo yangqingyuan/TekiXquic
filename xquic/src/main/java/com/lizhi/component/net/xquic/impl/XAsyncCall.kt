@@ -76,7 +76,7 @@ class XAsyncCall(
 
     private var executed = false
 
-    private val handle:Handler = object :Handler(Looper.getMainLooper()){
+    private val handle: Handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
             responseCallback?.onFailure(xCall, Exception("read time out"))
@@ -190,16 +190,12 @@ class XAsyncCall(
 
     }
 
-    override fun callBackData(ret: Int, data: ByteArray) {
+    override fun callBackData(ret: Int, data: String) {
 
         synchronized(isCallback) {
             if (isCallback) {
                 XLogUtils.warn(
-                    "is callback on need to callback again!! ret=${ret},data=${
-                        String(
-                            data
-                        )
-                    }"
+                    "is callback on need to callback again!! ret=${ret},data=${data}"
                 )
                 return@synchronized
             }
@@ -208,31 +204,30 @@ class XAsyncCall(
                 xResponse.code = ret
                 responseCallback?.onResponse(xCall, xResponse)
             } else {
-                val errMsg = String(data)
-                responseCallback?.onFailure(xCall, Exception(errMsg))
+                responseCallback?.onFailure(xCall, Exception(data))
             }
             isCallback = true
         }
     }
 
-    override fun callBackMessage(msgType: Int, data: ByteArray) {
+    override fun callBackMessage(msgType: Int, data: String) {
         XLogUtils.debug("callBackMessage msgType=$msgType")
 
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.INIT.ordinal -> {
                     try {
-                        clientCtx = String(data).toLong()
+                        clientCtx = data.toLong()
                     } catch (e: Exception) {
                         XLogUtils.error(e)
                     }
                 }
 
                 XquicMsgType.TOKEN.ordinal -> {
-                    XRttInfoCache.tokenMap.put(originalRequest.url.host, String(data))
+                    XRttInfoCache.tokenMap.put(originalRequest.url.host, data)
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    XRttInfoCache.sessionMap.put(originalRequest.url.host, String(data))
+                    XRttInfoCache.sessionMap.put(originalRequest.url.host, data)
                 }
 
                 XquicMsgType.DESTROY.ordinal -> {
@@ -240,11 +235,11 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TP.ordinal -> {
-                    XRttInfoCache.tpMap.put(url(), String(data))
+                    XRttInfoCache.tpMap.put(url(), data)
                 }
                 XquicMsgType.HEAD.ordinal -> {
                     try {
-                        val headJson = JSONObject(String(data))
+                        val headJson = JSONObject(data)
                         val xHeaderBuild = XHeaders.Builder()
                         for (key in headJson.keys()) {
                             xHeaderBuild.add(key, headJson.getString(key))

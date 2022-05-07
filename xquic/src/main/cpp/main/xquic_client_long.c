@@ -409,7 +409,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        callback_data_to_client(user_conn, XQC_ERROR, err_msg);
+        callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
     }
 }
 
@@ -535,18 +535,31 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
 
     /* get data from queue to create on or more request */
     while (!queue_empty(queue)) {
-        char *content = queue_front(queue);
+        char *data = queue_front(queue);
+        cJSON *json_data = cJSON_Parse(data);
+        char *content = cJSON_GetObjectItem(json_data, "send_body")->valuestring;
+        char *tag = cJSON_GetObjectItem(json_data, "user_tag")->valuestring;
+        cJSON_Delete(json_data);
         queue_pop(queue);
         xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
         user_stream->user_conn = user_conn;
+
+        if (tag != NULL && strlen(tag) != 0) {
+            memset(user_stream->user_tag, 0, 512);
+            strcpy(user_stream->user_tag, tag);//copy data
+        }
 
         if (content != NULL) {
             size_t content_len = strlen(content);
             user_stream->send_body = malloc(content_len);
             strcpy(user_stream->send_body, content);//copy data
             user_stream->send_body_len = content_len;
-            free(content);
         }
+
+        if (data != NULL) {
+            free(data);
+        }
+
         if (args->user_callback->max_recv_data_len > 0) {
             user_stream->recv_body_max_len = args->user_callback->max_recv_data_len;
         } else {
@@ -560,7 +573,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                         "xqc h3 request create error,please check network or retry,host=%s",
                         user_conn->ctx->args->net_cfg.host);
                 LOGE("%s", err_msg);
-                callback_data_to_client(user_conn, XQC_ERROR, err_msg);
+                callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
                 return;
             }
         } else {

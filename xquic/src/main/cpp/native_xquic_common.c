@@ -21,22 +21,21 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(I[B)V");
+    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(ILjava/lang/String;)V");
     if (!jmid) {
         LOGE("call back java error,can not find methodId callBackMessage");
         return;
     }
 
-    /* data to byteArray*/
-    jbyteArray dataBuf = (*env)->NewByteArray(env, (jsize) len);
-    (*env)->SetByteArrayRegion(env, dataBuf, 0, (jsize) len, (jbyte *) data);
+    /* data to jstring*/
+    jstring recv_body = (*env)->NewStringUTF(env,data);
 
     /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, dataBuf);
+    (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, recv_body);
 
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
-    (*env)->DeleteLocalRef(env, dataBuf);
+    (*env)->DeleteLocalRef(env, recv_body);
     (*env)->DeleteLocalRef(env, callbackClass);
 
     if (msg_type == MSG_TYPE_DESTROY) {//destroy global ref
@@ -63,23 +62,31 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData", "(I[B)V");
+    jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData", "(ILjava/lang/String;)V");
     if (!jm_id) {
         LOGE("call back error,can not find methodId callBackReadData");
         return -1;
     }
 
-    /* data to byteArray*/
-    jbyteArray dataBuf = (*env)->NewByteArray(env, (jsize) len);
-    (*env)->SetByteArrayRegion(env, dataBuf, 0, (jsize) len, (jbyte *) data);
+    cJSON *usr = cJSON_CreateObject();
+    cJSON_AddStringToObject(usr, "recv_body", data);
+    if (user_data != NULL) {
+        cJSON_AddStringToObject(usr, "tag", user_data);
+    }
+    char *json_data = cJSON_Print(usr);
+
+    /* data to jstring*/
+    jstring recv_body = (*env)->NewStringUTF(env,json_data);
 
     /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jm_id, core, dataBuf);
+    (*env)->CallVoidMethod(env, j_obj, jm_id, core, recv_body);
 
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
-    (*env)->DeleteLocalRef(env, dataBuf);
+    (*env)->DeleteLocalRef(env, recv_body);
     (*env)->DeleteLocalRef(env, callbackClass);
+    cJSON_Delete(usr);
+    free(json_data);
     return 0;
 }
 

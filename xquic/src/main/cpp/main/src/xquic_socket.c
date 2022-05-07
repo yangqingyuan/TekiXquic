@@ -137,7 +137,7 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
                                         addr_len, (xqc_msec_t) recv_time, user_conn);
         if (ret != XQC_OK) {
             LOGE("xqc_engine_packet_process error");
-            callback_data_to_client(user_conn, ret, "xqc_engine_packet_process error");
+            callback_data_to_client(user_conn, ret, "xqc_engine_packet_process error", NULL);
             return;
         }
 

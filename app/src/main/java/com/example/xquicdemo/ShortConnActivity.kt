@@ -167,7 +167,7 @@ class ShortConnActivity : AppCompatActivity() {
     }
 
     private fun parseResponse(startTime: Long, index: Int, xResponse: XResponse) {
-        var content: String = xResponse.xResponseBody.getData()
+        var content: String = xResponse.xResponseBody.body
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }

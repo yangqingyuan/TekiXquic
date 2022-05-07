@@ -110,9 +110,13 @@ class XRealWebSocket(
     class PingRunnable(private val xRealWebSocket: XRealWebSocket) : Runnable {
         override fun run() {
             if (xRealWebSocket.clientCtx <= 0 || xRealWebSocket.failed || xRealWebSocket.enqueuedClose) return
+            var pingBody = xRealWebSocket.pingListener.ping()
+            if (pingBody.length > 256) {
+                pingBody = "ping body ti too lang"
+            }
             xRealWebSocket.xquicLongNative.sendPing(
                 xRealWebSocket.clientCtx,
-                xRealWebSocket.pingListener.ping()
+                pingBody
             )
         }
     }
@@ -190,7 +194,7 @@ class XRealWebSocket(
             when (msg.msgType) {
                 Message.MSG_TYPE_SEND -> {//
                     if (clientCtx > 0 && !failed && !enqueuedClose) {
-                        when (xquicLongNative.send(clientCtx, msg.msgContent)) {
+                        when (xquicLongNative.send(clientCtx, msg.getContent())) {
                             XquicCallback.XQC_OK -> {
                                 synchronized(this) { queueSize -= msg.msgContent.length }
                             }
@@ -227,10 +231,17 @@ class XRealWebSocket(
     /**
      * message object
      */
-    class Message(var msgType: Int, var msgContent: String) {
+    class Message(var msgType: Int, var msgContent: String, var tag: String? = null) {
         companion object {
             const val MSG_TYPE_SEND = 0
             const val MSG_TYPE_CLOSE = 1
+        }
+
+        fun getContent(): String {
+            if (tag != null && tag!!.length > 512) {
+                return "{\"send_body\":\"$msgContent\",\"user_tag\":\"${"tag is too lang"}\"}"
+            }
+            return "{\"send_body\":\"$msgContent\",\"user_tag\":\"${tag ?: ""}\"}"
         }
     }
 
@@ -251,6 +262,11 @@ class XRealWebSocket(
      */
     @Synchronized
     override fun send(data: String): Boolean {
+        return send(data, "")
+    }
+
+    @Synchronized
+    override fun send(data: String, tag: String): Boolean {
         // Don't send new frames after we've failed or enqueued a close frame.
         if (!check()) return false
 
@@ -261,7 +277,7 @@ class XRealWebSocket(
         }
 
         queueSize += data.length
-        messageQueue.add(Message(Message.MSG_TYPE_SEND, data))
+        messageQueue.add(Message(Message.MSG_TYPE_SEND, data, tag))
 
         runWriter()
         return true
@@ -304,39 +320,39 @@ class XRealWebSocket(
      * callback data
      */
     @Synchronized
-    override fun callBackData(ret: Int, data: ByteArray) {
+    override fun callBackData(ret: Int, data: String) {
         if (ret == XquicCallback.XQC_OK) {
             xResponse.xResponseBody = XResponseBody(data)
             listener.onMessage(this, xResponse)
         } else {
             clientCtx = 0
             failed = true
-            val errMsg = String(data)
-            listener.onFailure(this, Exception(errMsg), xResponse)
+
+            listener.onFailure(this, Exception(data), xResponse)
         }
     }
 
     /**
      * call back message
      */
-    override fun callBackMessage(msgType: Int, data: ByteArray) {
+    override fun callBackMessage(msgType: Int, data: String) {
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.HANDSHAKE.ordinal -> {
                     listener.onOpen(this, xResponse)
                 }
                 XquicMsgType.TOKEN.ordinal -> {
-                    XRttInfoCache.tokenMap.put(xRequest.url.host, String(data))
+                    XRttInfoCache.tokenMap.put(xRequest.url.host, data)
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    XRttInfoCache.sessionMap.put(xRequest.url.host, String(data))
+                    XRttInfoCache.sessionMap.put(xRequest.url.host, data)
                 }
                 XquicMsgType.TP.ordinal -> {
-                    XRttInfoCache.tpMap.put(xRequest.url.host, String(data))
+                    XRttInfoCache.tpMap.put(xRequest.url.host, data)
                 }
                 XquicMsgType.HEAD.ordinal -> {
                     try {
-                        val headJson = JSONObject(String(data))
+                        val headJson = JSONObject(data)
                         val xHeaderBuild = XHeaders.Builder()
                         for (key in headJson.keys()) {
                             xHeaderBuild.add(key, headJson.getString(key))
@@ -347,7 +363,7 @@ class XRealWebSocket(
                     }
                 }
                 XquicMsgType.PING.ordinal -> {
-                    pingListener.pong(String(data))
+                    pingListener.pong(data)
                 }
                 XquicMsgType.DESTROY.ordinal -> {
                     close()
