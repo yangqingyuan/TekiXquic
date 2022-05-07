@@ -21,14 +21,20 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage", "(ILjava/lang/String;)V");
+    jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage",
+                                         "(ILjava/lang/String;)V");
     if (!jmid) {
         LOGE("call back java error,can not find methodId callBackMessage");
         return;
     }
 
     /* data to jstring*/
-    jstring recv_body = (*env)->NewStringUTF(env,data);
+    jstring recv_body;
+    if (data != NULL) {
+        recv_body = (*env)->NewStringUTF(env, data);
+    } else {
+        recv_body = (*env)->NewStringUTF(env, "");
+    }
 
     /* call back */
     (*env)->CallVoidMethod(env, j_obj, jmid, msg_type, recv_body);
@@ -62,7 +68,8 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
-    jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData", "(ILjava/lang/String;)V");
+    jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData",
+                                          "(ILjava/lang/String;)V");
     if (!jm_id) {
         LOGE("call back error,can not find methodId callBackReadData");
         return -1;
@@ -76,7 +83,7 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     char *json_data = cJSON_Print(usr);
 
     /* data to jstring*/
-    jstring recv_body = (*env)->NewStringUTF(env,json_data);
+    jstring recv_body = (*env)->NewStringUTF(env, json_data);
 
     /* call back */
     (*env)->CallVoidMethod(env, j_obj, jm_id, core, recv_body);

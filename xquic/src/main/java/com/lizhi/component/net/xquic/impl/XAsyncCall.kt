@@ -204,7 +204,7 @@ class XAsyncCall(
                 xResponse.code = ret
                 responseCallback?.onResponse(xCall, xResponse)
             } else {
-                responseCallback?.onFailure(xCall, Exception(data))
+                responseCallback?.onFailure(xCall, Exception(JSONObject(data).getString("recv_body")))
             }
             isCallback = true
         }

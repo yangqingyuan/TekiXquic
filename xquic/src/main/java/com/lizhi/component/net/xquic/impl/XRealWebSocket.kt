@@ -327,8 +327,7 @@ class XRealWebSocket(
         } else {
             clientCtx = 0
             failed = true
-
-            listener.onFailure(this, Exception(data), xResponse)
+            listener.onFailure(this, Exception(JSONObject(data).getString("recv_body")), xResponse)
         }
     }
 
