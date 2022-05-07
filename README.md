@@ -37,7 +37,7 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 第二步：导入sdk</br>
 ```
-implementation 'io.github.yangqingyuan:teki-quic:1.0.1.1-SNAPSHOT'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.1'
 ```
 
 # 版本更新
