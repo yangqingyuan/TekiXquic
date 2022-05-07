@@ -401,8 +401,8 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
         }
 
         if (rc != XQC_OK) {
-            LOGE("client idle callback,close conn error");
-            return;
+            LOGW("client idle callback,close conn error");
+            //return;
         }
 
         LOGW("socket idle timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",

@@ -50,7 +50,7 @@ class XquicClient {
     var writeTimeout: Int = 0
 
     /**
-     * unit second
+     * unit MILLISECONDS
      */
     var pingInterval: Long = 0L
 

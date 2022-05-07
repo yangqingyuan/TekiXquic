@@ -221,7 +221,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body);
 
         /* auto to close request */
-        int ret = xqc_h3_request_close(h3_request);
+        int ret = xqc_h3_request_finish(h3_request);
+        //int ret = xqc_h3_request_close(h3_request);
         LOGD("auto to call xqc_h3_request_close ret=%d", ret);
 
         if (user_stream->user_conn->ctx->args->net_cfg.conn_type == CONN_TYPE_SHORT) {

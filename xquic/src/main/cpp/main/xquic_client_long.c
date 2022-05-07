@@ -392,8 +392,8 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
         }
 
         if (rc != XQC_OK) {
-            LOGE("client idle callback,close conn error");
-            return;
+            LOGW("client idle callback,close conn error");
+            //return;
         }
 
         LOGW("socket idle timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
@@ -457,7 +457,8 @@ client_long_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_clie
     settings->cc_params.init_cwnd = 32;//拥塞窗口数
     settings->so_sndbuf = 1024 * 1024;//socket send  buf的大小
     settings->proto_version = XQC_VERSION_V1;
-    settings->init_idle_time_out = (args->net_cfg.conn_timeout + 1) * 1000;//xquic default 10s
+    settings->init_idle_time_out = (args->net_cfg.conn_timeout) * 1000;//xquic default 10s
+    settings->idle_time_out = (args->net_cfg.read_timeout) * 1000;//xquic default
     settings->spurious_loss_detect_on = 1;//散列丢失检测
     settings->keyupdate_pkt_threshold = args->quic_cfg.keyupdate_pkt_threshold;//单个 1-rtt 密钥的数据包限制，0 表示无限制
 }
