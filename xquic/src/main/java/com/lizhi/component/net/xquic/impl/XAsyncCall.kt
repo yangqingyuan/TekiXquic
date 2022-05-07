@@ -79,7 +79,7 @@ class XAsyncCall(
     private val handle:Handler = object :Handler(Looper.getMainLooper()){
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
-            responseCallback?.onFailure(xCall, Exception("time out"))
+            responseCallback?.onFailure(xCall, Exception("read time out"))
             cancel()
         }
     }
@@ -194,7 +194,7 @@ class XAsyncCall(
 
         synchronized(isCallback) {
             if (isCallback) {
-                XLogUtils.error(
+                XLogUtils.warn(
                     "is callback on need to callback again!! ret=${ret},data=${
                         String(
                             data

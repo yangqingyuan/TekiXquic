@@ -38,7 +38,7 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
-    callback_msg_to_client(user_conn->ctx->args,MSG_TYPE_HANDSHAKE,"handshake_finished",18);
+    callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_HANDSHAKE, "handshake_finished", 18);
     LOGD(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
 }
 
@@ -153,8 +153,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
 
         if (fin) {
             user_stream->recv_fin = 1;
-            LOGW("client_h3_request_read_notify fin");
-            return 0;
+            LOGW("client_h3_request_read_notify fin ,only recv header data,not body data !!");
+            goto finish;
         }
     }
 
@@ -169,7 +169,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
     //TODO 最好根据后端返回动态的调整
     if (user_stream->recv_body == NULL) {
         user_stream->recv_body = malloc(user_stream->recv_body_max_len);
-        memset(user_stream->recv_body,0,user_stream->recv_body_max_len);
+        memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
     }
     ssize_t read = 0;
     ssize_t read_sum = 0;
@@ -204,8 +204,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         LOGI("xqc h3 request recv body size %lu, fin:%d", user_stream->recv_body_len, fin);
     }
 
-    /* finish */
-    if (fin) {
+    finish:
+    if (fin) {  /* finish */
         user_stream->recv_fin = 1;
 
         xqc_request_stats_t stats;

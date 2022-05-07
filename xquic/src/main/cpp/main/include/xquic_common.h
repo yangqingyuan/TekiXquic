@@ -547,9 +547,13 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
 inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data) {
     xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
     if (user_callback) {
+        int len = 0;
+        if (data != NULL){
+            len = strlen(data);
+        }
         user_callback->user_data_callback.callback_data(
                 user_callback->user_data_callback.object_android, core,
-                data, strlen(data), NULL);
+                data, len, NULL);
     }
 }
 
