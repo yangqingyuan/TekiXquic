@@ -96,16 +96,16 @@ class XAsyncCall(
             .index(index)
             .build()
 
-        /*
-         * set timeout
-         */
-        if (xquicClient.readTimeout > 0) {
-            handle.sendEmptyMessageDelayed(index, xquicClient.readTimeout * 1000L)
-        }
     }
 
     fun executeOn(executorService: ExecutorService?) {
         assert(!Thread.holdsLock(xquicClient.dispatcher()))
+        /*
+       * set timeout
+       */
+        if (xquicClient.readTimeout > 0) {
+            handle.sendEmptyMessageDelayed(index, xquicClient.readTimeout * 1000L)
+        }
         var success = false
         try {
             executorService!!.execute(this)
@@ -120,8 +120,12 @@ class XAsyncCall(
         }
     }
 
+    private fun authority(): String {
+        return originalRequest.url.authority
+    }
+
     fun url(): String {
-        return originalRequest.url.getNewUrl()
+        return originalRequest.url.url
     }
 
     fun request(): XRequest {
@@ -156,13 +160,21 @@ class XAsyncCall(
         delayTime = startTime - createTime
         executed = true
         try {
-            XLogUtils.debug("=======> execute start index(${index})<========")
-            XLogUtils.debug(" url ${url()} ")
+            XLogUtils.debug("=======> execute start indexAA(${index})<========")
+            val url = originalRequest.url.getHostUrl(xquicClient.dns)
+            if (url.isNullOrBlank()) {
+                responseCallback?.onFailure(
+                    xCall,
+                    Exception("dns can not parse domain ${originalRequest.url.url} error")
+                )
+                return
+            }
+            XLogUtils.debug(" url $url ")
 
             val sendParamsBuilder = SendParams.Builder()
-                .setUrl(url())
-                .setToken(XRttInfoCache.tokenMap[originalRequest.url.host])
-                .setSession(XRttInfoCache.sessionMap[originalRequest.url.host])
+                .setUrl(url)
+                .setToken(XRttInfoCache.tokenMap[authority()])
+                .setSession(XRttInfoCache.sessionMap[authority()])
                 .setConnectTimeOut(xquicClient.connectTimeOut)
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
@@ -181,6 +193,8 @@ class XAsyncCall(
             clientCtx = 0L
             handle.removeMessages(index)
         } catch (e: Exception) {
+            e.printStackTrace()
+            XLogUtils.error(e)
             cancel()
         } finally {
             XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
@@ -199,12 +213,16 @@ class XAsyncCall(
                 )
                 return@synchronized
             }
+            handle.removeMessages(index)
             if (ret == XquicCallback.XQC_OK) {
                 xResponse.xResponseBody = XResponseBody(data)
                 xResponse.code = ret
                 responseCallback?.onResponse(xCall, xResponse)
             } else {
-                responseCallback?.onFailure(xCall, Exception(JSONObject(data).getString("recv_body")))
+                responseCallback?.onFailure(
+                    xCall,
+                    Exception(JSONObject(data).getString("recv_body"))
+                )
             }
             isCallback = true
         }
@@ -224,10 +242,10 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TOKEN.ordinal -> {
-                    XRttInfoCache.tokenMap.put(originalRequest.url.host, data)
+                    XRttInfoCache.tokenMap.put(authority(), data)
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    XRttInfoCache.sessionMap.put(originalRequest.url.host, data)
+                    XRttInfoCache.sessionMap.put(authority(), data)
                 }
 
                 XquicMsgType.DESTROY.ordinal -> {
@@ -235,7 +253,7 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TP.ordinal -> {
-                    XRttInfoCache.tpMap.put(url(), data)
+                    XRttInfoCache.tpMap.put(authority(), data)
                 }
                 XquicMsgType.HEAD.ordinal -> {
                     try {

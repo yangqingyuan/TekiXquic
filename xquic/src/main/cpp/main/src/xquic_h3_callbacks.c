@@ -39,7 +39,15 @@ void client_h3_conn_handshake_finished(xqc_h3_conn_t *h3_conn, void *user_data) 
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, &user_conn->cid);
     callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_HANDSHAKE, "handshake_finished", 18);
-    LOGD(">>>>>>>> 0rtt_flag:%d <<<<<<<<<", stats.early_data_flag);
+    char ortt_info[100] = {0};
+    char info[50] = "without 0-RTT";
+    if (stats.early_data_flag == XQC_0RTT_ACCEPT) {
+        strcpy(info, "0-RTT was accepted");
+    } else if (stats.early_data_flag == XQC_0RTT_REJECT) {
+        strcpy(info, "0-RTT was rejected");
+    }
+    sprintf(ortt_info, ">>>>>>>> 0rtt_flag:%d(%s)<<<<<<<<<", stats.early_data_flag, info);
+    LOGI("%s", ortt_info);
 }
 
 void client_h3_conn_ping_acked_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid,

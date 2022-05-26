@@ -1,5 +1,9 @@
 package com.lizhi.component.net.xquic.mode
 
+import com.lizhi.component.net.xquic.listener.XDns
+import com.lizhi.component.net.xquic.utils.IPUtils
+import com.lizhi.component.net.xquic.utils.XLogUtils
+
 /**
  * 作用:
  * 作者: yqy
@@ -8,6 +12,8 @@ package com.lizhi.component.net.xquic.mode
 class XHttpUrl {
 
     companion object {
+
+        private const val TAG = "XHttpUrl"
 
         private fun skipLeadingAsciiWhitespace(input: String, pos: Int, limit: Int): Int {
             for (i in pos until limit) {
@@ -71,7 +77,7 @@ class XHttpUrl {
      * sample:https://192.168.10.21:8443/test?gws_rd=ssl
      * host = 192.168.10.21
      */
-    lateinit var host: String
+    var host: String? = null
     lateinit var url: String
     var port: Int = 0
 
@@ -122,8 +128,11 @@ class XHttpUrl {
                 temp.split("/")
             }
             if (list.isNotEmpty()) {
-                xHttpUrl.host = list[0]
                 xHttpUrl.authority = list[0]
+                //if is ready ip
+                if (IPUtils.isIpv4(xHttpUrl.authority) || IPUtils.isIpv6(xHttpUrl.authority)) {
+                    xHttpUrl.host = list[0]
+                }
             } else {
                 throw IllegalArgumentException(
                     "Expected URL host url:$url"
@@ -131,7 +140,7 @@ class XHttpUrl {
             }
 
             /* parse port */
-            pos += xHttpUrl.host.length + 1
+            pos += xHttpUrl.authority.length + 1
             if (pos <= limit) {
                 list = url.substring(pos, limit).split("/")
                 if (list.isNotEmpty()) {
@@ -163,8 +172,22 @@ class XHttpUrl {
         }
     }
 
-    fun getNewUrl(): String {
-        return "$scheme://$host:$port$path"
+    /**
+     * use dns to get domain ip
+     */
+    fun getHostUrl(dns: XDns?): String? {
+        if (!host.isNullOrEmpty()) {
+            return "$scheme://$host:$port$path"
+        }
+        try {
+            val address = dns?.lookup(authority)
+            if (!address.isNullOrEmpty()) {
+                return "$scheme://${address[0].hostAddress}:$port$path"//get first one
+            }
+        } catch (e: Exception) {
+            XLogUtils.error(TAG, e)
+        }
+        return "$scheme://$authority:$port$path"
     }
 
     override fun toString(): String {

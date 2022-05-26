@@ -121,8 +121,8 @@ class XRealWebSocket(
         }
     }
 
-    fun url(): String {
-        return xRequest.url.getNewUrl()
+    private fun authority(): String {
+        return xRequest.url.authority
     }
 
     /**
@@ -156,35 +156,51 @@ class XRealWebSocket(
         }
         XLogUtils.debug("=======> connect start <========")
         executor.execute {
-            val sendParamsBuilder = SendParams.Builder()
-                .setUrl(url())
-                .setToken(XRttInfoCache.tokenMap[xRequest.url.host])
-                .setSession(XRttInfoCache.sessionMap[xRequest.url.host])
-                .setConnectTimeOut(xquicClient.connectTimeOut)
-                .setReadTimeOut(xquicClient.readTimeout)
-                .setMaxRecvLenght(1024 * 1024)
-                .setCCType(xquicClient.ccType)
 
-            sendParamsBuilder.setHeaders(parseHttpHeads())
+            try {
+                val url = xRequest.url.getHostUrl(xquicClient.dns)
+                if (url == null) {
+                    listener.onFailure(
+                        this,
+                        Exception("dns can not parse domain ${xRequest.url.url} error"),
+                        xResponse
+                    )
+                    return@execute
+                }
 
-            clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
-            if (clientCtx <= 0) {
-                listener.onFailure(this, java.lang.Exception("connect error"), xResponse)
-            } else {
-                /* 注意：这里是阻塞的 */
-                xquicLongNative.start(clientCtx)
+                val sendParamsBuilder = SendParams.Builder()
+                    .setUrl(url)
+                    .setToken(XRttInfoCache.tokenMap[authority()])
+                    .setSession(XRttInfoCache.sessionMap[authority()])
+                    .setConnectTimeOut(xquicClient.connectTimeOut)
+                    .setReadTimeOut(xquicClient.readTimeout)
+                    .setMaxRecvLenght(1024 * 1024)
+                    .setCCType(xquicClient.ccType)
+
+                sendParamsBuilder.setHeaders(parseHttpHeads())
+
+                clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
+                if (clientCtx <= 0) {
+                    listener.onFailure(this, java.lang.Exception("connect error"), xResponse)
+                } else {
+                    /* 注意：这里是阻塞的 */
+                    xquicLongNative.start(clientCtx)
+                }
+
+                /* 注意：阻塞结束说明已经内部已经结束了 */
+                executor.shutdownNow()
+
+                if (cancelOrClose == STATUS_CLOSE) {
+                    listener.onClosed(this, code, reason)
+                } else if (cancelOrClose == STATUS_CANCEL) {
+                    listener.onFailure(this, Throwable("cancel"), xResponse)
+                }
+
+            } catch (e: Exception) {
+                XLogUtils.error(e)
+            } finally {
+                XLogUtils.debug("=======> execute end <========")
             }
-
-            /* 注意：阻塞结束说明已经内部已经结束了 */
-            executor.shutdownNow()
-
-            if (cancelOrClose == STATUS_CLOSE) {
-                listener.onClosed(this, code, reason)
-            } else if (cancelOrClose == STATUS_CANCEL) {
-                listener.onFailure(this, Throwable("cancel"), xResponse)
-            }
-
-            XLogUtils.debug("=======> execute end <========")
         }
     }
 
@@ -341,13 +357,13 @@ class XRealWebSocket(
                     listener.onOpen(this, xResponse)
                 }
                 XquicMsgType.TOKEN.ordinal -> {
-                    XRttInfoCache.tokenMap.put(xRequest.url.host, data)
+                    XRttInfoCache.tokenMap.put(authority(), data)
                 }
                 XquicMsgType.SESSION.ordinal -> {
-                    XRttInfoCache.sessionMap.put(xRequest.url.host, data)
+                    XRttInfoCache.sessionMap.put(authority(), data)
                 }
                 XquicMsgType.TP.ordinal -> {
-                    XRttInfoCache.tpMap.put(xRequest.url.host, data)
+                    XRttInfoCache.tpMap.put(authority(), data)
                 }
                 XquicMsgType.HEAD.ordinal -> {
                     try {

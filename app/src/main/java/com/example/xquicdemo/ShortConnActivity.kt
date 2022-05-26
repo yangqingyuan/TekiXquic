@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
@@ -40,6 +39,7 @@ class ShortConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .setReadTimeOut(23) //TODO 未实现
             .writeTimeout(15)//TODO 未实现
+            //.dns(XDns.SYSTEM)
             .build()
 
         textView = findViewById(R.id.tv_result)

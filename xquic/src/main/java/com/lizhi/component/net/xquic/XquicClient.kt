@@ -3,13 +3,9 @@ package com.lizhi.component.net.xquic
 import com.lizhi.component.net.xquic.impl.XDispatcher
 import com.lizhi.component.net.xquic.impl.XRealCall
 import com.lizhi.component.net.xquic.impl.XRealWebSocket
-import com.lizhi.component.net.xquic.listener.XCall
-import com.lizhi.component.net.xquic.listener.XInterceptor
-import com.lizhi.component.net.xquic.listener.XPingListener
-import com.lizhi.component.net.xquic.listener.XWebSocketListener
+import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.CCType
-import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.util.*
 
 /**
@@ -59,6 +55,12 @@ class XquicClient {
      */
     var ccType = CCType.CUBIC
 
+    /**
+     * dns
+     */
+    var dns: XDns? = null
+
+
     private val dispatcher by lazy { XDispatcher() }
 
     /**
@@ -75,7 +77,6 @@ class XquicClient {
      * ping listener
      */
     private var pingListener = DEFAULT_PING_LISTENER
-
 
     class Builder {
         private val xquicClient = XquicClient()
@@ -109,12 +110,17 @@ class XquicClient {
             return this
         }
 
+        fun dns(xDns: XDns):Builder {
+            xquicClient.dns = xDns
+            return this
+        }
+
         fun addInterceptor(xInterceptor: XInterceptor): Builder {
             xquicClient.interceptors.add(xInterceptor)
             return this
         }
 
-        fun addPingListener(pingListener: XPingListener):Builder {
+        fun addPingListener(pingListener: XPingListener): Builder {
             xquicClient.pingListener = pingListener
             return this
         }

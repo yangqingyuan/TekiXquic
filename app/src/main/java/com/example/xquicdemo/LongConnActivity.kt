@@ -4,7 +4,6 @@ import android.annotation.SuppressLint
 import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.view.View
 import android.widget.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XPingListener
@@ -73,6 +72,7 @@ class LongConnActivity : AppCompatActivity() {
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
             .ccType(SetCache.getCCType(applicationContext))
             .pingInterval(5000)//
+            //.dns(XDns.SYSTEM)
             .addPingListener(object : XPingListener {
                 //可选
                 override fun ping(): String {
