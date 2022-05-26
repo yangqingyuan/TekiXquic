@@ -9,7 +9,7 @@ class XquicLongNative {
         XquicLoader.loadLib()
     }
 
-
+    
     /**
      * 链接
      * return 返回的是clientCtx的指针地址，为其他函数提供入参
@@ -18,6 +18,7 @@ class XquicLongNative {
         param: SendParams,
         xquicCallback: XquicCallback
     ): Long
+
 
     /**
      * 开始
@@ -33,6 +34,13 @@ class XquicLongNative {
      * 发送数据
      */
     external fun send(clientCtx: Long, content: String): Int
+
+
+    /**
+     * 发送带头的
+     */
+    external fun send(clientCtx: Long, headers: HashMap<String, String>, content: String): Int
+
 
     /**
      * 取消

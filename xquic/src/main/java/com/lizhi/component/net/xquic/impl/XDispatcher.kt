@@ -1,6 +1,7 @@
 package com.lizhi.component.net.xquic.impl
 
 import com.lizhi.component.net.xquic.listener.XCall
+import com.lizhi.component.net.xquic.listener.XRunnable
 import java.util.*
 import java.util.concurrent.*
 
@@ -19,10 +20,10 @@ class XDispatcher {
     private var executorService: ExecutorService? = null
 
     /** Ready async calls in the order they'll be run.  */
-    private val readyAsyncCalls: Deque<XAsyncCall> = ArrayDeque()
+    private val readyAsyncCalls: Deque<XRunnable> = ArrayDeque()
 
     /** Running asynchronous calls. Includes canceled calls that haven't finished yet.  */
-    private val runningAsyncCalls: Deque<XAsyncCall> = ArrayDeque()
+    private val runningAsyncCalls: Deque<XRunnable> = ArrayDeque()
 
     /** Running synchronous calls. Includes canceled calls that haven't finished yet.  */
     private val runningSyncCalls: Deque<XRealCall> = ArrayDeque()
@@ -41,13 +42,13 @@ class XDispatcher {
         if (executorService == null) {
             executorService = ThreadPoolExecutor(
                 0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-                SynchronousQueue<Runnable>(), threadFactory("OkHttp Dispatcher", false)
+                SynchronousQueue(), threadFactory("OkHttp Dispatcher", false)
             )
         }
         return executorService
     }
 
-    fun enqueue(xAsyncCall: XAsyncCall) {
+    fun enqueue(xAsyncCall: XRunnable) {
         synchronized(this) {
             readyAsyncCalls.add(xAsyncCall)
         }
@@ -57,12 +58,12 @@ class XDispatcher {
 
     private fun promoteAndExecute(): Boolean {
         assert(!Thread.holdsLock(this))
-        val executableCalls: MutableList<XAsyncCall> = ArrayList<XAsyncCall>()
+        val executableCalls: MutableList<XRunnable> = ArrayList<XRunnable>()
         var isRunning: Boolean
         synchronized(this) {
-            val i: MutableIterator<XAsyncCall> = readyAsyncCalls.iterator()
+            val i: MutableIterator<XRunnable> = readyAsyncCalls.iterator()
             while (i.hasNext()) {
-                val asyncCall: XAsyncCall = i.next()
+                val asyncCall: XRunnable = i.next()
                 if (runningAsyncCalls.size >= maxRequests) break // Max capacity.
                 if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) {
                     continue  // Host max capacity.
@@ -76,14 +77,14 @@ class XDispatcher {
         var i = 0
         val size = executableCalls.size
         while (i < size) {
-            val asyncCall: XAsyncCall = executableCalls[i]
+            val asyncCall: XRunnable = executableCalls[i]
             asyncCall.executeOn(executorService())
             i++
         }
         return isRunning
     }
 
-    private fun runningCallsForHost(call: XAsyncCall): Int {
+    private fun runningCallsForHost(call: XRunnable): Int {
         var result = 0
         for (c in runningAsyncCalls) {
             if (c.url() == call.url()) result++
@@ -125,16 +126,16 @@ class XDispatcher {
         return runningAsyncCalls.size + runningSyncCalls.size
     }
 
-    fun finished(xAsyncCall: XAsyncCall) {
-        if (runningAsyncCalls.contains(xAsyncCall)) {
-            finished(runningAsyncCalls, xAsyncCall)
+    fun finished(xRunnable: XRunnable) {
+        if (runningAsyncCalls.contains(xRunnable)) {
+            finished(runningAsyncCalls, xRunnable)
         } else {
             //移除没有执行的
-            readyAsyncCalls.remove(xAsyncCall)
+            readyAsyncCalls.remove(xRunnable)
         }
     }
 
-
+    
     private fun <T> finished(calls: Deque<T>, call: T) {
         var idleCallback: Runnable?
         synchronized(this) {

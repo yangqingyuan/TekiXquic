@@ -109,7 +109,7 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
-            .url(url)
+            .url("$url&index=$index")
             .get(xRequestBody) //Default
             //.addHeader("testA", "testA")
             //.addHeader("Keep-Alive", "timeout=300, max=1000")

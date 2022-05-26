@@ -6,6 +6,7 @@ import androidx.lifecycle.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
+import com.lizhi.component.net.xquic.listener.XRunnable
 import com.lizhi.component.net.xquic.mode.XRequest
 
 /**
@@ -16,7 +17,7 @@ import com.lizhi.component.net.xquic.mode.XRequest
 class XRealCall : XCall {
     lateinit var xquicClient: XquicClient
     lateinit var originalRequest: XRequest
-    lateinit var asyncCall: XAsyncCall
+    lateinit var asyncCall: XRunnable
 
     // Guarded by this.
     private var executed = false
@@ -60,7 +61,11 @@ class XRealCall : XCall {
             check(!executed) { "Already Executed" }
             executed = true
         }
-        asyncCall = XAsyncCall(this, xquicClient, originalRequest, xCallback)
+        asyncCall = if (xquicClient.reUse) {//if reuse
+            XAsyncCallReuse(this, xquicClient, originalRequest, xCallback, XConnectionPool.get(originalRequest))
+        } else {
+            XAsyncCall(this, xquicClient, originalRequest, xCallback)
+        }
         xquicClient.dispatcher()
             .enqueue(asyncCall)
     }

@@ -60,6 +60,11 @@ class XquicClient {
      */
     var dns: XDns? = null
 
+    /**
+     * 是否复用
+     */
+    var reUse: Boolean = false
+
 
     private val dispatcher by lazy { XDispatcher() }
 
@@ -110,7 +115,7 @@ class XquicClient {
             return this
         }
 
-        fun dns(xDns: XDns):Builder {
+        fun dns(xDns: XDns): Builder {
             xquicClient.dns = xDns
             return this
         }
@@ -122,6 +127,11 @@ class XquicClient {
 
         fun addPingListener(pingListener: XPingListener): Builder {
             xquicClient.pingListener = pingListener
+            return this
+        }
+
+        fun reUser(): Builder {
+            xquicClient.reUse = true
             return this
         }
 

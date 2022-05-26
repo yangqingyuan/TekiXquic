@@ -1,28 +1,17 @@
 package com.lizhi.component.net.xquic.impl
 
-import android.os.Handler
-import android.os.Looper
-import android.os.Message
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
 import com.lizhi.component.net.xquic.native.SendParams
 import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicMsgType
-import com.lizhi.component.net.xquic.native.XquicShortNative
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
-import java.io.InterruptedIOException
 import java.lang.Exception
-import java.util.*
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.RejectedExecutionException
-import java.util.concurrent.atomic.AtomicInteger
-import kotlin.collections.HashMap
 
 
 /**
@@ -35,125 +24,7 @@ class XAsyncCall(
     private var xquicClient: XquicClient,
     private var originalRequest: XRequest,
     private var responseCallback: XCallBack? = null
-) : XNamedRunnable(), XquicCallback {
-
-    companion object {
-        /**
-         * create index
-         */
-        private val atomicInteger = AtomicInteger()
-    }
-
-    private var index = 0
-    private var createTime = System.currentTimeMillis()
-
-    /**
-     * queue delay time
-     */
-    private var delayTime = 0L
-
-    /**
-     * isCallback
-     */
-    private var isCallback = false
-
-    /**
-     * xResponse
-     */
-    private var xResponse: XResponse
-
-    /**
-     * is finish
-     */
-    private var isFinish = false
-
-    /**
-     * short native
-     */
-    private val xquicShortNative = XquicShortNative()
-
-    private var clientCtx: Long = 0L
-
-    private var executed = false
-
-    private val handle: Handler = object : Handler(Looper.getMainLooper()) {
-        override fun handleMessage(msg: Message) {
-            super.handleMessage(msg)
-            responseCallback?.onFailure(xCall, Exception("read time out"))
-            cancel()
-        }
-    }
-
-
-    init {
-        index = atomicInteger.incrementAndGet()
-        name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
-
-        xResponse = XResponse.Builder()
-            .headers(originalRequest.headers.build())
-            .request(originalRequest)
-            .delayTime(delayTime)
-            .index(index)
-            .build()
-
-    }
-
-    fun executeOn(executorService: ExecutorService?) {
-        assert(!Thread.holdsLock(xquicClient.dispatcher()))
-        /*
-       * set timeout
-       */
-        if (xquicClient.readTimeout > 0) {
-            handle.sendEmptyMessageDelayed(index, xquicClient.readTimeout * 1000L)
-        }
-        var success = false
-        try {
-            executorService!!.execute(this)
-            success = true
-        } catch (e: RejectedExecutionException) {
-            val ioException = InterruptedIOException("executor rejected")
-            ioException.initCause(e)
-        } finally {
-            if (!success) {
-                xquicClient.dispatcher().finished(this) // This call is no longer running!
-            }
-        }
-    }
-
-    private fun authority(): String {
-        return originalRequest.url.authority
-    }
-
-    fun url(): String {
-        return originalRequest.url.url
-    }
-
-    fun request(): XRequest {
-        return originalRequest
-    }
-
-    /**
-     * parse http heads
-     * more headers "https://zhuanlan.zhihu.com/p/282737965"
-     */
-    private fun parseHttpHeads(): HashMap<String, String> {
-        /* set headers */
-        val headers = hashMapOf<String, String>()
-        headers[":method"] = originalRequest.method
-        headers[":scheme"] = originalRequest.url.scheme
-        headers[":authority"] = originalRequest.url.authority
-        originalRequest.url.path?.let {
-            headers[":path"] = it
-        }
-
-        headers.putAll(originalRequest.headers.build().headersMap)
-        originalRequest.body?.let {
-            val body = it
-            headers["content-type"] = body.mediaType.mediaType
-            headers["content-length"] = body.content.length.toString()
-        }
-        return headers
-    }
+) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback), XquicCallback {
 
     override fun execute() {
         val startTime = System.currentTimeMillis()
@@ -274,12 +145,8 @@ class XAsyncCall(
         }
     }
 
-    fun get(): XCall {
-        return xCall
-    }
-
-    fun cancel() {
-        handle.removeMessages(index)
+    override fun cancel() {
+        super.cancel()
         if (!isFinish && clientCtx > 0) {
             xquicShortNative.cancel(clientCtx)
         }
