@@ -53,11 +53,11 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.1'
   val xquicClient = XquicClient.Builder()
         .connectTimeOut(13)
         .setReadTimeOut(30)
-        .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
         .ccType(CCType.BBR) //可选，拥塞算法
         .build()
     val xRequest = XRequest.Builder()
         .url("https://192.168.10.245:8443")
+        .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
         .addHeader("testA", "testA")// 可选，携带自定义头信息
         .get() //Default
         .tag("tag")//可选
@@ -81,13 +81,13 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.1'
 val xquicClient = XquicClient.Builder()
     .connectTimeOut(13)
     .setReadTimeOut(30)
-    .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
     .ccType(CCType.BBR) //可选，拥塞算法
     .build()
 
 val xRequestBody =XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), "test")
 val xRequest = XRequest.Builder()
     .url("https://192.168.10.245:8443")
+    .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
     .addHeader("testA", "testA")// 可选，携带自定义头信息
     .post(xRequestBody)
     .tag("tag")//可选
