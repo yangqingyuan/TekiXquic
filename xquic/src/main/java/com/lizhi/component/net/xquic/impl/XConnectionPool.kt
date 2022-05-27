@@ -1,6 +1,7 @@
 package com.lizhi.component.net.xquic.impl
 
 import com.lizhi.component.net.xquic.mode.XRequest
+import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -90,6 +91,7 @@ class XConnectionPool(
                 return -1
             }
         }
+        //XLogUtils.error("remove longestIdleConnection")
         longestIdleConnection?.close()
         // Cleanup again immediately.
         return 0
@@ -97,7 +99,6 @@ class XConnectionPool(
 
     fun get(request: XRequest): XConnection? {
         synchronized(this) {
-            assert(Thread.holdsLock(this))
             for (connection in connections) {
                 if (connection.isEligible(request)) {
                     return connection
@@ -110,7 +111,6 @@ class XConnectionPool(
 
     fun put(connection: XConnection) {
         synchronized(this) {
-            assert(Thread.holdsLock(this))
             if (!cleanupRunning) {
                 cleanupRunning = true
                 xDispatcher.executorService()?.execute(cleanupRunnable)

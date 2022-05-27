@@ -4,7 +4,6 @@ import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.native.SendParams
 import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
@@ -20,6 +19,10 @@ class XAsyncCallReuse(
     private var originalRequest: XRequest,
     private var responseCallback: XCallBack? = null,
 ) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback), XquicCallback {
+
+    companion object {
+        const val TAG = "XAsyncCallReuse"
+    }
 
     override fun execute() {
         val startTime = System.currentTimeMillis()
@@ -37,27 +40,15 @@ class XAsyncCallReuse(
             }
             XLogUtils.debug(" url $url ")
 
-            val sendParamsBuilder = SendParams.Builder()
-                .setUrl(url)
-                .setToken(XRttInfoCache.tokenMap[authority()])
-                .setSession(XRttInfoCache.sessionMap[authority()])
-                .setConnectTimeOut(xquicClient.connectTimeOut)
-                .setReadTimeOut(xquicClient.readTimeout)
-                .setMaxRecvLenght(1024 * 1024)
-                .setCCType(xquicClient.ccType)
-
-            sendParamsBuilder.setHeaders(parseHttpHeads())
-
-            originalRequest.body?.let {
-                sendParamsBuilder.setContent(it.content)
+            var connection: XConnection?
+            synchronized(TAG) {
+                connection = xquicClient.connectionPool().get(originalRequest)
+                if (connection == null) {
+                    connection = XConnection(xquicClient, originalRequest, xCall)
+                    xquicClient.connectionPool().put(connection!!) //add to pool
+                }
             }
-
-            var connection = xquicClient.connectionPool().get(originalRequest)
-            if (connection == null) {
-                connection = XConnection(originalRequest, xquicClient.dispatcher())
-                xquicClient.connectionPool().put(connection) //add to pool
-            }
-            connection.send(sendParamsBuilder.build(), this)
+            connection!!.send(index.toString(), originalRequest.body?.content, responseCallback)
 
             handle.removeMessages(index)
         } catch (e: Exception) {

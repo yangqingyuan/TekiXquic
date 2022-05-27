@@ -100,8 +100,10 @@ class XRealWebSocket(
     }
 
     private fun runWriter() {
-        assert(Thread.holdsLock(this))
-        executor.execute(writerRunnable)
+        synchronized(this) {
+            assert(Thread.holdsLock(this))
+            executor.execute(writerRunnable)
+        }
     }
 
     /**
@@ -247,7 +249,11 @@ class XRealWebSocket(
     /**
      * message object
      */
-    internal class Message(var msgType: Int, var msgContent: String, var tag: String? = null) {
+    class Message(
+        var msgType: Int = MSG_TYPE_SEND,
+        var msgContent: String,
+        var tag: String? = null
+    ) {
         companion object {
             const val MSG_TYPE_SEND = 0
             const val MSG_TYPE_CLOSE = 1
@@ -295,6 +301,20 @@ class XRealWebSocket(
         queueSize += data.length
         messageQueue.add(Message(Message.MSG_TYPE_SEND, data, tag))
 
+        runWriter()
+        return true
+    }
+
+    override fun send(message: Message): Boolean {
+        if (!check()) return false
+
+        // If this frame overflows the buffer, reject it and close the web socket.
+        if (queueSize + message.msgContent.length > MAX_QUEUE_SIZE) {
+            close()
+            return false
+        }
+        queueSize += message.msgContent.length
+        messageQueue.add(message)
         runWriter()
         return true
     }
