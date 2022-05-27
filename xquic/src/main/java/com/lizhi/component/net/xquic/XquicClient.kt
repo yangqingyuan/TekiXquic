@@ -1,5 +1,6 @@
 package com.lizhi.component.net.xquic
 
+import com.lizhi.component.net.xquic.impl.XConnectionPool
 import com.lizhi.component.net.xquic.impl.XDispatcher
 import com.lizhi.component.net.xquic.impl.XRealCall
 import com.lizhi.component.net.xquic.impl.XRealWebSocket
@@ -79,6 +80,11 @@ class XquicClient {
     private val networkInterceptors by lazy { mutableListOf<XInterceptor>() }
 
     /**
+     * 链接管理
+     */
+    private lateinit var xConnectionPool: XConnectionPool
+
+    /**
      * ping listener
      */
     private var pingListener = DEFAULT_PING_LISTENER
@@ -132,7 +138,14 @@ class XquicClient {
 
         fun reUser(): Builder {
             xquicClient.reUse = true
+            xquicClient.xConnectionPool = XConnectionPool()
+            xquicClient.xConnectionPool.setDispatcher(xquicClient.dispatcher)
             return this
+        }
+
+        fun connectionPool(xConnectionPool: XConnectionPool) {
+            xquicClient.xConnectionPool = xConnectionPool
+            xquicClient.xConnectionPool.setDispatcher(xquicClient.dispatcher)
         }
 
         fun addNetworkInterceptor(xInterceptor: XInterceptor): Builder {
@@ -149,6 +162,9 @@ class XquicClient {
         return dispatcher
     }
 
+    fun connectionPool(): XConnectionPool {
+        return xConnectionPool
+    }
 
     /**
      * new webSocket

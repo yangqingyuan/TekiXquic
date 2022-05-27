@@ -5,6 +5,7 @@ import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.SendParams
+import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
 
@@ -18,15 +19,14 @@ class XAsyncCallReuse(
     private var xquicClient: XquicClient,
     private var originalRequest: XRequest,
     private var responseCallback: XCallBack? = null,
-    private var connection: XConnection? = null
-) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback) {
+) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback), XquicCallback {
 
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
         executed = true
         try {
-            XLogUtils.debug("=======> execute start indexAA(${index})<========")
+            XLogUtils.debug("=======> execute start index(${index})<========")
             val url = originalRequest.url.getHostUrl(xquicClient.dns)
             if (url.isNullOrBlank()) {
                 responseCallback?.onFailure(
@@ -52,11 +52,12 @@ class XAsyncCallReuse(
                 sendParamsBuilder.setContent(it.content)
             }
 
+            var connection = xquicClient.connectionPool().get(originalRequest)
             if (connection == null) {
-                connection = XConnection()
-                XConnectionPool.put(connection!!)
+                connection = XConnection(originalRequest, xquicClient.dispatcher())
+                xquicClient.connectionPool().put(connection) //add to pool
             }
-            connection?.send(sendParamsBuilder.build())
+            connection.send(sendParamsBuilder.build(), this)
 
             handle.removeMessages(index)
         } catch (e: Exception) {

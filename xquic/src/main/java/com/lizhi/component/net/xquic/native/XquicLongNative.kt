@@ -39,7 +39,7 @@ class XquicLongNative {
     /**
      * 发送带头的
      */
-    external fun send(clientCtx: Long, headers: HashMap<String, String>, content: String): Int
+    external fun send(clientCtx: Long, param: SendParams): Int
 
 
     /**

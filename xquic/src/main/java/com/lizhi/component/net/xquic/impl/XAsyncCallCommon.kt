@@ -7,10 +7,14 @@ import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.listener.XRunnable
+import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
-import com.lizhi.component.net.xquic.native.XquicShortNative
+import com.lizhi.component.net.xquic.mode.XResponseBody
+import com.lizhi.component.net.xquic.native.XquicCallback
+import com.lizhi.component.net.xquic.native.XquicMsgType
 import com.lizhi.component.net.xquic.utils.XLogUtils
+import org.json.JSONObject
 import java.io.InterruptedIOException
 import java.lang.Exception
 import java.util.*
@@ -28,7 +32,7 @@ abstract class XAsyncCallCommon(
     private var xquicClient: XquicClient,
     private var originalRequest: XRequest,
     private var responseCallback: XCallBack? = null
-) : Runnable, XRunnable {
+) : Runnable, XRunnable, XquicCallback {
     var name: String? = null
 
     override fun run() {
@@ -43,6 +47,8 @@ abstract class XAsyncCallCommon(
 
 
     companion object {
+        private const val TAG = "XAsyncCallCommon"
+
         /**
          * create index
          */
@@ -73,11 +79,6 @@ abstract class XAsyncCallCommon(
      * is finish
      */
     var isFinish = false
-
-    /**
-     * short native
-     */
-    val xquicShortNative = XquicShortNative()
 
     var clientCtx: Long = 0L
 
@@ -164,5 +165,75 @@ abstract class XAsyncCallCommon(
 
     override fun cancel() {
         handle.removeMessages(index)
+        if (!executed) {
+            xquicClient.dispatcher().finished(this)
+        }
+    }
+
+    override fun callBackData(ret: Int, data: String) {
+        synchronized(isCallback) {
+            if (isCallback) {
+                XLogUtils.warn(
+                    "is callback on need to callback again!! ret=${ret},data=${data}"
+                )
+                return@synchronized
+            }
+            handle.removeMessages(index)
+            if (ret == XquicCallback.XQC_OK) {
+                xResponse.xResponseBody = XResponseBody(data)
+                xResponse.code = ret
+                responseCallback?.onResponse(xCall, xResponse)
+            } else {
+                responseCallback?.onFailure(
+                    xCall,
+                    Exception(JSONObject(data).getString("recv_body"))
+                )
+            }
+            isCallback = true
+        }
+    }
+
+    override fun callBackMessage(msgType: Int, data: String) {
+        synchronized(this) {
+            when (msgType) {
+                XquicMsgType.INIT.ordinal -> {
+                    try {
+                        clientCtx = data.toLong()
+                    } catch (e: Exception) {
+                        XLogUtils.error(e)
+                    }
+                }
+
+                XquicMsgType.TOKEN.ordinal -> {
+                    XRttInfoCache.tokenMap.put(authority(), data)
+                }
+                XquicMsgType.SESSION.ordinal -> {
+                    XRttInfoCache.sessionMap.put(authority(), data)
+                }
+
+                XquicMsgType.DESTROY.ordinal -> {
+                    clientCtx = 0L
+                }
+
+                XquicMsgType.TP.ordinal -> {
+                    XRttInfoCache.tpMap.put(authority(), data)
+                }
+                XquicMsgType.HEAD.ordinal -> {
+                    try {
+                        val headJson = JSONObject(data)
+                        val xHeaderBuild = XHeaders.Builder()
+                        for (key in headJson.keys()) {
+                            xHeaderBuild.add(key, headJson.getString(key))
+                        }
+                        xResponse.xHeaders = xHeaderBuild.build()
+                    } catch (e: Exception) {
+                        XLogUtils.error(e)
+                    }
+                }
+                else -> {
+                    //XLogUtils.error("un know callback msg")
+                }
+            }
+        }
     }
 }

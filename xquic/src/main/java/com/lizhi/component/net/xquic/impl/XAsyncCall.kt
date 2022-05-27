@@ -9,6 +9,7 @@ import com.lizhi.component.net.xquic.mode.XResponseBody
 import com.lizhi.component.net.xquic.native.SendParams
 import com.lizhi.component.net.xquic.native.XquicCallback
 import com.lizhi.component.net.xquic.native.XquicMsgType
+import com.lizhi.component.net.xquic.native.XquicShortNative
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
 import java.lang.Exception
@@ -25,6 +26,10 @@ class XAsyncCall(
     private var originalRequest: XRequest,
     private var responseCallback: XCallBack? = null
 ) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback), XquicCallback {
+    /**
+     * short native
+     */
+    val xquicShortNative = XquicShortNative()
 
     override fun execute() {
         val startTime = System.currentTimeMillis()
@@ -149,10 +154,6 @@ class XAsyncCall(
         super.cancel()
         if (!isFinish && clientCtx > 0) {
             xquicShortNative.cancel(clientCtx)
-        }
-
-        if (!executed) {
-            xquicClient.dispatcher().finished(this)
         }
     }
 

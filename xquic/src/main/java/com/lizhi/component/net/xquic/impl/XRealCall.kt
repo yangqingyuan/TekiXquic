@@ -62,7 +62,12 @@ class XRealCall : XCall {
             executed = true
         }
         asyncCall = if (xquicClient.reUse) {//if reuse
-            XAsyncCallReuse(this, xquicClient, originalRequest, xCallback, XConnectionPool.get(originalRequest))
+            XAsyncCallReuse(
+                this,
+                xquicClient,
+                originalRequest,
+                xCallback
+            )
         } else {
             XAsyncCall(this, xquicClient, originalRequest, xCallback)
         }

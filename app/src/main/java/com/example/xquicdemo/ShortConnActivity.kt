@@ -40,6 +40,7 @@ class ShortConnActivity : AppCompatActivity() {
             .setReadTimeOut(23) //TODO 未实现
             .writeTimeout(15)//TODO 未实现
             //.dns(XDns.SYSTEM)
+            .reUser()
             .build()
 
         textView = findViewById(R.id.tv_result)

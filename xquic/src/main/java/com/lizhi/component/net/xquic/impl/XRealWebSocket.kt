@@ -247,7 +247,7 @@ class XRealWebSocket(
     /**
      * message object
      */
-    class Message(var msgType: Int, var msgContent: String, var tag: String? = null) {
+    internal class Message(var msgType: Int, var msgContent: String, var tag: String? = null) {
         companion object {
             const val MSG_TYPE_SEND = 0
             const val MSG_TYPE_CLOSE = 1
