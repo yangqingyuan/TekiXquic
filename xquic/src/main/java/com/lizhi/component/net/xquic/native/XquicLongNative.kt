@@ -9,7 +9,7 @@ class XquicLongNative {
         XquicLoader.loadLib()
     }
 
-    
+
     /**
      * 链接
      * return 返回的是clientCtx的指针地址，为其他函数提供入参
@@ -38,8 +38,9 @@ class XquicLongNative {
 
     /**
      * 发送带头的
+     * 用于复用链接
      */
-    external fun send(clientCtx: Long, param: SendParams): Int
+    external fun sendWithHead(clientCtx: Long, param: SendParams, content: String): Int
 
 
     /**

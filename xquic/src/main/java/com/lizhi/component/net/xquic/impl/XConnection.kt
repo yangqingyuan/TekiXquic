@@ -34,12 +34,18 @@ class XConnection(val xRequest: XRequest, private val xDispatcher: XDispatcher) 
 
 
     fun send(params: SendParams, xCallBack: XquicCallback) {
-        xCallBackList.add(xCallBack)
-        if (isLive) {
-            XLogUtils.error("send ")
-            xquicLongNative.send(clientCtx, Message("adb").getContent())
-        } else {
-            startConnect(params)
+        synchronized(this) {
+            xCallBackList.add(xCallBack)
+            params.content = if (params.content.isNullOrEmpty()) {
+                Message("test").getContent()
+            } else {
+                Message(params.content!!).getContent()
+            }
+            if (isLive && clientCtx > 0) {
+                xquicLongNative.sendWithHead(clientCtx, params, params.content!!)
+            } else {
+                startConnect(params)
+            }
         }
     }
 
@@ -53,7 +59,7 @@ class XConnection(val xRequest: XRequest, private val xDispatcher: XDispatcher) 
                     /* 注意：这里是阻塞的 */
                     isLive = true
                     xquicLongNative.start(clientCtx)
-                    //clientCtx = 0
+                    clientCtx = 0
                 }
             } catch (e: Exception) {
                 XLogUtils.error(e)

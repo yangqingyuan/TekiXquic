@@ -948,6 +948,44 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
 }
 
 /**
+ * 带头的方式
+ * @param ctx
+ * @param headers
+ * @param content
+ * @return
+ */
+int client_long_send_with_head(xqc_cli_ctx_t *ctx, xqc_http_header_t *headers, int headers_size,
+                               const char *content) {
+    DEBUG;
+    if (ctx == NULL || ctx->active <= 0) {
+        LOGE("client long send error:  ctx = %p,active = %d ", ctx, ctx->active);
+        return -2;
+    }
+
+    size_t len = strlen(content);
+
+    /* call method client_task_schedule_callback */
+    ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;
+    char *data = malloc(len);
+    memset(data, 0, len);
+    strcpy(data, content);
+
+    pthread_mutex_lock(ctx->mutex);
+
+    ctx->args->user_callback->h3_hdrs.headers = headers;
+    ctx->args->user_callback->h3_hdrs.count = headers_size;
+    /* push to queue */
+    queue_push(&ctx->msg_data.queue, data);
+
+    /* notify send */
+    ev_async_send(ctx->eb, &ctx->ev_task);
+
+    pthread_mutex_unlock(ctx->mutex);
+    return 0;
+}
+
+
+/**
  * 取消
  * @return
  */

@@ -55,6 +55,22 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative
 }
 
 /**
+* 发送带头的数据，域名相同，path不相同的情况，用于链接复用
+ */
+JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_sendWithHead
+        (JNIEnv *env, jclass cls, jlong clientCtx, jobject param, jstring content) {
+    jint headersSize = getInt(env, param, "headersSize");
+    /* build header from params */
+    xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
+    if (build_headers_from_params(env, param, "headers", headers) < 0) {
+        LOGE("build_headers_from_params error");
+        return -1;
+    }
+    return client_long_send_with_head(jlong_to_ptr(clientCtx), headers, headersSize,
+                                      (*env)->GetStringUTFChars(env, content, 0));
+}
+
+/**
 * 取消发送数据
 */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_cancel

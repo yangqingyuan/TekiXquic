@@ -32,7 +32,7 @@ int client_long_start(xqc_cli_ctx_t *ctx);
  * @param ping_content
  * @return
  */
-int client_long_send_ping(xqc_cli_ctx_t *ctx,const char *ping_content);
+int client_long_send_ping(xqc_cli_ctx_t *ctx, const char *ping_content);
 
 /**
  * H3的方式发送内容
@@ -40,7 +40,16 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx,const char *ping_content);
  * @param content
  * @return
  */
-int client_long_send(xqc_cli_ctx_t *ctx,const char *content);
+int client_long_send(xqc_cli_ctx_t *ctx, const char *content);
+
+/**
+ *
+ * @param ctx
+ * @param headers
+ * @param content
+ * @return
+ */
+int client_long_send_with_head(xqc_cli_ctx_t *ctx, xqc_http_header_t *headers,int headers_size, const char *content);
 
 /**
  * 取消
