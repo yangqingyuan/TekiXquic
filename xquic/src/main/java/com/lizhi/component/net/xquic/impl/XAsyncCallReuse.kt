@@ -30,7 +30,6 @@ class XAsyncCallReuse(
 
     override fun execute() {
         startTime = System.currentTimeMillis()
-        executed = true
         try {
             XLogUtils.debug("=======> execute start index(${indexTag})<========")
             val url = originalRequest.url.getHostUrl(xquicClient.dns)
@@ -58,31 +57,43 @@ class XAsyncCallReuse(
                 object : XCallBack {
                     override fun onFailure(call: XCall, exception: Exception) {
                         responseCallback?.onFailure(xCall, exception)
-                        finish()
+                        finish(false)
                     }
 
                     override fun onResponse(call: XCall, xResponse: XResponse) {
                         responseCallback?.onResponse(xCall, xResponse)
-                        finish()
+                        finish(true)
                     }
                 })
         } catch (e: Exception) {
             e.printStackTrace()
             XLogUtils.error(e)
             cancel()
-            finish()
+            finish(false)
         }
     }
 
-    fun finish() {
-        XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${indexTag})<========")
+    fun finish(result: Boolean) {
+        XLogUtils.debug(
+            "=======> execute status(${
+                if (result) {
+                    "success"
+                } else {
+                    "failed"
+                }
+            }),cost(${System.currentTimeMillis() - startTime} ms),index(${indexTag})<========"
+        )
         handle.removeMessages(indexTag)
         isFinish = true
         xquicClient.dispatcher().finished(this@XAsyncCallReuse)
     }
 
     override fun cancel() {
-        super.cancel()
-        connection?.cancel(indexTag.toString())
+        try {
+            super.cancel()
+            connection?.cancel(indexTag.toString())
+        } catch (e: Exception) {
+            XLogUtils.error(e)
+        }
     }
 }

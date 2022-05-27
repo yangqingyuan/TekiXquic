@@ -16,7 +16,7 @@ import java.util.ArrayDeque
  * 作者: yqy
  * 创建日期: 2022/5/26.
  */
-class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall) {
+class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: XCall) {
 
     companion object {
         private const val TAG = "XConnection"
@@ -48,7 +48,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
 
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
-                    XLogUtils.error(TAG,"onMessage")
+                    XLogUtils.error(TAG, "onMessage")
                     xCallBackMap[response.xResponseBody.tag]?.onResponse(xCall, response)
                     xCallBackMap.remove(response.xResponseBody.tag)
                 }
@@ -78,6 +78,10 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
     fun send(
         tag: String, content: String?, xCallBack: XCallBack?
     ) {
+        if (isDestroy) {
+            xCallBack?.onFailure(xCall, Exception("connection is destroy"))
+            return
+        }
         xCallBackMap[tag] = xCallBack
         val message = XRealWebSocket.Message(
             XRealWebSocket.Message.MSG_TYPE_SEND,
@@ -106,7 +110,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
     }
 
     /**
-     *
+     * 取消的时候移除监听
      */
     fun cancel(tag: String) {
         synchronized(this) {

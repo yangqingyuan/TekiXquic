@@ -66,6 +66,7 @@ class XDispatcher {
                 val asyncCall: XRunnable = i.next()
                 if (runningAsyncCalls.size >= maxRequests) break // Max capacity.
                 if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) {
+                    //XLogUtils.error("太多了")
                     continue  // Host max capacity.
                 }
                 i.remove()
@@ -135,7 +136,7 @@ class XDispatcher {
         }
     }
 
-    
+
     private fun <T> finished(calls: Deque<T>, call: T) {
         var idleCallback: Runnable?
         synchronized(this) {

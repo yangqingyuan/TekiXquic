@@ -32,12 +32,11 @@ class XAsyncCall(
     /**
      * short native
      */
-    val xquicShortNative = XquicShortNative()
+    private val xquicShortNative = XquicShortNative()
 
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
-        executed = true
         try {
             XLogUtils.debug("=======> execute start indexAA(${indexTag})<========")
             val url = originalRequest.url.getHostUrl(xquicClient.dns)
@@ -84,9 +83,13 @@ class XAsyncCall(
     }
 
     override fun cancel() {
-        super.cancel()
-        if (!isFinish && clientCtx > 0) {
-            xquicShortNative.cancel(clientCtx)
+        try {
+            super.cancel()
+            if (!isFinish && clientCtx > 0) {
+                xquicShortNative.cancel(clientCtx)
+            }
+        } catch (e: Exception) {
+            XLogUtils.error(e)
         }
     }
 

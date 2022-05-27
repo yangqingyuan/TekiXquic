@@ -75,10 +75,10 @@ abstract class XAsyncCallCommon(
      */
     var isFinish = false
 
-
-    var executed = false
-
     init {
+        if (indexTag >= Int.MAX_VALUE) {
+            atomicInteger.set(0)
+        }
         indexTag = atomicInteger.incrementAndGet()
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
 
@@ -159,8 +159,6 @@ abstract class XAsyncCallCommon(
 
     override fun cancel() {
         handle.removeMessages(indexTag)
-        if (!executed) {
-            xquicClient.dispatcher().finished(this)
-        }
+        xquicClient.dispatcher().finished(this)
     }
 }
