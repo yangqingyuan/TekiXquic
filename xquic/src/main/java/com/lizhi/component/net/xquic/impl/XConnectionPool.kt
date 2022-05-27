@@ -100,8 +100,12 @@ class XConnectionPool(
     fun get(request: XRequest): XConnection? {
         synchronized(this) {
             for (connection in connections) {
-                if (connection.isEligible(request)) {
-                    return connection
+                if (connection.isDestroy) {
+                    connections.remove(connection)
+                } else {
+                    if (connection.isEligible(request)) {
+                        return connection
+                    }
                 }
             }
             return null

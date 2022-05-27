@@ -28,6 +28,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
     private var xCallBackMap: MutableMap<String, XCallBack?> = mutableMapOf()
 
     var idleAtNanos = Long.MAX_VALUE
+    var isDestroy = false
 
     /**
      * 存储还未链接的数据
@@ -42,12 +43,12 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
                 while (true) {
                     val content = messageQueue.poll() ?: return
                     webSocket.send(content)
-                    XLogUtils.error(TAG, "onMessage")
                 }
             }
 
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
+                    XLogUtils.error(TAG,"onMessage")
                     xCallBackMap[response.xResponseBody.tag]?.onResponse(xCall, response)
                     xCallBackMap.remove(response.xResponseBody.tag)
                 }
@@ -55,15 +56,20 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
 
             override fun onClosed(webSocket: XWebSocket, code: Int, reason: String?) {
                 xWebSocket = null
+                isDestroy = true
                 XLogUtils.debug(TAG, "onClosed")
             }
 
             override fun onFailure(webSocket: XWebSocket, t: Throwable, response: XResponse) {
-                xWebSocket = null
-                XLogUtils.debug(TAG, "onFailure")
-                xCallBackMap.forEach(action = {
-                    it.value?.onFailure(xCall, Exception(t))
-                })
+                synchronized(this) {
+                    xWebSocket = null
+                    isDestroy = true
+                    XLogUtils.debug(TAG, "onFailure")
+                    xCallBackMap.forEach(action = {
+                        it.value?.onFailure(xCall, Exception(t))
+                    })
+                    xCallBackMap.clear()
+                }
             }
         })
     }
@@ -93,14 +99,19 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, xCall: XCall
      * 是否符合条件
      */
     fun isEligible(xRequest: XRequest): Boolean {
-        /*if (xWebSocket == null) {
-            XLogUtils.error("isEligible error")
-            return false
-        }*/
         if (authority == xRequest.url.authority) {//通过域名来判断是否符合
             return true
         }
         return false
+    }
+
+    /**
+     *
+     */
+    fun cancel(tag: String) {
+        synchronized(this) {
+            xCallBackMap.remove(tag)
+        }
     }
 
     fun close() {

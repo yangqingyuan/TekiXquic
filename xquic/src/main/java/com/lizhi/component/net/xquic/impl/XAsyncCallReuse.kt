@@ -4,9 +4,10 @@ import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.native.XquicCallback
+import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
+import kotlin.properties.Delegates
 
 /**
  * 作用: 复用调用
@@ -18,18 +19,20 @@ class XAsyncCallReuse(
     private var xquicClient: XquicClient,
     private var originalRequest: XRequest,
     private var responseCallback: XCallBack? = null,
-) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback), XquicCallback {
+) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback) {
 
     companion object {
         const val TAG = "XAsyncCallReuse"
     }
 
+    var connection: XConnection? = null
+    private var startTime by Delegates.notNull<Long>()
+
     override fun execute() {
-        val startTime = System.currentTimeMillis()
-        delayTime = startTime - createTime
+        startTime = System.currentTimeMillis()
         executed = true
         try {
-            XLogUtils.debug("=======> execute start index(${index})<========")
+            XLogUtils.debug("=======> execute start index(${indexTag})<========")
             val url = originalRequest.url.getHostUrl(xquicClient.dns)
             if (url.isNullOrBlank()) {
                 responseCallback?.onFailure(
@@ -40,7 +43,6 @@ class XAsyncCallReuse(
             }
             XLogUtils.debug(" url $url ")
 
-            var connection: XConnection?
             synchronized(TAG) {
                 connection = xquicClient.connectionPool().get(originalRequest)
                 if (connection == null) {
@@ -48,17 +50,39 @@ class XAsyncCallReuse(
                     xquicClient.connectionPool().put(connection!!) //add to pool
                 }
             }
-            connection!!.send(index.toString(), originalRequest.body?.content, responseCallback)
 
-            handle.removeMessages(index)
+            //注意：这里使用index作为tag
+            connection!!.send(
+                indexTag.toString(),
+                originalRequest.body?.content,/*responseCallback*/
+                object : XCallBack {
+                    override fun onFailure(call: XCall, exception: Exception) {
+                        responseCallback?.onFailure(xCall, exception)
+                        finish()
+                    }
+
+                    override fun onResponse(call: XCall, xResponse: XResponse) {
+                        responseCallback?.onResponse(xCall, xResponse)
+                        finish()
+                    }
+                })
         } catch (e: Exception) {
             e.printStackTrace()
             XLogUtils.error(e)
             cancel()
-        } finally {
-            XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${index})<========")
-            isFinish = true
-            xquicClient.dispatcher().finished(this)
+            finish()
         }
+    }
+
+    fun finish() {
+        XLogUtils.debug("=======> execute end cost(${System.currentTimeMillis() - startTime} ms),index(${indexTag})<========")
+        handle.removeMessages(indexTag)
+        isFinish = true
+        xquicClient.dispatcher().finished(this@XAsyncCallReuse)
+    }
+
+    override fun cancel() {
+        super.cancel()
+        connection?.cancel(indexTag.toString())
     }
 }
