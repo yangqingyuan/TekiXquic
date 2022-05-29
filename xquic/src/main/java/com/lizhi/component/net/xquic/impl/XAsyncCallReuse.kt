@@ -44,7 +44,7 @@ class XAsyncCallReuse(
 
             synchronized(TAG) {
                 connection = xquicClient.connectionPool().get(originalRequest)
-                if (connection == null) {
+                if (connection == null || connection?.isDestroy == true) {
                     connection = XConnection(xquicClient, originalRequest, xCall)
                     xquicClient.connectionPool().put(connection!!) //add to pool
                 }

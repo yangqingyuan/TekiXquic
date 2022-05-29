@@ -104,7 +104,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
      * 是否符合条件
      */
     fun isEligible(xRequest: XRequest): Boolean {
-        if (authority == xRequest.url.authority) {//通过域名来判断是否符合
+        if (authority == xRequest.url.authority && !isDestroy) {//通过域名来判断是否符合
             return true
         }
         return false
