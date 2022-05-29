@@ -73,8 +73,13 @@ int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
     xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
 
     if (user_callback->h3_hdrs.count > 0) {
-        user_stream->h3_hdrs.headers = user_callback->h3_hdrs.headers;
-        user_stream->h3_hdrs.count = user_callback->h3_hdrs.count;
+        if (req != NULL && req->count > 0) {
+            user_stream->h3_hdrs.headers = req->headers;
+            user_stream->h3_hdrs.count = req->count;
+        } else {
+            user_stream->h3_hdrs.headers = user_callback->h3_hdrs.headers;
+            user_stream->h3_hdrs.count = user_callback->h3_hdrs.count;
+        }
 
         xqc_http_header_t *headers = user_stream->h3_hdrs.headers;
         LOGD("=========== request head start =================");

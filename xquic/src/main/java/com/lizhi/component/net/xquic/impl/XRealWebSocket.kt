@@ -1,5 +1,6 @@
 package com.lizhi.component.net.xquic.impl
 
+import com.google.gson.Gson
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.listener.XWebSocket
@@ -8,10 +9,7 @@ import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
-import com.lizhi.component.net.xquic.native.SendParams
-import com.lizhi.component.net.xquic.native.XquicCallback
-import com.lizhi.component.net.xquic.native.XquicLongNative
-import com.lizhi.component.net.xquic.native.XquicMsgType
+import com.lizhi.component.net.xquic.native.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
 import java.util.*
@@ -19,6 +17,7 @@ import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
 import java.util.concurrent.ThreadFactory
 import java.util.concurrent.TimeUnit
+
 
 /**
  * 作用: 长链接
@@ -101,7 +100,6 @@ class XRealWebSocket(
 
     private fun runWriter() {
         synchronized(this) {
-            assert(Thread.holdsLock(this))
             executor.execute(writerRunnable)
         }
     }
@@ -252,18 +250,27 @@ class XRealWebSocket(
     class Message(
         var msgType: Int = MSG_TYPE_SEND,
         var msgContent: String,
-        var tag: String? = null
+        var tag: String? = null,
+        var header: HashMap<String, String>? = null
     ) {
         companion object {
             const val MSG_TYPE_SEND = 0
             const val MSG_TYPE_CLOSE = 1
+            val gson = Gson()
+        }
+
+        private val sendBody = SendBody()
+
+        init {
+            sendBody.send_body = msgContent
+            sendBody.user_tag = tag
+            header?.forEach(action = {
+                sendBody.headers.add(SendBody.Header(it.key, it.value))
+            })
         }
 
         fun getContent(): String {
-            if (tag != null && tag!!.length > 512) {
-                return "{\"send_body\":\"$msgContent\",\"user_tag\":\"${"tag is too lang"}\"}"
-            }
-            return "{\"send_body\":\"$msgContent\",\"user_tag\":\"${tag ?: ""}\"}"
+            return gson.toJson(sendBody)
         }
     }
 

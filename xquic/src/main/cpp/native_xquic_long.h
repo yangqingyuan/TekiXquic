@@ -41,12 +41,6 @@ JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative
 
 
 /**
-* 发送带头的数据，域名相同，path不相同的情况，用于链接复用
- */
-JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_sendWithHead
-        (JNIEnv *env, jclass cls, jlong clientCtx, jobject params, jstring content);
-
-/**
 * 取消发送数据
 */
 JNIEXPORT jint JNICALL Java_com_lizhi_component_net_xquic_native_XquicLongNative_cancel

@@ -16,13 +16,6 @@ extern "C"{
 
 xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback);
 
-
-int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
-                              xqc_http_header_t *heards);
-
-jint getInt(JNIEnv *env, jobject param, const char *field);
-
-
 #ifdef __cplusplus
 }
 #endif

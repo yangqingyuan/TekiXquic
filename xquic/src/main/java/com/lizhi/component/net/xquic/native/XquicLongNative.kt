@@ -33,15 +33,7 @@ class XquicLongNative {
     /**
      * 发送数据
      */
-    external fun send(clientCtx: Long, content: String): Int
-
-
-    /**
-     * 发送带头的
-     * 用于复用链接
-     */
-    external fun sendWithHead(clientCtx: Long, param: SendParams, content: String): Int
-
+    external fun send(clientCtx: Long, json: String): Int
 
     /**
      * 取消

@@ -530,7 +530,7 @@ int client_long_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_a
  * @param req_cnt
  */
 void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *args,
-                               xqc_cli_request_t *reqs, queue_t *queue) {
+                               xqc_cli_request_t *reqs, queue_t *queue, int req_cut) {
     DEBUG;
 
     /* get data from queue to create on or more request */
@@ -539,16 +539,18 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         cJSON *json_data = cJSON_Parse(data);
         char *content = cJSON_GetObjectItem(json_data, "send_body")->valuestring;
         char *tag = cJSON_GetObjectItem(json_data, "user_tag")->valuestring;
-        cJSON_Delete(json_data);
+        cJSON *headers_json = cJSON_GetObjectItem(json_data, "headers");
         queue_pop(queue);
         xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
         user_stream->user_conn = user_conn;
 
+        /* copy tag */
         if (tag != NULL && strlen(tag) != 0) {
             memset(user_stream->user_tag, 0, 512);
-            strcpy(user_stream->user_tag, tag);//copy data
+            strcpy(user_stream->user_tag, tag);
         }
 
+        /*copy send content */
         if (content != NULL) {
             size_t content_len = strlen(content);
             user_stream->send_body = malloc(content_len);
@@ -556,8 +558,31 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             user_stream->send_body_len = content_len;
         }
 
-        if (data != NULL) {
-            free(data);
+        /* format request */
+        xqc_cli_request_t *request = NULL;
+        if (headers_json != NULL) {
+            if (req_cut > MAX_REQUEST_CNT) {
+                req_cut = 0;
+            }
+            req_cut++;
+            request = reqs + req_cut; //loop user request
+            int size = cJSON_GetArraySize(headers_json);
+            request->count = size;
+
+            for (int i = 0; i < size; i++) {
+                cJSON *item = cJSON_GetArrayItem(headers_json, i);
+
+                char *name = cJSON_GetObjectItem(item, "name")->valuestring;
+                char *value = cJSON_GetObjectItem(item, "value")->valuestring;
+                int flags = cJSON_GetObjectItem(item, "flags")->valueint;
+
+                xqc_http_header_t header = {
+                        .name = {.iov_base = name, .iov_len = strlen(name)},
+                        .value = {.iov_base = value, .iov_len = strlen(value)},
+                        .flags = flags,
+                };
+                request->headers[i] = header;
+            }
         }
 
         if (args->user_callback->max_recv_data_len > 0) {
@@ -567,19 +592,24 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         }
 
         if (args->quic_cfg.alpn_type == ALPN_H3) {
-            if (client_send_h3_requests(user_conn, user_stream, reqs) < 0) {
+            if (client_send_h3_requests(user_conn, user_stream, request) < 0) {
                 char err_msg[214];
                 sprintf(err_msg,
                         "xqc h3 request create error,please check network or retry,host=%s",
                         user_conn->ctx->args->net_cfg.host);
                 LOGE("%s", err_msg);
                 callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
-                return;
+                goto end;
             }
         } else {
             LOGE("只持者 h3发送");
         }
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
+
+        end:
+        /* free data */
+        free(data);
+        cJSON_Delete(json_data);
     }
 }
 
@@ -681,7 +711,8 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
                 ctx->task_ctx.schedule.schedule_info[task_idx].fin_flag = 0;
 
                 client_long_send_requests(task->user_conn, ctx->args, task->reqs,
-                                          &ctx->msg_data.queue);
+                                          &ctx->msg_data.queue,
+                                          ctx->task_ctx.tasks[task_idx].req_cnt);
 
             }
             pthread_mutex_unlock(ctx->mutex);
@@ -946,44 +977,6 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     pthread_mutex_unlock(ctx->mutex);
     return 0;
 }
-
-/**
- * 带头的方式
- * @param ctx
- * @param headers
- * @param content
- * @return
- */
-int client_long_send_with_head(xqc_cli_ctx_t *ctx, xqc_http_header_t *headers, int headers_size,
-                               const char *content) {
-    DEBUG;
-    if (ctx == NULL || ctx->active <= 0) {
-        LOGE("client long send error:  ctx = %p,active = %d ", ctx, ctx->active);
-        return -2;
-    }
-
-    size_t len = strlen(content);
-
-    /* call method client_task_schedule_callback */
-    ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;
-    char *data = malloc(len);
-    memset(data, 0, len);
-    strcpy(data, content);
-
-    pthread_mutex_lock(ctx->mutex);
-
-    ctx->args->user_callback->h3_hdrs.headers = headers;
-    ctx->args->user_callback->h3_hdrs.count = headers_size;
-    /* push to queue */
-    queue_push(&ctx->msg_data.queue, data);
-
-    /* notify send */
-    ev_async_send(ctx->eb, &ctx->ev_task);
-
-    pthread_mutex_unlock(ctx->mutex);
-    return 0;
-}
-
 
 /**
  * 取消

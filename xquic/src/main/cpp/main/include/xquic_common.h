@@ -252,6 +252,7 @@ typedef struct xqc_cli_env_config_s {
 #define RESOURCE_LEN        256
 #define AUTHORITY_LEN       128
 #define URL_LEN             512
+#define MAX_HEADER          100
 
 #define XQC_INTEROP_TLS_GROUPS  "X25519:P-256:P-384:P-521"
 
@@ -266,13 +267,14 @@ typedef enum request_method_e {
  * 单个请求
  */
 typedef struct xqc_cli_request_s {
-    char path[RESOURCE_LEN];         /* request path */
-    char scheme[8];                  /* request scheme, http/https */
-    REQUEST_METHOD method;
-    char auth[AUTHORITY_LEN];
-    char url[URL_LEN];               /* original url */
-    // char            headers[MAX_HEADER][256];   /* field line of h3 */
-
+    //char path[RESOURCE_LEN];         /* request path */
+    //char scheme[8];                  /* request scheme, http/https */
+    //REQUEST_METHOD method;
+    //char auth[AUTHORITY_LEN];
+    //char url[URL_LEN];               /* original url */
+    //char headers[MAX_HEADER][256];   /* field line of h3 */
+    xqc_http_header_t headers[MAX_HEADER];
+    int count
 } xqc_cli_request_t;
 
 /**

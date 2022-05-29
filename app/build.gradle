@@ -52,4 +52,5 @@ dependencies {
 
     //implementation 'io.github.yangqingyuan:teki-quic:1.0.1.1-SNAPSHOT'
     implementation project(":xquic")
+    implementation 'com.google.code.gson:gson:2.8.9'
 }

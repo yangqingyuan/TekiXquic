@@ -10,6 +10,7 @@ import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
 import java.util.ArrayDeque
+import java.util.HashMap
 
 /**
  * 作用: 链接
@@ -76,7 +77,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
 
     @Synchronized
     fun send(
-        tag: String, content: String?, xCallBack: XCallBack?
+        tag: String, content: String?, headers: HashMap<String, String>, xCallBack: XCallBack?
     ) {
         if (isDestroy) {
             xCallBack?.onFailure(xCall, Exception("connection is destroy"))
@@ -86,7 +87,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
         val message = XRealWebSocket.Message(
             XRealWebSocket.Message.MSG_TYPE_SEND,
             content ?: "test",
-            tag
+            tag, headers
         )
 
         if (xWebSocket != null) {

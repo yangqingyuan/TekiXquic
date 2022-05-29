@@ -53,7 +53,7 @@ class XAsyncCallReuse(
             //注意：这里使用index作为tag
             connection!!.send(
                 indexTag.toString(),
-                originalRequest.body?.content,/*responseCallback*/
+                originalRequest.body?.content, parseHttpHeads(),
                 object : XCallBack {
                     override fun onFailure(call: XCall, exception: Exception) {
                         responseCallback?.onFailure(xCall, exception)
