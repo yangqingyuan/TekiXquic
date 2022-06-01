@@ -155,8 +155,8 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         }
         char *out = cJSON_Print(usr);
         callback_msg_to_client(user_stream->user_conn->ctx->args, MSG_TYPE_HEAD, out, strlen(out));
+        cJSON_free(out);
         cJSON_Delete(usr);
-        free(out);
         LOGD("============ response head end ================");
 
         if (fin) {

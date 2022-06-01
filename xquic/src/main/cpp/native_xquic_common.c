@@ -92,8 +92,8 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     (*env)->DeleteGlobalRef(env, j_obj);
     (*env)->DeleteLocalRef(env, recv_body);
     (*env)->DeleteLocalRef(env, callbackClass);
+    cJSON_free(json_data);
     cJSON_Delete(usr);
-    free(json_data);
     return 0;
 }
 
