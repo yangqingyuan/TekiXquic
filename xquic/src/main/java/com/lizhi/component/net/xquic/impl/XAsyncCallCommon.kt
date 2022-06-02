@@ -83,7 +83,7 @@ abstract class XAsyncCallCommon(
         name = String.format(Locale.US, "${XLogUtils.commonTag} %s", originalRequest.url)
 
         xResponse = XResponse.Builder()
-            .headers(originalRequest.headers.build())
+            .headers(originalRequest.headers)
             .request(originalRequest)
             .delayTime(delayTime)
             .index(indexTag)
@@ -135,7 +135,7 @@ abstract class XAsyncCallCommon(
             headers[":path"] = it
         }
 
-        headers.putAll(originalRequest.headers.build().headersMap)
+        headers.putAll(originalRequest.headers.headersMap)
         originalRequest.body?.let {
             val body = it
             headers["content-type"] = body.mediaType.mediaType

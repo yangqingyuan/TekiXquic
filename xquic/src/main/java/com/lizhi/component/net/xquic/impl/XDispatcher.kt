@@ -131,8 +131,10 @@ class XDispatcher {
         if (runningAsyncCalls.contains(xRunnable)) {
             finished(runningAsyncCalls, xRunnable)
         } else {
-            //移除没有执行的
-            readyAsyncCalls.remove(xRunnable)
+            synchronized(this) {
+                //移除没有执行的
+                readyAsyncCalls.remove(xRunnable)
+            }
         }
     }
 

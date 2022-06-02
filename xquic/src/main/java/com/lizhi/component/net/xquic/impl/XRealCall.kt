@@ -32,9 +32,9 @@ class XRealCall : XCall {
             xRealCall.originalRequest = xRequest
 
             /* auto cancel by activity left */
-            if (xRealCall.originalRequest.life is LifecycleOwner) {
+            if (xRealCall.originalRequest.life?.get() is LifecycleOwner) {
                 handle.post {
-                    xRealCall.originalRequest.life?.lifecycle?.addObserver(object :
+                    xRealCall.originalRequest.life?.get()?.lifecycle?.addObserver(object :
                         LifecycleEventObserver {
                         override fun onStateChanged(
                             source: LifecycleOwner,
@@ -61,7 +61,7 @@ class XRealCall : XCall {
             check(!executed) { "Already Executed" }
             executed = true
         }
-        asyncCall = if (xquicClient.reUse) {//if reuse
+        asyncCall = if (xquicClient.reuse) {//if reuse
             XAsyncCallReuse(
                 this,
                 xquicClient,

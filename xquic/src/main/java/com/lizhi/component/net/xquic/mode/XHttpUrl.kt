@@ -194,5 +194,16 @@ class XHttpUrl {
         return "XHttpUrl(scheme=$scheme, host='$host', port=$port, url=$url, authority=$authority, path=$path)"
     }
 
+    fun newUrl(): XHttpUrl {
+        val xHttpUrl = XHttpUrl()
+        xHttpUrl.authority = authority
+        xHttpUrl.scheme = scheme
+        xHttpUrl.url = url
+        xHttpUrl.host = host
+        xHttpUrl.path = path
+        xHttpUrl.port = port
+        return xHttpUrl
+    }
+
 
 }

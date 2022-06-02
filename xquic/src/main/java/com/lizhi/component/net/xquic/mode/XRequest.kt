@@ -1,6 +1,7 @@
 package com.lizhi.component.net.xquic.mode
 
 import androidx.fragment.app.FragmentActivity
+import java.lang.ref.WeakReference
 
 /**
  * 作用:
@@ -16,7 +17,7 @@ class XRequest {
     private val tags by lazy { mutableMapOf<String, String>() }
 
     var method: String = "GET" // or POST
-    var headers: XHeaders.Builder = XHeaders.Builder()
+    var headers: XHeaders = XHeaders.Builder().build()
 
 
     fun tag(): String? {
@@ -24,9 +25,23 @@ class XRequest {
     }
 
     /**
+     * copy and new data
+     */
+    fun newRequest(): XRequest {
+        val xRequest = XRequest()
+        xRequest.url = url.newUrl()
+        xRequest.method = xRequest.method
+        xRequest.headers = xRequest.headers.newHeaders()
+        body?.let {
+            xRequest.body = XRequestBody.create(it.mediaType, it.content)
+        }
+        return xRequest
+    }
+
+    /**
      * to observer activity life
      */
-    var life: FragmentActivity? = null
+    var life: WeakReference<FragmentActivity>? = null
 
     class Builder {
         private val xRequest = XRequest()
@@ -42,18 +57,17 @@ class XRequest {
 
 
         fun header(name: String, value: String): Builder {
-            xRequest.headers.set(name, value)
+            xRequest.headers.headersMap[name] = value
             return this
         }
 
         fun addHeader(name: String, value: String): Builder {
-            xRequest.headers.add(name, value)
+            xRequest.headers.headersMap[name] = value
             return this
         }
 
-
-        fun removeHeader(name: String, value: String): Builder {
-            xRequest.headers.set(name, value)
+        fun removeHeader(name: String): Builder {
+            xRequest.headers.headersMap.remove(name)
             return this
         }
 
@@ -63,12 +77,12 @@ class XRequest {
         }
 
         fun life(activity: FragmentActivity): Builder {
-            xRequest.life = activity
+            xRequest.life = WeakReference(activity)
             return this
         }
 
-        fun headers(heards: XHeaders): Builder {
-            xRequest.headers = heards.newBuilder()
+        fun headers(header: XHeaders): Builder {
+            xRequest.headers = header
             return this
         }
 

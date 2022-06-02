@@ -64,7 +64,7 @@ class XquicClient {
     /**
      * 是否复用
      */
-    var reUse: Boolean = false
+    var reuse: Boolean = true
 
 
     private val dispatcher by lazy { XDispatcher() }
@@ -136,8 +136,8 @@ class XquicClient {
             return this
         }
 
-        fun reUser(): Builder {
-            xquicClient.reUse = true
+        fun reuse(isReuse:Boolean): Builder {
+            xquicClient.reuse = isReuse
             xquicClient.xConnectionPool = XConnectionPool()
             xquicClient.xConnectionPool.setDispatcher(xquicClient.dispatcher)
             return this

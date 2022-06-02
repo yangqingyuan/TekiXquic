@@ -25,7 +25,9 @@ class XHeaders {
         }
     }
 
-    fun newBuilder(): Builder {
-        return Builder()
+    fun newHeaders():XHeaders {
+        val xHeaders = XHeaders()
+        xHeaders.headersMap.putAll(headersMap)
+        return xHeaders
     }
 }

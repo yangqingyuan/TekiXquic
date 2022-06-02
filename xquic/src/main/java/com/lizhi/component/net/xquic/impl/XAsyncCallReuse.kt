@@ -17,9 +17,9 @@ import kotlin.properties.Delegates
 class XAsyncCallReuse(
     private var xCall: XCall,
     private var xquicClient: XquicClient,
-    private var originalRequest: XRequest,
+    private var xRequest: XRequest,
     private var responseCallback: XCallBack? = null,
-) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback) {
+) : XAsyncCallCommon(xCall, xquicClient, xRequest, responseCallback) {
 
     companion object {
         const val TAG = "XAsyncCallReuse"
@@ -32,20 +32,20 @@ class XAsyncCallReuse(
         startTime = System.currentTimeMillis()
         try {
             XLogUtils.debug("=======> execute start index(${indexTag})<========")
-            val url = originalRequest.url.getHostUrl(xquicClient.dns)
+            val url = xRequest.url.getHostUrl(xquicClient.dns)
             if (url.isNullOrBlank()) {
                 responseCallback?.onFailure(
                     xCall,
-                    Exception("dns can not parse domain ${originalRequest.url.url} error")
+                    Exception("dns can not parse domain ${xRequest.url.url} error")
                 )
                 return
             }
             XLogUtils.debug(" url $url ")
 
             synchronized(TAG) {
-                connection = xquicClient.connectionPool().get(originalRequest)
+                connection = xquicClient.connectionPool().get(xRequest)
                 if (connection == null || connection?.isDestroy == true) {
-                    connection = XConnection(xquicClient, originalRequest, xCall)
+                    connection = XConnection(xquicClient, xRequest)
                     xquicClient.connectionPool().put(connection!!) //add to pool
                 }
             }
@@ -53,7 +53,7 @@ class XAsyncCallReuse(
             //注意：这里使用index作为tag
             connection!!.send(
                 indexTag.toString(),
-                originalRequest.body?.content, parseHttpHeads(),
+                xRequest.body?.content, parseHttpHeads(),
                 object : XCallBack {
                     override fun onFailure(call: XCall, exception: Exception) {
                         responseCallback?.onFailure(xCall, exception)

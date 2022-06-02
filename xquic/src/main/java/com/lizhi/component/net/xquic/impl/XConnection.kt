@@ -17,19 +17,40 @@ import java.util.HashMap
  * 作者: yqy
  * 创建日期: 2022/5/26.
  */
-class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: XCall) {
+class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
 
     companion object {
         private const val TAG = "XConnection"
     }
 
-    private val authority = xRequest.url.authority
+    private val authority = originalRequest.url.authority
     private var xWebSocket: XWebSocket? = null
 
     private var xCallBackMap: MutableMap<String, XCallBack?> = mutableMapOf()
 
     var idleAtNanos = Long.MAX_VALUE
     var isDestroy = false
+    var xRequest: XRequest = originalRequest.newRequest()//这里重新拷贝
+
+    internal val emptyXCall = object : XCall {
+        override fun request(): XRequest {
+            return xRequest
+        }
+
+        override fun enqueue(xCallback: XCallBack?) {
+        }
+
+        override fun cancel() {
+        }
+
+        override fun isExecuted(): Boolean {
+            return false
+        }
+
+        override fun isCanceled(): Boolean {
+            return false
+        }
+    }
 
     /**
      * 存储还未链接的数据
@@ -37,7 +58,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
     private val messageQueue = ArrayDeque<XRealWebSocket.Message>()
 
     init {
-        xquicClient.newWebSocket(xRequest, object : XWebSocketListener {
+        xquicClient.newWebSocket(originalRequest, object : XWebSocketListener {
             override fun onOpen(webSocket: XWebSocket, response: XResponse) {
                 XLogUtils.debug(TAG, "onOpen")
                 xWebSocket = webSocket
@@ -50,7 +71,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
                     XLogUtils.error(TAG, "onMessage")
-                    xCallBackMap[response.xResponseBody.tag]?.onResponse(xCall, response)
+                    xCallBackMap[response.xResponseBody.tag]?.onResponse(emptyXCall, response)
                     xCallBackMap.remove(response.xResponseBody.tag)
                 }
             }
@@ -67,7 +88,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
                     isDestroy = true
                     XLogUtils.debug(TAG, "onFailure")
                     xCallBackMap.forEach(action = {
-                        it.value?.onFailure(xCall, Exception(t))
+                        it.value?.onFailure(emptyXCall, Exception(t))
                     })
                     xCallBackMap.clear()
                 }
@@ -80,7 +101,7 @@ class XConnection(xquicClient: XquicClient, val xRequest: XRequest, val xCall: X
         tag: String, content: String?, headers: HashMap<String, String>, xCallBack: XCallBack?
     ) {
         if (isDestroy) {
-            xCallBack?.onFailure(xCall, Exception("connection is destroy"))
+            xCallBack?.onFailure(emptyXCall, Exception("connection is destroy"))
             return
         }
         xCallBackMap[tag] = xCallBack

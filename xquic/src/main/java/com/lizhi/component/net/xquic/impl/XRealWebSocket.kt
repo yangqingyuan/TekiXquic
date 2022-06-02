@@ -83,7 +83,7 @@ class XRealWebSocket(
         this.key = String(nonce)
 
         xResponse = XResponse.Builder()
-            .headers(xRequest.headers.build())
+            .headers(xRequest.headers)
             .request(xRequest)
             .build()
 
@@ -145,7 +145,7 @@ class XRealWebSocket(
             headers[":path"] = it
         }
 
-        headers.putAll(xRequest.headers.build().headersMap)
+        headers.putAll(xRequest.headers.headersMap)
         return headers
     }
 
