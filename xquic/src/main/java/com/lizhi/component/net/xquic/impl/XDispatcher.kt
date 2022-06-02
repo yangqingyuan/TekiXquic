@@ -122,6 +122,19 @@ class XDispatcher {
         return Collections.unmodifiableList(result)
     }
 
+    fun cancel(tag: String) {
+        for (asyncCall in readyAsyncCalls) {
+            if (asyncCall.get().request().tag() == tag) {
+                asyncCall.cancel()
+            }
+        }
+        for (asyncCall in runningAsyncCalls) {
+            if (asyncCall.get().request().tag() == tag) {
+                asyncCall.cancel()
+            }
+        }
+    }
+
     @Synchronized
     fun runningCallsCount(): Int {
         return runningAsyncCalls.size + runningSyncCalls.size

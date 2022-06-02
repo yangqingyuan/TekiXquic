@@ -26,6 +26,8 @@ class LongConnActivity : AppCompatActivity() {
 
     private var launch: Job? = null
 
+    private var index = 0;
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_long)
@@ -40,6 +42,7 @@ class LongConnActivity : AppCompatActivity() {
             val testCount = SetCache.getTestCount(applicationContext)
             val timeSpace = SetCache.getTestSpace(applicationContext)
             launch = CoroutineScope(Dispatchers.Default).launch {
+                index = 0
                 for (i in (1..testCount)) {
                     webSocket.send(
                         etContent.text.toString() + ",index=" + i,
@@ -159,7 +162,7 @@ class LongConnActivity : AppCompatActivity() {
     private fun parseResponse(response: XResponse) {
         var content = response.xResponseBody.body
         val tag = response.xResponseBody.tag
-
+        index++
         var costTime = 0L
         tag?.let {
             costTime = System.currentTimeMillis() - tag.toLong()
@@ -169,7 +172,7 @@ class LongConnActivity : AppCompatActivity() {
         }
 
         XLogUtils.error(
-            " java ize=${content.length},content=${content}"
+            " java index = $index,size=${content.length},content=${content}"
         )
 
         appendText(

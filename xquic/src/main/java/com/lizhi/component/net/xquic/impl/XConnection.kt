@@ -70,7 +70,6 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
 
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
-                    XLogUtils.error(TAG, "onMessage")
                     xCallBackMap[response.xResponseBody.tag]?.onResponse(emptyXCall, response)
                     xCallBackMap.remove(response.xResponseBody.tag)
                 }

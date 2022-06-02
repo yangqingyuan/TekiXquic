@@ -8,6 +8,7 @@ import android.widget.*
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XCall
 import com.lizhi.component.net.xquic.listener.XCallBack
+import com.lizhi.component.net.xquic.listener.XDns
 import com.lizhi.component.net.xquic.mode.XMediaType
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XRequestBody
@@ -18,6 +19,7 @@ import java.lang.Exception
 import java.lang.StringBuilder
 import java.text.SimpleDateFormat
 import java.util.*
+import java.util.concurrent.atomic.AtomicInteger
 
 
 class ShortConnActivity : AppCompatActivity() {
@@ -29,6 +31,11 @@ class ShortConnActivity : AppCompatActivity() {
 
     private var launch: Job? = null
 
+    private var successCount = 0
+    private var failCount = 0
+    private var startTime = System.currentTimeMillis()
+    private val atomicInteger = AtomicInteger()
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_short)
@@ -37,10 +44,10 @@ class ShortConnActivity : AppCompatActivity() {
         xquicClient = XquicClient.Builder()
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
             .ccType(SetCache.getCCType(applicationContext))
-            .setReadTimeOut(23) //TODO 未实现
+            .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .writeTimeout(15)//TODO 未实现
             //.dns(XDns.SYSTEM)
-            .reUser()
+            //.reuse(false)//默认值true
             .build()
 
         textView = findViewById(R.id.tv_result)
@@ -53,12 +60,17 @@ class ShortConnActivity : AppCompatActivity() {
             val timeSpace = SetCache.getTestSpace(applicationContext)
 
             launch = CoroutineScope(Dispatchers.Default).launch {
+                startTime = System.currentTimeMillis()
+                successCount = 0
+                failCount = 0
+                atomicInteger.set(0)
                 for (i in (1..testCount)) {
                     if (methodGet) {
                         get(i)
                     } else {
                         post(i)
                     }
+                    XLogUtils.error("=====================index($i) ===============")
 
                     if (timeSpace > 0) {
                         delay(timeSpace * 1000L)
@@ -100,7 +112,8 @@ class ShortConnActivity : AppCompatActivity() {
 
 
     private fun get(index: Int) {
-        val url = SetCache.getSelectUrl(applicationContext)
+        //val url = SetCache.getSelectUrl(applicationContext)
+        val url = "https://aliyun.yzqzhdj.gov.cn/ssc-service/open/v1.2/app/config"
         if (url.isNullOrEmpty()) {
             Toast.makeText(applicationContext, "请先设置url", Toast.LENGTH_SHORT).show()
             return
@@ -110,8 +123,10 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
-            .url("$url&index=$index")
+            .url("$url")
             .get(xRequestBody) //Default
+            .addHeader("tenantId", "soacp")
+            .addHeader("clientId", "portalApp")
             //.addHeader("testA", "testA")
             //.addHeader("Keep-Alive", "timeout=300, max=1000")
             .tag("tag")
@@ -122,7 +137,8 @@ class ShortConnActivity : AppCompatActivity() {
 
     private fun post(index: Int) {
 
-        val url = SetCache.getSelectUrl(applicationContext)
+        //val url = SetCache.getSelectUrl(applicationContext)
+        val url = "https://aliyun.yzqzhdj.gov.cn/ssc-service/open/v1.2/app/config"
         if (url.isNullOrEmpty()) {
             Toast.makeText(applicationContext, "请先设置url", Toast.LENGTH_SHORT).show()
             return
@@ -132,8 +148,10 @@ class ShortConnActivity : AppCompatActivity() {
         val xRequestBody =
             XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
-            .url("$url&index=$index")
+            .url("$url")
             .post(xRequestBody) //Default
+            .addHeader("tenantId", "soacp")
+            .addHeader("clientId", "portalApp")
             .tag("tag")
             .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
             .build()
@@ -149,6 +167,7 @@ class ShortConnActivity : AppCompatActivity() {
             requestInfo.append("请求方式：" + SetCache.getMethod(applicationContext) + "\n")
             requestInfo.append("轮询次数：" + SetCache.getTestCount(applicationContext) + " 次\n")
             requestInfo.append("请求url：" + xRequest.url.url + "\n")
+            requestInfo.append("是否复用：" + xquicClient.reuse + "\n")
             appendText(requestInfo.toString())
         }
 
@@ -158,11 +177,37 @@ class ShortConnActivity : AppCompatActivity() {
             override fun onFailure(call: XCall, exception: Exception) {
                 exception.printStackTrace()
                 XLogUtils.error(exception.message)
-                appendText("${exception.message}")
+
+                synchronized(this@ShortConnActivity) {
+                    failCount++
+                }
+                atomicInteger.incrementAndGet()
+                if (atomicInteger.get() >= SetCache.getTestCount(applicationContext)) {
+                    appendText(
+                        "成功次数：${successCount},失败次数：${failCount},成功率:${
+                            successCount / (SetCache.getTestCount(
+                                applicationContext
+                            ) * 1.0f)
+                        } %,总耗时${System.currentTimeMillis() - startTime}"
+                    )
+                }
             }
 
             override fun onResponse(call: XCall, xResponse: XResponse) {
                 parseResponse(startTime, index, xResponse)
+                synchronized(this@ShortConnActivity) {
+                    successCount++
+                }
+                atomicInteger.incrementAndGet()
+                if (atomicInteger.get() >= SetCache.getTestCount(applicationContext)) {
+                    appendText(
+                        "成功次数：${successCount},失败次数：${failCount},成功率:${
+                            (successCount / (SetCache.getTestCount(
+                                applicationContext
+                            ) * 1.0f))*100
+                        }%,总耗时${System.currentTimeMillis() - startTime} ms"
+                    )
+                }
             }
         })
     }
@@ -176,14 +221,15 @@ class ShortConnActivity : AppCompatActivity() {
         val now = System.currentTimeMillis()
 
         XLogUtils.error(
-            " java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},content=${content}"
+            "index=$index, java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},content=${content}"
         )
 
-        appendText("$content ,index=$index, time=${now - startTime - xResponse.delayTime}ms ,status=" + xResponse.getStatus())
+        //appendText("$content ,index=$index, time=${now - startTime - xResponse.delayTime}ms ,status=" + xResponse.getStatus())
     }
 
     override fun onDestroy() {
         super.onDestroy()
         launch?.cancel()
+        xquicClient.cancel("tag")
     }
 }

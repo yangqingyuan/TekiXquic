@@ -82,12 +82,16 @@ class XquicClient {
     /**
      * 链接管理
      */
-    private lateinit var xConnectionPool: XConnectionPool
+    private var xConnectionPool: XConnectionPool = XConnectionPool()
 
     /**
      * ping listener
      */
     private var pingListener = DEFAULT_PING_LISTENER
+
+    init {
+        xConnectionPool.setDispatcher(dispatcher)
+    }
 
     class Builder {
         private val xquicClient = XquicClient()
@@ -136,10 +140,8 @@ class XquicClient {
             return this
         }
 
-        fun reuse(isReuse:Boolean): Builder {
+        fun reuse(isReuse: Boolean): Builder {
             xquicClient.reuse = isReuse
-            xquicClient.xConnectionPool = XConnectionPool()
-            xquicClient.xConnectionPool.setDispatcher(xquicClient.dispatcher)
             return this
         }
 
@@ -176,5 +178,11 @@ class XquicClient {
         return xRealWebSocket
     }
 
+    /**
+     * cancel by tag
+     */
+    fun cancel(tag: String) {
+        dispatcher.cancel(tag)
+    }
 
 }
