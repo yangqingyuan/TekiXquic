@@ -130,6 +130,8 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
         return -1;
     }
 
+    correctUtfBytes(data);
+
     cJSON *usr = cJSON_CreateObject();
     cJSON_AddStringToObject(usr, "recv_body", data);
     if (user_data != NULL) {

@@ -6,22 +6,22 @@ void client_keylog_cb(const char *line, void *user_data) {
 }
 
 void client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *engine_user_data) {
-    DEBUG;
+    //DEBUG;
     switch (lvl) {
         case XQC_LOG_REPORT:
         case XQC_LOG_FATAL:
         case XQC_LOG_ERROR:
-            LOGE("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGE("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
             break;
         case XQC_LOG_WARN:
-            LOGW("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGW("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
             break;
         case XQC_LOG_INFO:
         case XQC_LOG_STATS:
-            LOGI("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGI("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
             break;
         case XQC_LOG_DEBUG:
-            LOGD("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGD("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
             break;
     }
 }
