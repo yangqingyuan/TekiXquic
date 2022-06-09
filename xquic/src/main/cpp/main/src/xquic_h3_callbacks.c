@@ -145,19 +145,22 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
             return -1;
         }
 
-        cJSON *usr = cJSON_CreateObject();
-        LOGD("============ response head start ================");
-        for (int i = 0; i < headers->count; ++i) {
-            cJSON_AddStringToObject(usr, (char *) headers->headers[i].name.iov_base,
-                                    (char *) headers->headers[i].value.iov_base);
-            LOGD("--> %s, %s \n", (char *) headers->headers[i].name.iov_base,
-                 (char *) headers->headers[i].value.iov_base);
+        if (headers->count > 0) {
+            cJSON *usr = cJSON_CreateObject();
+            LOGD("============ response head start ================");
+            for (int i = 0; i < headers->count; ++i) {
+                cJSON_AddStringToObject(usr, (char *) headers->headers[i].name.iov_base,
+                                        (char *) headers->headers[i].value.iov_base);
+                LOGD("--> %s, %s \n", (char *) headers->headers[i].name.iov_base,
+                     (char *) headers->headers[i].value.iov_base);
+            }
+            char *out = cJSON_Print(usr);
+            callback_msg_to_client(user_stream->user_conn->ctx->args, MSG_TYPE_HEAD, out,
+                                   strlen(out));
+            cJSON_Delete(usr);
+            cJSON_free(out);
+            LOGD("============ response head end ================");
         }
-        char *out = cJSON_Print(usr);
-        callback_msg_to_client(user_stream->user_conn->ctx->args, MSG_TYPE_HEAD, out, strlen(out));
-        cJSON_free(out);
-        cJSON_Delete(usr);
-        LOGD("============ response head end ================");
 
         if (fin) {
             user_stream->recv_fin = 1;

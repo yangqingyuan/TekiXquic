@@ -130,7 +130,7 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
         return -1;
     }
 
-    correctUtfBytes(data);
+    //correctUtfBytes(data);//FIXME 打开后可以将非utf-8的数据转成标准utf-8数据
 
     cJSON *usr = cJSON_CreateObject();
     cJSON_AddStringToObject(usr, "recv_body", data);
