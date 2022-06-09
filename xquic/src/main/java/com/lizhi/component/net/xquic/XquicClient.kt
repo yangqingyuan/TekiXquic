@@ -64,7 +64,7 @@ class XquicClient {
     /**
      * 是否复用
      */
-    var reuse: Boolean = true
+    var reuse: Boolean = false
 
 
     private val dispatcher by lazy { XDispatcher() }

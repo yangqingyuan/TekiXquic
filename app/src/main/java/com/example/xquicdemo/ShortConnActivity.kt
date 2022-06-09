@@ -47,7 +47,7 @@ class ShortConnActivity : AppCompatActivity() {
             .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .writeTimeout(15)//TODO 未实现
             //.dns(XDns.SYSTEM)
-            //.reuse(false)//默认值true
+            .reuse(SetCache.getReuse(applicationContext) == 1)//默认值false
             .build()
 
         textView = findViewById(R.id.tv_result)
@@ -90,6 +90,10 @@ class ShortConnActivity : AppCompatActivity() {
 
     }
 
+    override fun onResume() {
+        super.onResume()
+        xquicClient.reuse = (SetCache.getReuse(applicationContext) == 1)
+    }
 
     @SuppressLint("SimpleDateFormat")
     private fun getData(): String {
@@ -112,8 +116,7 @@ class ShortConnActivity : AppCompatActivity() {
 
 
     private fun get(index: Int) {
-        //val url = SetCache.getSelectUrl(applicationContext)
-        val url = "https://aliyun.yzqzhdj.gov.cn/ssc-service/open/v1.2/app/config"
+        val url = SetCache.getSelectUrl(applicationContext)
         if (url.isNullOrEmpty()) {
             Toast.makeText(applicationContext, "请先设置url", Toast.LENGTH_SHORT).show()
             return
@@ -136,9 +139,7 @@ class ShortConnActivity : AppCompatActivity() {
     }
 
     private fun post(index: Int) {
-
-        //val url = SetCache.getSelectUrl(applicationContext)
-        val url = "https://aliyun.yzqzhdj.gov.cn/ssc-service/open/v1.2/app/config"
+        val url = SetCache.getSelectUrl(applicationContext)
         if (url.isNullOrEmpty()) {
             Toast.makeText(applicationContext, "请先设置url", Toast.LENGTH_SHORT).show()
             return
@@ -171,8 +172,6 @@ class ShortConnActivity : AppCompatActivity() {
             appendText(requestInfo.toString())
         }
 
-
-        val startTime = System.currentTimeMillis()
         xquicClient.newCall(xRequest).enqueue(object : XCallBack {
             override fun onFailure(call: XCall, exception: Exception) {
                 exception.printStackTrace()
@@ -204,7 +203,7 @@ class ShortConnActivity : AppCompatActivity() {
                         "成功次数：${successCount},失败次数：${failCount},成功率:${
                             (successCount / (SetCache.getTestCount(
                                 applicationContext
-                            ) * 1.0f))*100
+                            ) * 1.0f)) * 100
                         }%,总耗时${System.currentTimeMillis() - startTime} ms"
                     )
                 }

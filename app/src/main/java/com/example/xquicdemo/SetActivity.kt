@@ -20,6 +20,7 @@ class SetActivity : AppCompatActivity() {
     private lateinit var checkBox: CheckBox
     private lateinit var checkBox1: CheckBox
     private lateinit var checkBox2: CheckBox
+    private lateinit var cb_reuse: CheckBox
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -120,7 +121,7 @@ class SetActivity : AppCompatActivity() {
 
             if (etTestCount.text.isNotEmpty()) {
                 val count = etTestCount.text.toString().toInt()
-                if (count in 1..1000) {
+                if (count in 1..Int.MAX_VALUE) {
                     SetCache.setTestCount(applicationContext, count)
                 }
             }
@@ -174,6 +175,14 @@ class SetActivity : AppCompatActivity() {
             2 -> {
                 checkBox2.isChecked = true
             }
+        }
+
+        cb_reuse = findViewById(R.id.cb_reuse)
+        if (SetCache.getReuse(applicationContext) == 1) {
+            cb_reuse.isChecked = true
+        }
+        cb_reuse.setOnCheckedChangeListener { buttonView, isChecked ->
+            SetCache.setReuse(applicationContext, 1)
         }
 
     }

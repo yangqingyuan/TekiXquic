@@ -103,6 +103,26 @@
             </RadioGroup>
         </LinearLayout>
 
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginLeft="10dp"
+            android:orientation="horizontal">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="是否复用"
+                tools:ignore="HardcodedText" />
+
+            <CheckBox
+                android:id="@+id/cb_reuse"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginLeft="20dp"
+                android:text=""
+                tools:ignore="HardcodedText" />
+        </LinearLayout>
 
         <LinearLayout
             android:layout_width="match_parent"

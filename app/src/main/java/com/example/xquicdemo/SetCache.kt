@@ -13,6 +13,7 @@ object SetCache {
     private const val KEY_URL1 = "url1"
     private const val KEY_URL2 = "url2"
     private const val KEY_SELECT = "select"
+    private const val KEY_REUSE = "reuse"
     private const val KEY_CONN_TIMEOUT = "conn_time_out"
     private const val KEY_TEST_COUNT = "conn_test_count"
     private const val KEY_TEST_SPACE = "conn_test_space"
@@ -68,6 +69,14 @@ object SetCache {
 
     fun setSelect(context: Context, index: Int) {
         context.getSharedPreferences(key, 0).edit().putInt(KEY_SELECT, index).apply()
+    }
+
+    fun getReuse(context: Context):Int{
+        return context.getSharedPreferences(key, 0).getInt(KEY_REUSE, 0)
+    }
+
+    fun setReuse(context: Context,index: Int){
+        context.getSharedPreferences(key, 0).edit().putInt(KEY_REUSE, index).apply()
     }
 
 
