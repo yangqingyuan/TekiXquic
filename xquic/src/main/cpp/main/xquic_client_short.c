@@ -875,7 +875,7 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
 
     char addr[64];
     memset(addr, 0, 64);
-    sprintf(addr, "%ld", ptr_to_jlong(ctx));
+    sprintf(addr, "%lld", ptr_to_jlong(ctx));
     callback_msg_to_client(ctx->args, MSG_TYPE_INIT, addr, strlen(addr));
 
     ctx->active = 1;
@@ -895,7 +895,7 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
     client_free_ctx(ctx);
 
     end:
-    LOGW("client send end(发送结束),总时间：%lu us", (xqc_now() - start_time));
+    LOGW("client send end(发送结束),总时间：%llu us", (xqc_now() - start_time));
     return XQC_OK;
 }
 
