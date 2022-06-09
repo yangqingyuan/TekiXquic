@@ -178,11 +178,13 @@ class SetActivity : AppCompatActivity() {
         }
 
         cb_reuse = findViewById(R.id.cb_reuse)
-        if (SetCache.getReuse(applicationContext) == 1) {
-            cb_reuse.isChecked = true
-        }
+        cb_reuse.isChecked = SetCache.getReuse(applicationContext) == 1
         cb_reuse.setOnCheckedChangeListener { buttonView, isChecked ->
-            SetCache.setReuse(applicationContext, 1)
+            if (isChecked) {
+                SetCache.setReuse(applicationContext, 1)
+            }else{
+                SetCache.setReuse(applicationContext, 0)
+            }
         }
 
     }
