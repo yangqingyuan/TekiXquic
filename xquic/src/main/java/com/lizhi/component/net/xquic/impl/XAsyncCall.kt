@@ -86,7 +86,7 @@ class XAsyncCall(
     override fun cancel() {
         try {
             super.cancel()
-            if (!isFinish && clientCtx > 0) {
+            if (!isFinish && checkClientCtx(clientCtx)) {
                 xquicShortNative.cancel(clientCtx)
             }
         } catch (e: Exception) {

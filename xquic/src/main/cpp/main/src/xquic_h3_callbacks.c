@@ -12,10 +12,10 @@ int client_h3_conn_close_notify(xqc_h3_conn_t *conn, const xqc_cid_t *cid, void 
     DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     xqc_conn_stats_t stats = xqc_conn_get_stats(user_conn->ctx->engine, cid);
-    LOGD("send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, srtt:%lu early_data_flag:%d, conn_err:%d, ack_info:%s\n",
+
+    LOGD("send_count:%u, lost_count:%u, tlp_count:%u, recv_count:%u, conn_err:%d\n",
          stats.send_count, stats.lost_count,
-         stats.tlp_count, stats.recv_count, stats.srtt, stats.early_data_flag, stats.conn_err,
-         stats.ack_info);
+         stats.tlp_count, stats.recv_count, stats.conn_err);
 
     /* chang status to finished */
     user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].status = TASK_STATUS_FINISHED;

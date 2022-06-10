@@ -39,6 +39,16 @@ class XRealWebSocket(
 
         private const val MAX_QUEUE_SIZE = (16 * 1024 * 1024 // 16 MiB.
                 ).toLong()
+
+        /**
+         * check clientCtx Valid
+         */
+        internal fun checkClientCtx(clientCtx: Long): Boolean {
+            if (clientCtx != 0L && clientCtx != -1L) {
+                return true
+            }
+            return false
+        }
     }
 
     private val xquicLongNative: XquicLongNative = XquicLongNative()
@@ -136,7 +146,7 @@ class XRealWebSocket(
      */
     class PingRunnable(private val xRealWebSocket: XRealWebSocket) : Runnable {
         override fun run() {
-            if (xRealWebSocket.clientCtx <= 0 || xRealWebSocket.failed || xRealWebSocket.enqueuedClose) return
+            if (!checkClientCtx(xRealWebSocket.clientCtx) || xRealWebSocket.failed || xRealWebSocket.enqueuedClose) return
             var pingBody = xRealWebSocket.pingListener.ping()
             if (pingBody.length > 256) {
                 pingBody = "ping body ti too lang"
@@ -207,7 +217,7 @@ class XRealWebSocket(
                 sendParamsBuilder.setHeaders(parseHttpHeads())
 
                 clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
-                if (clientCtx <= 0) {
+                if (!checkClientCtx(clientCtx)) {
                     listener.onFailure(this, java.lang.Exception("connect error"), xResponse)
                 } else {
                     /* 注意：这里是阻塞的 */
@@ -236,7 +246,7 @@ class XRealWebSocket(
             val msg = messageQueue.poll() ?: return false
             when (msg.msgType) {
                 Message.MSG_TYPE_SEND -> {//
-                    if (clientCtx > 0 && !failed && !enqueuedClose) {
+                    if (checkClientCtx(clientCtx) && !failed && !enqueuedClose) {
                         when (xquicLongNative.send(clientCtx, msg.getContent())) {
                             XquicCallback.XQC_OK -> {
                                 synchronized(this) { queueSize -= msg.msgContent.length }
@@ -255,7 +265,7 @@ class XRealWebSocket(
                 Message.MSG_TYPE_CLOSE -> {//close
                     enqueuedClose = true
                     messageQueue.clear()
-                    if (clientCtx > 0) {
+                    if (checkClientCtx(clientCtx)) {
                         xquicLongNative.cancel(clientCtx)
                     }
                     return false
@@ -305,7 +315,7 @@ class XRealWebSocket(
      * check
      */
     private fun check(): Boolean {
-        if (clientCtx <= 0 || failed || enqueuedClose) {
+        if (!checkClientCtx(clientCtx) || failed || enqueuedClose) {
             listener.onFailure(this, Exception("web socket is closed"), xResponse)
             return false
         }

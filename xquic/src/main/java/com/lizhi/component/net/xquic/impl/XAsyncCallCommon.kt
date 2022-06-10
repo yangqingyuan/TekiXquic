@@ -48,6 +48,16 @@ abstract class XAsyncCallCommon(
          * create index
          */
         private val atomicInteger = AtomicInteger()
+
+        /**
+         * check clientCtx Valid
+         */
+        internal fun checkClientCtx(clientCtx: Long): Boolean {
+            if (clientCtx != 0L && clientCtx != -1L) {
+                return true
+            }
+            return false
+        }
     }
 
     var indexTag = 0

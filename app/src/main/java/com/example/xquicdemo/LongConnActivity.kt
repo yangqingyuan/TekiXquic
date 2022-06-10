@@ -101,13 +101,15 @@ class LongConnActivity : AppCompatActivity() {
             XRequest.Builder()
                 .url(url)
                 .get() //Default
-                .addHeader("testA", "testA")
+                .addHeader("tenantId", "soacp")
+                .addHeader("clientId", "portalApp")
                 .build()
         } else {
             XRequest.Builder()
                 .url(url)
                 .post()
-                .addHeader("testA", "testA")
+                .addHeader("tenantId", "soacp")
+                .addHeader("clientId", "portalApp")
                 .build()
         }
 

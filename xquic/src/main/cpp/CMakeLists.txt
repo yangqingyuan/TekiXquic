@@ -8,7 +8,8 @@ cmake_minimum_required(VERSION 3.10.2)
 #设置编译器类型
 #C编译器 CMAKE_C_FLAGS_DEBUG
 #C++编译器 CMAKE_CXX_FLAGS_DEBUG
-SET(CMAKE_C_FLAGS_DEBUG "-g -std=c++11")
+SET(CMAKE_C_FLAGS_DEBUG "-g -std=c11")
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -std=c++11")
 
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/xquic) # 头文件
 include_directories(${CMAKE_CURRENT_SOURCE_DIR}/share_libs/include/ev) # 头文件
