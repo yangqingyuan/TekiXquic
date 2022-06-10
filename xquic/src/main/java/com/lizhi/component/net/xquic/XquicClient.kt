@@ -89,9 +89,6 @@ class XquicClient {
      */
     private var pingListener = DEFAULT_PING_LISTENER
 
-    init {
-        xConnectionPool.setDispatcher(dispatcher)
-    }
 
     class Builder {
         private val xquicClient = XquicClient()
@@ -147,7 +144,6 @@ class XquicClient {
 
         fun connectionPool(xConnectionPool: XConnectionPool) {
             xquicClient.xConnectionPool = xConnectionPool
-            xquicClient.xConnectionPool.setDispatcher(xquicClient.dispatcher)
         }
 
         fun addNetworkInterceptor(xInterceptor: XInterceptor): Builder {

@@ -28,6 +28,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
 
     private var xCallBackMap: MutableMap<String, XCallBack?> = mutableMapOf()
 
+    @Volatile
     var idleAtNanos = Long.MAX_VALUE
 
     @Volatile
@@ -76,6 +77,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
 
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
+                    idleAtNanos = System.nanoTime()
                     xCallBackMap[response.xResponseBody.tag]?.onResponse(emptyXCall, response)
                     xCallBackMap.remove(response.xResponseBody.tag)//to free Reference
                 }
@@ -84,6 +86,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
             override fun onClosed(webSocket: XWebSocket, code: Int, reason: String?) {
                 xWebSocket = null
                 isDestroy = true
+                idleAtNanos = 0
                 XLogUtils.debug(TAG, "onClosed")
             }
 
@@ -91,6 +94,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
                 synchronized(this) {
                     xWebSocket = null
                     isDestroy = true
+                    idleAtNanos = 0
                     XLogUtils.debug(TAG, "onFailure")
                     xCallBackMap.forEach(action = {
                         it.value?.onFailure(emptyXCall, Exception(t))

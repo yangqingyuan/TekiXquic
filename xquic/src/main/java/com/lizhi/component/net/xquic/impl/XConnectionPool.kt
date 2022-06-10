@@ -1,7 +1,6 @@
 package com.lizhi.component.net.xquic.impl
 
 import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.util.*
 import java.util.concurrent.TimeUnit
 
@@ -14,8 +13,8 @@ class XConnectionPool(
     private val maxIdleConnections: Int = 5,
     private val keepAliveDuration: Long = 2,
     timeUnit: TimeUnit = TimeUnit.MINUTES
-) : Object() {
-    private lateinit var xDispatcher: XDispatcher
+) {
+
     private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
 
     init {
@@ -23,32 +22,9 @@ class XConnectionPool(
         require(keepAliveDuration > 0) { "keepAliveDuration <= 0: $keepAliveDuration" }
     }
 
-    fun setDispatcher(xDispatcher: XDispatcher) {
-        this.xDispatcher = xDispatcher
-    }
-
     private val connections: Deque<XConnection> = ArrayDeque()
-    var cleanupRunning = false
-
-    private val cleanupRunnable = Runnable {
-        while (true) {
-            var waitNanos: Long = cleanup(System.nanoTime())
-            if (waitNanos == -1L) return@Runnable
-            if (waitNanos > 0) {
-                val waitMillis = waitNanos / 1000000L
-                waitNanos -= waitMillis * 1000000L
-                synchronized(this@XConnectionPool) {
-                    try {
-                        this@XConnectionPool.wait(waitMillis, waitNanos.toInt())
-                    } catch (ignored: InterruptedException) {
-                    }
-                }
-            }
-        }
-    }
 
     private fun cleanup(now: Long): Long {
-        var inUseConnectionCount = 0
         var idleConnectionCount = 0
         var longestIdleConnection: XConnection? = null
         var longestIdleDurationNs = Long.MIN_VALUE
@@ -59,15 +35,16 @@ class XConnectionPool(
             while (i.hasNext()) {
                 val connection: XConnection = i.next()
 
-                // If the connection is in use, keep searching.
-                /*if (pruneAndGetAllocationCount(connection, now) > 0) {
-                    inUseConnectionCount++
-                    continue
-                }*/
+                if (connection.isDestroy) {
+                    connections.remove(longestIdleConnection)
+                    return -1
+                }
+
                 idleConnectionCount++
 
                 // If the connection is ready to be evicted, we're done.
                 val idleDurationNs: Long = now - connection.idleAtNanos
+
                 if (idleDurationNs > longestIdleDurationNs) {
                     longestIdleDurationNs = idleDurationNs
                     longestIdleConnection = connection
@@ -79,19 +56,11 @@ class XConnectionPool(
                 // We've found a connection to evict. Remove it from the list, then close it below (outside
                 // of the synchronized block).
                 connections.remove(longestIdleConnection)
-            } else if (idleConnectionCount > 0) {
-                // A connection will be ready to evict soon.
-                return keepAliveDurationNs - longestIdleDurationNs
-            } else if (inUseConnectionCount > 0) {
-                // All connections are in use. It'll be at least the keep alive duration 'til we run again.
-                return keepAliveDurationNs
             } else {
                 // No connections, idle or in use.
-                cleanupRunning = false
                 return -1
             }
         }
-        //XLogUtils.error("remove longestIdleConnection")
         longestIdleConnection?.close()
         // Cleanup again immediately.
         return 0
@@ -115,10 +84,7 @@ class XConnectionPool(
 
     fun put(connection: XConnection) {
         synchronized(this) {
-            if (!cleanupRunning) {
-                cleanupRunning = true
-                xDispatcher.executorService()?.execute(cleanupRunnable)
-            }
+            cleanup(System.nanoTime())
             connections.add(connection)
         }
     }

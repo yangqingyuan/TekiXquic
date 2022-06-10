@@ -16,9 +16,6 @@ class XDispatcher {
     private val maxRequestsPerHost = 5
     private val idleCallback: Runnable? = null
 
-    /** Executes calls. Created lazily.  */
-    private var executorService: ExecutorService? = null
-
     /** Ready async calls in the order they'll be run.  */
     private val readyAsyncCalls: Deque<XRunnable> = ArrayDeque()
 
@@ -28,24 +25,8 @@ class XDispatcher {
     /** Running synchronous calls. Includes canceled calls that haven't finished yet.  */
     private val runningSyncCalls: Deque<XRealCall> = ArrayDeque()
 
-
-    private fun threadFactory(name: String?, daemon: Boolean): ThreadFactory {
-        return ThreadFactory { runnable ->
-            val result = Thread(runnable, name)
-            result.isDaemon = daemon
-            result
-        }
-    }
-
-    @Synchronized
-    fun executorService(): ExecutorService? {
-        if (executorService == null) {
-            executorService = ThreadPoolExecutor(
-                0, Int.MAX_VALUE, 60, TimeUnit.SECONDS,
-                SynchronousQueue(), threadFactory("OkHttp Dispatcher", false)
-            )
-        }
-        return executorService
+    private fun executorService(): ExecutorService {
+        return XExecutorService.executorService
     }
 
     fun enqueue(xAsyncCall: XRunnable) {
