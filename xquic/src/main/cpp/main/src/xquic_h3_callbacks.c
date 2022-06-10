@@ -174,7 +174,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         return 0;
     }
 
-    char buff[4096] = {0};
+    unsigned char buff[4096] = {0};
     size_t buff_size = 4096;
 
     //TODO 最好根据后端返回动态的调整

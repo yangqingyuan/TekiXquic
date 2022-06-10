@@ -218,8 +218,8 @@ int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
         const char *valueChar = (*env)->GetStringUTFChars(env, valueString, 0);
 
         xqc_http_header_t header = {
-                .name = {.iov_base = keyChar, .iov_len = strlen(keyChar)},
-                .value = {.iov_base = valueChar, .iov_len = strlen(valueChar)},
+                .name = {.iov_base = (void*)keyChar, .iov_len = strlen(keyChar)},
+                .value = {.iov_base = (void*)valueChar, .iov_len = strlen(valueChar)},
                 .flags = 0,
         };
         heards[i] = header;

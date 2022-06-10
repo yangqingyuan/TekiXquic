@@ -274,7 +274,7 @@ typedef struct xqc_cli_request_s {
     //char url[URL_LEN];               /* original url */
     //char headers[MAX_HEADER][256];   /* field line of h3 */
     xqc_http_header_t headers[MAX_HEADER];
-    int count
+    int count;
 } xqc_cli_request_t;
 
 /**
@@ -328,11 +328,11 @@ typedef struct xqc_cli_user_data_params_s {
 
     int max_recv_data_len;
 
-    char *token;
+    const char *token;
     char *tp;
-    char *session;
-    char *url;
-    char *content;
+    const char *session;
+    const char *url;
+    const char *content;
 
     pthread_mutex_t *mutex;
 

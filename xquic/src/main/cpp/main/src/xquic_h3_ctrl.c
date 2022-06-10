@@ -32,7 +32,7 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
 
         if (user_stream->send_offset < user_stream->send_body_len) {
             ret = xqc_h3_request_send_body(user_stream->h3_request,
-                                           user_stream->send_body + user_stream->send_offset,
+                                           (unsigned char *)user_stream->send_body + user_stream->send_offset,
                                            user_stream->send_body_len -
                                            user_stream->send_offset,
                                            1);

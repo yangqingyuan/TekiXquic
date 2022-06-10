@@ -117,7 +117,7 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
         }
 
         if (recv_size <= 0) {
-            LOGE("recvfrom error recv_size=%d", recv_size);
+            LOGE("recvfrom error recv_size=%zd", recv_size);
             break;
         }
 
