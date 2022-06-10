@@ -27,6 +27,7 @@ class XAsyncCall(
     private var responseCallback: XCallBack? = null
 ) : XAsyncCallCommon(xCall, xquicClient, originalRequest, responseCallback), XquicCallback {
 
+    @Volatile
     var clientCtx: Long = 0L
 
     /**

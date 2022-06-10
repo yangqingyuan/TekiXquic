@@ -29,8 +29,14 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
     private var xCallBackMap: MutableMap<String, XCallBack?> = mutableMapOf()
 
     var idleAtNanos = Long.MAX_VALUE
+
+    @Volatile
     var isDestroy = false
-    var xRequest: XRequest = originalRequest.newRequest()//这里重新拷贝
+
+    /**
+     * copy a newObject
+     */
+    var xRequest: XRequest = originalRequest.newRequest()
 
     internal val emptyXCall = object : XCall {
         override fun request(): XRequest {
@@ -71,7 +77,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
                     xCallBackMap[response.xResponseBody.tag]?.onResponse(emptyXCall, response)
-                    xCallBackMap.remove(response.xResponseBody.tag)
+                    xCallBackMap.remove(response.xResponseBody.tag)//to free Reference
                 }
             }
 
@@ -89,7 +95,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
                     xCallBackMap.forEach(action = {
                         it.value?.onFailure(emptyXCall, Exception(t))
                     })
-                    xCallBackMap.clear()
+                    xCallBackMap.clear()//to free Reference
                 }
             }
         })

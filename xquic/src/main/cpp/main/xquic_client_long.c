@@ -533,14 +533,21 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                                xqc_cli_request_t *reqs, queue_t *queue, int req_cut) {
     DEBUG;
 
-    /* get data from queue to create on or more request */
+    /* get data from queue to create one or more request */
     while (!queue_empty(queue)) {
+        /* get first data */
         char *data = queue_front(queue);
+
+        /* parse json data */
         cJSON *json_data = cJSON_Parse(data);
         char *content = cJSON_GetObjectItem(json_data, "send_body")->valuestring;
         char *tag = cJSON_GetObjectItem(json_data, "user_tag")->valuestring;
         cJSON *headers_json = cJSON_GetObjectItem(json_data, "headers");
+
+        /* remove pop data */
         queue_pop(queue);
+
+        /* new a stream */
         xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
         user_stream->user_conn = user_conn;
 
@@ -585,6 +592,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             }
         }
 
+        /*set recv body max len */
         if (args->user_callback->max_recv_data_len > 0) {
             user_stream->recv_body_max_len = args->user_callback->max_recv_data_len;
         } else {

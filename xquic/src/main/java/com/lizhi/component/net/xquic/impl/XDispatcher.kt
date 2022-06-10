@@ -66,7 +66,7 @@ class XDispatcher {
                 val asyncCall: XRunnable = i.next()
                 if (runningAsyncCalls.size >= maxRequests) break // Max capacity.
                 if (runningCallsForHost(asyncCall) >= maxRequestsPerHost) {
-                    //XLogUtils.error("太多了")
+                    //XLogUtils.error("当前相同的请求超过最大限制")
                     continue  // Host max capacity.
                 }
                 i.remove()
@@ -87,7 +87,7 @@ class XDispatcher {
 
     private fun runningCallsForHost(call: XRunnable): Int {
         var result = 0
-        for (c in runningAsyncCalls) {
+        for (c in runningAsyncCalls) {//Calculate requests for the same URL
             if (c.url() == call.url()) result++
         }
         return result

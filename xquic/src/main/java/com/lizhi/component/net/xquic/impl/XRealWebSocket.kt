@@ -44,20 +44,47 @@ class XRealWebSocket(
     private val xquicLongNative: XquicLongNative = XquicLongNative()
     private var executor: ScheduledExecutorService
     private val key: String
+
+    /**
+     * is callback fail
+     */
+    @Volatile
     private var failed = false
+
     private var queueSize: Long = 0
+
+    @Volatile
     private var clientCtx: Long = 0L
+
+    /**
+     * when close enqueuedClose is true
+     */
+    @Volatile
     private var enqueuedClose = false
 
     private val xResponse: XResponse
 
+    /**
+     * use to cache message
+     */
     private val messageQueue = ArrayDeque<Message>()
 
+    /**
+     * real to send runnable
+     */
     private val writerRunnable: Runnable
 
+    /**
+     * user default close code ,will return at onClosed
+     */
     private var code: Int = -1
+
+    /**
+     * user default close reason ,will return at onClosed
+     */
     private var reason: String? = null
 
+    @Volatile
     private var cancelOrClose = 0// 2 cancle 1:close
 
     private fun threadFactory(): ThreadFactory {
