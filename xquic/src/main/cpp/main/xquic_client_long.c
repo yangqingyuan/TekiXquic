@@ -672,7 +672,7 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
     //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
-
+    pthread_mutex_lock(ctx->mutex);
     switch (ctx->msg_data.cmd_type) {
         case CMD_TYPE_NONE:
             break;
@@ -708,7 +708,6 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             break;
         case CMD_TYPE_SEND_DATA: //send data
             //LOGE("send data %s", ctx->msg_data.data);
-            pthread_mutex_lock(ctx->mutex);
             //FIXME 如果是多链接的时候，永远只用第一个conn来进行请求，例如非 MODE_SCMR模式
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
@@ -723,7 +722,6 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
                                           ctx->task_ctx.tasks[task_idx].req_cnt);
 
             }
-            pthread_mutex_unlock(ctx->mutex);
             break;
         case CMD_TYPE_CANCEL://cancel conn
             /* when timeout, close which not fin */
@@ -744,6 +742,7 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             break;
     }
     ctx->msg_data.cmd_type = CMD_TYPE_NONE;
+    pthread_mutex_unlock(ctx->mutex);
 }
 
 /**
@@ -966,6 +965,8 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
         return -2;
     }
 
+    pthread_mutex_lock(ctx->mutex);
+
     size_t len = strlen(content);
 
     /* call method client_task_schedule_callback */
@@ -973,8 +974,6 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     char *data = malloc(len);
     memset(data, 0, len);
     strcpy(data, content);
-
-    pthread_mutex_lock(ctx->mutex);
 
     /* push to queue */
     queue_push(&ctx->msg_data.queue, data);
