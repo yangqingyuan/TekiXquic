@@ -49,7 +49,7 @@ class SendParams {
      * optional param
      * default: bbr
      */
-    var ccType: Int = CCType.BBR.ordinal
+    var ccType: Int = CCType.BBR
 
     /**
      * common head
@@ -104,8 +104,8 @@ class SendParams {
             return this
         }
 
-        fun setCCType(ccType: CCType): Builder {
-            params.ccType = ccType.ordinal
+        fun setCCType(@CCType.Type ccType: Int): Builder {
+            params.ccType = ccType
             return this
         }
 

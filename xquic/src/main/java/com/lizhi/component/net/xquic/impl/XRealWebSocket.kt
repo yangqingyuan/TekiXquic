@@ -136,6 +136,9 @@ class XRealWebSocket(
     }
 
     private fun runWriter() {
+        if (!check()) {
+            return
+        }
         synchronized(this) {
             executor.execute(writerRunnable)
         }
@@ -417,19 +420,19 @@ class XRealWebSocket(
     override fun callBackMessage(msgType: Int, data: String) {
         synchronized(this) {
             when (msgType) {
-                XquicMsgType.HANDSHAKE.ordinal -> {
+                XquicMsgType.HANDSHAKE -> {
                     listener.onOpen(this, xResponse)
                 }
-                XquicMsgType.TOKEN.ordinal -> {
+                XquicMsgType.TOKEN -> {
                     XRttInfoCache.tokenMap.put(authority(), data)
                 }
-                XquicMsgType.SESSION.ordinal -> {
+                XquicMsgType.SESSION -> {
                     XRttInfoCache.sessionMap.put(authority(), data)
                 }
-                XquicMsgType.TP.ordinal -> {
+                XquicMsgType.TP -> {
                     XRttInfoCache.tpMap.put(authority(), data)
                 }
-                XquicMsgType.HEAD.ordinal -> {
+                XquicMsgType.HEAD -> {
                     try {
                         val headJson = JSONObject(data)
                         val xHeaderBuild = XHeaders.Builder()
@@ -441,10 +444,10 @@ class XRealWebSocket(
                         XLogUtils.error(e)
                     }
                 }
-                XquicMsgType.PING.ordinal -> {
+                XquicMsgType.PING -> {
                     pingListener.pong(data)
                 }
-                XquicMsgType.DESTROY.ordinal -> {
+                XquicMsgType.DESTROY -> {
                     close()
                 }
                 else -> {

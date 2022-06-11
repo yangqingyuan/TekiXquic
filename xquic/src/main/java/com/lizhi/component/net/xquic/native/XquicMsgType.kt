@@ -1,41 +1,41 @@
 package com.lizhi.component.net.xquic.native
 
-enum class XquicMsgType {
+object XquicMsgType {
 
-    INIT,
+    const val INIT = 0
 
     /**
      * hand_shake
      */
-    HANDSHAKE,
+    const val HANDSHAKE = 1
 
     /**
      * token
      */
-    TOKEN,
+    const val TOKEN = 2
 
     /**
      * session ticket
      */
-    SESSION,
+    const val SESSION = 3
 
     /**
      * transport parameter
      */
-    TP,
+    const val TP = 4
 
     /**
      * Headers
      */
-    HEAD,
+    const val HEAD = 5
 
     /**
      * ping msg
      */
-    PING,
+    const val PING = 6
 
     /**
      * native destroy
      */
-    DESTROY
+    const val DESTROY = 7
 }

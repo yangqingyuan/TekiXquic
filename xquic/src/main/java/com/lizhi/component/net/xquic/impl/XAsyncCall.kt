@@ -97,7 +97,7 @@ class XAsyncCall(
     override fun callBackMessage(msgType: Int, data: String) {
         synchronized(this) {
             when (msgType) {
-                XquicMsgType.INIT.ordinal -> {
+                XquicMsgType.INIT -> {
                     try {
                         clientCtx = data.toLong()
                     } catch (e: Exception) {
@@ -105,21 +105,21 @@ class XAsyncCall(
                     }
                 }
 
-                XquicMsgType.TOKEN.ordinal -> {
+                XquicMsgType.TOKEN -> {
                     XRttInfoCache.tokenMap.put(authority(), data)
                 }
-                XquicMsgType.SESSION.ordinal -> {
+                XquicMsgType.SESSION -> {
                     XRttInfoCache.sessionMap.put(authority(), data)
                 }
 
-                XquicMsgType.DESTROY.ordinal -> {
+                XquicMsgType.DESTROY -> {
                     clientCtx = 0L
                 }
 
-                XquicMsgType.TP.ordinal -> {
+                XquicMsgType.TP -> {
                     XRttInfoCache.tpMap.put(authority(), data)
                 }
-                XquicMsgType.HEAD.ordinal -> {
+                XquicMsgType.HEAD -> {
                     try {
                         val headJson = JSONObject(data)
                         val xHeaderBuild = XHeaders.Builder()

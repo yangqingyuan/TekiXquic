@@ -19,17 +19,17 @@ object SetCache {
     private const val KEY_TEST_SPACE = "conn_test_space"
 
 
-    fun setCCType(context: Context, ccType: CCType) {
-        context.getSharedPreferences(key, 0).edit().putInt(KEY_CC_TYPE, ccType.ordinal).apply()
+    fun setCCType(context: Context, ccType: Int) {
+        context.getSharedPreferences(key, 0).edit().putInt(KEY_CC_TYPE, ccType).apply()
     }
 
-    fun getCCType(context: Context): CCType {
+    fun getCCType(context: Context): Int {
         return when (context.getSharedPreferences(key, 0)
-            .getInt(KEY_CC_TYPE, CCType.BBR.ordinal)) {
-            CCType.BBR.ordinal -> {
+            .getInt(KEY_CC_TYPE, CCType.BBR)) {
+            CCType.BBR -> {
                 CCType.BBR
             }
-            CCType.CUBIC.ordinal -> {
+            CCType.CUBIC -> {
                 CCType.CUBIC
             }
             else -> {
@@ -71,11 +71,11 @@ object SetCache {
         context.getSharedPreferences(key, 0).edit().putInt(KEY_SELECT, index).apply()
     }
 
-    fun getReuse(context: Context):Int{
+    fun getReuse(context: Context): Int {
         return context.getSharedPreferences(key, 0).getInt(KEY_REUSE, 0)
     }
 
-    fun setReuse(context: Context,index: Int){
+    fun setReuse(context: Context, index: Int) {
         context.getSharedPreferences(key, 0).edit().putInt(KEY_REUSE, index).apply()
     }
 

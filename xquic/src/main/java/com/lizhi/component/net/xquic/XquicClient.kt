@@ -112,7 +112,7 @@ class XquicClient {
             return this
         }
 
-        fun ccType(ccType: CCType): Builder {
+        fun ccType(@CCType.Type ccType: Int): Builder {
             xquicClient.ccType = ccType
             return this
         }
