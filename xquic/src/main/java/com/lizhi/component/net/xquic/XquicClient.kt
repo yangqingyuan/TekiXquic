@@ -14,13 +14,83 @@ import java.util.*
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class XquicClient {
+open class XquicClient internal constructor(builder: Builder) {
 
-    companion object {
-        /**
-         * 默认的ping实现
-         */
-        private var DEFAULT_PING_LISTENER: XPingListener = object : XPingListener {
+    /**
+     * unit second
+     */
+    var connectTimeOut: Int = builder.connectTimeOut
+
+    /**
+     * unit second
+     */
+    var readTimeout: Int = builder.readTimeout
+
+    /**
+     * unit second TODO 待实现
+     */
+    var writeTimeout: Int = builder.writeTimeout
+
+    /**
+     * unit MILLISECONDS
+     */
+    var pingInterval: Long = builder.pingInterval
+
+    /**
+     * 拥塞算法
+     */
+    var ccType = builder.ccType
+
+    /**
+     * dns
+     */
+    var dns: XDns? = builder.dns
+
+    /**
+     * 是否复用
+     */
+    var reuse: Boolean = builder.reuse
+
+
+    private val dispatcher = builder.dispatcher
+
+    /**
+     * 拦截器
+     */
+    private val interceptors = builder.interceptors
+
+    /**
+     * 网络拦截器
+     */
+    private val networkInterceptors = builder.networkInterceptors
+
+    /**
+     * 链接管理
+     */
+    private var xConnectionPool = builder.xConnectionPool
+
+    /**
+     * ping listener
+     */
+    private var pingListener = builder.pingListener
+
+    fun newBuilder(): Builder {
+        return Builder(this)
+    }
+
+    class Builder constructor() {
+        internal var connectTimeOut: Int = 30
+        internal var readTimeout: Int = 30
+        internal var writeTimeout: Int = 0
+        internal var pingInterval: Long = 0L
+        internal var ccType = CCType.CUBIC
+        internal var dns: XDns? = null
+        internal var reuse: Boolean = false
+        internal var dispatcher = XDispatcher()
+        internal var interceptors = mutableListOf<XInterceptor>()
+        internal var networkInterceptors = mutableListOf<XInterceptor>()
+        internal var xConnectionPool: XConnectionPool = XConnectionPool()
+        internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
                 return "ping"
             }
@@ -29,126 +99,68 @@ class XquicClient {
                 //XLogUtils.debug("pong callBack= $data")
             }
         }
-    }
 
-    /**
-     * unit second
-     */
-    var connectTimeOut: Int = 30
-
-    /**
-     * unit second
-     */
-    var readTimeout: Int = 30
-
-    /**
-     * unit second TODO 待实现
-     */
-    var writeTimeout: Int = 0
-
-    /**
-     * unit MILLISECONDS
-     */
-    var pingInterval: Long = 0L
-
-    /**
-     * 拥塞算法
-     */
-    var ccType = CCType.CUBIC
-
-    /**
-     * dns
-     */
-    var dns: XDns? = null
-
-    /**
-     * 是否复用
-     */
-    var reuse: Boolean = false
-
-
-    private val dispatcher by lazy { XDispatcher() }
-
-    /**
-     * 拦截器
-     */
-    private val interceptors by lazy { mutableListOf<XInterceptor>() }
-
-    /**
-     * 网络拦截器
-     */
-    private val networkInterceptors by lazy { mutableListOf<XInterceptor>() }
-
-    /**
-     * 链接管理
-     */
-    private var xConnectionPool: XConnectionPool = XConnectionPool()
-
-    /**
-     * ping listener
-     */
-    private var pingListener = DEFAULT_PING_LISTENER
-
-
-    class Builder {
-        private val xquicClient = XquicClient()
+        internal constructor(xquicClient: XquicClient) : this() {
+            connectTimeOut = xquicClient.connectTimeOut
+            readTimeout = xquicClient.readTimeout
+            writeTimeout = xquicClient.writeTimeout
+            pingInterval = xquicClient.pingInterval
+            ccType = xquicClient.ccType
+            dns = xquicClient.dns
+            reuse = xquicClient.reuse
+            dispatcher = xquicClient.dispatcher
+            interceptors = xquicClient.interceptors
+            networkInterceptors = xquicClient.networkInterceptors
+            xConnectionPool = xquicClient.xConnectionPool
+            pingListener = xquicClient.pingListener
+        }
 
         fun build(): XquicClient {
-            return xquicClient
+            return XquicClient(this)
         }
 
-        fun connectTimeOut(connectTimeout: Int): Builder {
-            xquicClient.connectTimeOut = connectTimeout
-            return this
+        fun connectTimeOut(connectTimeout: Int) = apply {
+            this.connectTimeOut = connectTimeout
         }
 
-        fun setReadTimeOut(readTimeout: Int): Builder {
-            xquicClient.readTimeout = readTimeout
-            return this
+        fun setReadTimeOut(readTimeout: Int) = apply {
+            this.readTimeout = readTimeout
         }
 
-        fun writeTimeout(writeTimeout: Int): Builder {
-            xquicClient.writeTimeout = writeTimeout
-            return this
+        fun writeTimeout(writeTimeout: Int) = apply {
+            this.writeTimeout = writeTimeout
         }
 
-        fun ccType(@CCType.Type ccType: Int): Builder {
-            xquicClient.ccType = ccType
-            return this
+        fun ccType(@CCType.Type ccType: Int) = apply {
+            this.ccType = ccType
         }
 
-        fun pingInterval(pingInterval: Long): Builder {
-            xquicClient.pingInterval = pingInterval
-            return this
+        fun pingInterval(pingInterval: Long) = apply {
+            this.pingInterval = pingInterval
         }
 
-        fun dns(xDns: XDns): Builder {
-            xquicClient.dns = xDns
-            return this
+        fun dns(xDns: XDns) = apply {
+            this.dns = xDns
         }
 
-        fun addInterceptor(xInterceptor: XInterceptor): Builder {
-            xquicClient.interceptors.add(xInterceptor)
-            return this
+        fun addInterceptor(xInterceptor: XInterceptor) = apply {
+            this.interceptors.add(xInterceptor)
         }
 
-        fun addPingListener(pingListener: XPingListener): Builder {
-            xquicClient.pingListener = pingListener
-            return this
+        fun addPingListener(pingListener: XPingListener) = apply {
+            this.pingListener = pingListener
         }
 
-        fun reuse(isReuse: Boolean): Builder {
-            xquicClient.reuse = isReuse
-            return this
+        fun reuse(isReuse: Boolean) = apply {
+            this.reuse = isReuse
         }
 
-        fun connectionPool(xConnectionPool: XConnectionPool) {
-            xquicClient.xConnectionPool = xConnectionPool
+        fun connectionPool(xConnectionPool: XConnectionPool) = apply {
+            this.xConnectionPool = xConnectionPool
         }
 
-        fun addNetworkInterceptor(xInterceptor: XInterceptor): Builder {
-            xquicClient.networkInterceptors.add(xInterceptor)
-            return this
+        fun addNetworkInterceptor(xInterceptor: XInterceptor) = apply {
+            this.networkInterceptors.add(xInterceptor)
         }
     }
 
