@@ -8,7 +8,7 @@ package com.lizhi.component.net.xquic.mode
 class XHeaders(val headersMap: MutableMap<String, String>) {
 
     class Builder {
-        private val headersMap by lazy { hashMapOf<String, String>() }
+        private val headersMap = hashMapOf<String, String>()
         fun build(): XHeaders {
             return XHeaders(headersMap)
         }

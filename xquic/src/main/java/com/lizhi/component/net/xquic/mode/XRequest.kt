@@ -34,7 +34,7 @@ class XRequest(val builder: Builder) {
         internal var body: XRequestBody? = null
 
         internal var key = System.currentTimeMillis().toString()
-        internal val tags by lazy { mutableMapOf<String, String>() }
+        internal val tags = mutableMapOf<String, String>()
 
         var method: String = "GET" // or POST
         var headers: XHeaders = XHeaders.Builder().build()

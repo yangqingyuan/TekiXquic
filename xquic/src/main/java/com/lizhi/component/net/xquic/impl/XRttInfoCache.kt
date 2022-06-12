@@ -11,15 +11,15 @@ object XRttInfoCache {
     /**
      * token
      */
-    val tokenMap by lazy { LruCache<String, String>(100) }
+    val tokenMap = LruCache<String, String>(100)
 
     /**
      * session
      */
-    val sessionMap by lazy { LruCache<String, String>(100) }
+    val sessionMap = LruCache<String, String>(100)
 
     /**
      * tp
      */
-    val tpMap by lazy { LruCache<String, String>(100) }
+    val tpMap = LruCache<String, String>(100)
 }
