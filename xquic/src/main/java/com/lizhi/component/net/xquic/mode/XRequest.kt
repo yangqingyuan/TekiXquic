@@ -1,117 +1,97 @@
 package com.lizhi.component.net.xquic.mode
 
 import androidx.fragment.app.FragmentActivity
-import java.lang.ref.WeakReference
 
 /**
  * 作用:
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class XRequest {
+class XRequest(val builder: Builder) {
 
-    lateinit var url: XHttpUrl
-    var body: XRequestBody? = null
+    var url: XHttpUrl = builder.url
+    var body: XRequestBody? = builder.body
 
-    private var key = System.currentTimeMillis().toString()
-    private val tags by lazy { mutableMapOf<String, String>() }
+    private val tags = builder.tags
 
-    var method: String = "GET" // or POST
-    var headers: XHeaders = XHeaders.Builder().build()
-
+    var method: String = builder.method
+    var headers: XHeaders = builder.headers
 
     fun tag(): String? {
-        return tags[key]
+        return tags[builder.key]
     }
 
     /**
      * copy and new data
      */
     fun newRequest(): XRequest {
-        val xRequest = XRequest()
-        xRequest.url = url
-        xRequest.tags.putAll(tags)
-        xRequest.method = xRequest.method
-        xRequest.headers = xRequest.headers.newHeaders()
-        body?.let {
-            xRequest.body = XRequestBody.create(it.mediaType, it.content)
-        }
-        return xRequest
+        return XRequest(builder)
     }
 
-    /**
-     * to observer activity life
-     */
-    var life: WeakReference<FragmentActivity>? = null
-
     class Builder {
-        private val xRequest = XRequest()
+
+        lateinit var url: XHttpUrl
+        internal var body: XRequestBody? = null
+
+        internal var key = System.currentTimeMillis().toString()
+        internal val tags by lazy { mutableMapOf<String, String>() }
+
+        var method: String = "GET" // or POST
+        var headers: XHeaders = XHeaders.Builder().build()
 
         fun build(): XRequest {
-            return xRequest
+            return XRequest(this)
         }
 
-        fun url(url: String): Builder {
-            xRequest.url = XHttpUrl.get(url)
-            return this
+        fun url(url: String) = apply {
+            this.url = XHttpUrl.get(url)
         }
 
 
-        fun header(name: String, value: String): Builder {
-            xRequest.headers.headersMap[name] = value
-            return this
+        fun header(name: String, value: String) = apply {
+            this.headers.headersMap[name] = value
         }
 
-        fun addHeader(name: String, value: String): Builder {
-            xRequest.headers.headersMap[name] = value
-            return this
+        fun addHeader(name: String, value: String) = apply {
+            this.headers.headersMap[name] = value
         }
 
-        fun removeHeader(name: String): Builder {
-            xRequest.headers.headersMap.remove(name)
-            return this
+        fun removeHeader(name: String) = apply {
+            this.headers.headersMap.remove(name)
         }
 
-        fun tag(tag: String): Builder {
-            xRequest.tags[xRequest.key] = tag
-            return this
+        fun tag(tag: String) = apply {
+            this.tags[key] = tag
         }
 
-        fun life(activity: FragmentActivity): Builder {
-            xRequest.life = WeakReference(activity)
-            return this
+        fun life(activity: FragmentActivity) = apply {
+            //this.life = WeakReference(activity)
         }
 
-        fun headers(header: XHeaders): Builder {
-            xRequest.headers = header
-            return this
+        fun headers(header: XHeaders) = apply {
+            this.headers = header
         }
 
-        fun get(): Builder {
-            xRequest.method = "GET"
-            return this
+        fun get() = apply {
+            this.method = "GET"
         }
 
-        fun get(xRequestBody: XRequestBody): Builder {
-            xRequest.method = "GET"
-            xRequest.body = xRequestBody
-            return this
+        fun get(xRequestBody: XRequestBody) = apply {
+            this.method = "GET"
+            this.body = xRequestBody
         }
 
-        fun post(): Builder {
-            xRequest.method = "POST"
-            return this
+        fun post() = apply {
+            this.method = "POST"
         }
 
-        fun body(xRequestBody: XRequestBody): Builder {
-            xRequest.body = xRequestBody
-            return this
+        fun body(xRequestBody: XRequestBody) = apply {
+            this.body = xRequestBody
         }
 
-        fun post(xRequestBody: XRequestBody): Builder {
-            xRequest.method = "POST"
-            xRequest.body = xRequestBody
-            return this
+        fun post(xRequestBody: XRequestBody) = apply {
+            this.method = "POST"
+            this.body = xRequestBody
         }
     }
 }

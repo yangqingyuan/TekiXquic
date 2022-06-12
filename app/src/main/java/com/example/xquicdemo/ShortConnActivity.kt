@@ -124,7 +124,7 @@ class ShortConnActivity : AppCompatActivity() {
 
         val content = etContent.text.toString()
         val xRequestBody =
-            XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
+            XRequestBody.create(XMediaType(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
             .url("$url")
             .get(xRequestBody) //Default
@@ -147,7 +147,7 @@ class ShortConnActivity : AppCompatActivity() {
 
         val content = etContent.text.toString()
         val xRequestBody =
-            XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), content)
+            XRequestBody.create(XMediaType(XMediaType.MEDIA_TYPE_TEXT), content)
         val xRequest = XRequest.Builder()
             .url("$url")
             .post(xRequestBody) //Default

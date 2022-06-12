@@ -37,7 +37,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
     /**
      * copy a newObject
      */
-    var xRequest: XRequest = originalRequest.newRequest()
+    var xRequest: XRequest = originalRequest
 
     internal val emptyXCall = object : XCall {
         override fun request(): XRequest {
