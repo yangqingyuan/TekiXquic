@@ -165,7 +165,7 @@ open class XquicClient internal constructor(builder: Builder) {
     }
 
     fun newCall(xRequest: XRequest): XCall {
-        return XRealCall.newCall(this, xRequest)
+        return XRealCall(this, xRequest)
     }
 
     fun dispatcher(): XDispatcher {

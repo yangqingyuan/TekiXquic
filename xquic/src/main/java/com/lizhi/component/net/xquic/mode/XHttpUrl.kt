@@ -9,7 +9,7 @@ import com.lizhi.component.net.xquic.utils.XLogUtils
  * 作者: yqy
  * 创建日期: 2022/4/6
  */
-class XHttpUrl {
+class XHttpUrl(val builder: Builder) {
 
     companion object {
 
@@ -64,39 +64,39 @@ class XHttpUrl {
     /**
      * http/https
      */
-    lateinit var scheme: String
+    var scheme: String = builder.scheme
 
 
     /**
      * sample:https://192.168.10.21:8443/test?gws_rd=ssl
      * path = /test?gws_rd=ssl
      */
-    var path: String? = null
+    var path: String? = builder.path
 
     /**
      * sample:https://192.168.10.21:8443/test?gws_rd=ssl
      * host = 192.168.10.21
      */
-    var host: String? = null
-    lateinit var url: String
-    var port: Int = 0
+    var host: String? = builder.host
+    var url: String = builder.url
+    var port: Int = builder.port
 
     /**
      * sample:https://www.google.com.hk/?gws_rd=ssl
      * authority = www.google.com.hk
      */
-    lateinit var authority: String
-
-    //private val pathSegments by lazy { mutableListOf<String>() }
+    var authority: String = builder.authority
 
     class Builder {
-        private val xHttpUrl = XHttpUrl()
+        lateinit var scheme: String
+        var path: String? = null
+        var host: String? = null
+        lateinit var url: String
+        var port: Int = 0
+        lateinit var authority: String
 
-        /**
-         * https://ip:host/path?xx=xxx
-         */
-        fun parse(url: String): Builder {
-            xHttpUrl.url = url
+        fun parse(url: String) = apply {
+            this.url = url
             var pos: Int = skipLeadingAsciiWhitespace(url, 0, url.length)
             val limit: Int = skipTrailingAsciiWhitespace(url, pos, url.length)
 
@@ -105,11 +105,11 @@ class XHttpUrl {
 
             when {
                 url.regionMatches(0, "https:", 0, 6) -> {
-                    xHttpUrl.scheme = "https"
+                    this.scheme = "https"
                     pos += "https://".length
                 }
                 url.regionMatches(0, "http:", 0, 5) -> {
-                    xHttpUrl.scheme = "http"
+                    this.scheme = "http"
                     pos += "http://".length
                 }
                 else -> {
@@ -128,10 +128,10 @@ class XHttpUrl {
                 temp.split("/")
             }
             if (list.isNotEmpty()) {
-                xHttpUrl.authority = list[0]
+                this.authority = list[0]
                 //if is ready ip
-                if (IPUtils.isIpv4(xHttpUrl.authority) || IPUtils.isIpv6(xHttpUrl.authority)) {
-                    xHttpUrl.host = list[0]
+                if (IPUtils.isIpv4(this.authority) || IPUtils.isIpv6(this.authority)) {
+                    this.host = list[0]
                 }
             } else {
                 throw IllegalArgumentException(
@@ -140,12 +140,12 @@ class XHttpUrl {
             }
 
             /* parse port */
-            pos += xHttpUrl.authority.length + 1
+            pos += this.authority.length + 1
             if (pos <= limit) {
                 list = url.substring(pos, limit).split("/")
                 if (list.isNotEmpty()) {
                     try {
-                        xHttpUrl.port = list[0].toInt()
+                        this.port = list[0].toInt()
                         pos += list[0].length
                     } catch (e: Exception) {
                         pos -= 1
@@ -153,8 +153,8 @@ class XHttpUrl {
                 }
             }
 
-            if (xHttpUrl.port <= 0) {
-                xHttpUrl.port = if (xHttpUrl.scheme == "https") {
+            if (this.port <= 0) {
+                this.port = if (this.scheme == "https") {
                     443
                 } else {
                     80
@@ -162,13 +162,13 @@ class XHttpUrl {
             }
 
             if (pos <= limit) {
-                xHttpUrl.path = url.substring(pos, limit)
+                this.path = url.substring(pos, limit)
             }
             return this
         }
 
         fun build(): XHttpUrl {
-            return xHttpUrl
+            return XHttpUrl(this)
         }
     }
 
@@ -194,15 +194,8 @@ class XHttpUrl {
         return "XHttpUrl(scheme=$scheme, host='$host', port=$port, url=$url, authority=$authority, path=$path)"
     }
 
-    fun newUrl(): XHttpUrl {
-        val xHttpUrl = XHttpUrl()
-        xHttpUrl.authority = authority
-        xHttpUrl.scheme = scheme
-        xHttpUrl.url = url
-        xHttpUrl.host = host
-        xHttpUrl.path = path
-        xHttpUrl.port = port
-        return xHttpUrl
+    fun newUrl(builder: Builder): XHttpUrl {
+        return XHttpUrl(builder)
     }
 
 

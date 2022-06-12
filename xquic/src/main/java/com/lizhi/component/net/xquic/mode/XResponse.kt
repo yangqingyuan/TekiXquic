@@ -5,52 +5,65 @@ package com.lizhi.component.net.xquic.mode
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class XResponse {
-    lateinit var xRequest: XRequest
-    lateinit var xHeaders: XHeaders
+class XResponse(builder: Builder) {
+    var xRequest: XRequest = builder.xRequest
+    var xHeaders: XHeaders = builder.xHeaders
     lateinit var xResponseBody: XResponseBody
 
-    var code: Int = 0
-    var message: String? = null
+    var code: Int = builder.code
+    var message: String? = builder.message
 
     /**
      * queue wait time，unit ms
      */
-    var delayTime = 0L
+    var delayTime = builder.delayTime
 
-    var index = 0
+    var index = builder.index
+
+    init {
+        builder.xResponseBody?.let {
+            xResponseBody = it
+        }
+    }
 
 
     class Builder() {
-        private val xResponse = XResponse()
+        var code: Int = 0
+        var message: String? = null
 
-        fun request(xRequest: XRequest): Builder {
-            xResponse.xRequest = xRequest
-            return this
+        /**
+         * queue wait time，unit ms
+         */
+        var delayTime = 0L
+
+        var index = 0
+
+        lateinit var xRequest: XRequest
+        lateinit var xHeaders: XHeaders
+        var xResponseBody: XResponseBody? = null
+
+        fun request(xRequest: XRequest) = apply {
+            this.xRequest = xRequest
         }
 
-        fun headers(xHeaders: XHeaders): Builder {
-            xResponse.xHeaders = xHeaders
-            return this
+        fun headers(xHeaders: XHeaders) = apply {
+            this.xHeaders = xHeaders
         }
 
-        fun delayTime(delayTime: Long): Builder {
-            xResponse.delayTime = delayTime
-            return this
+        fun delayTime(delayTime: Long) = apply {
+            this.delayTime = delayTime
         }
 
-        fun index(index: Int): Builder {
-            xResponse.index = index
-            return this
+        fun index(index: Int) = apply {
+            this.index = index
         }
 
-        fun responseBody(xResponseBody: XResponseBody): Builder {
-            xResponse.xResponseBody = xResponseBody
-            return this
+        fun responseBody(xResponseBody: XResponseBody) = apply {
+            this.xResponseBody = xResponseBody
         }
 
         fun build(): XResponse {
-            return xResponse
+            return XResponse(this)
         }
 
     }

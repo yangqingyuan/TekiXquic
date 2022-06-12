@@ -29,7 +29,7 @@ class XRequest {
      */
     fun newRequest(): XRequest {
         val xRequest = XRequest()
-        xRequest.url = url.newUrl()
+        xRequest.url = url
         xRequest.tags.putAll(tags)
         xRequest.method = xRequest.method
         xRequest.headers = xRequest.headers.newHeaders()
