@@ -17,7 +17,7 @@ import java.util.HashMap
  * 作者: yqy
  * 创建日期: 2022/5/26.
  */
-class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
+class XConnection(val xquicClient: XquicClient, private val originalRequest: XRequest) {
 
     companion object {
         private const val TAG = "XConnection"
@@ -87,6 +87,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
                 xWebSocket = null
                 isDestroy = true
                 idleAtNanos = 0
+                xquicClient.connectionPool().remove(this@XConnection)//clean conn
                 XLogUtils.debug(TAG, "onClosed")
             }
 
@@ -95,6 +96,7 @@ class XConnection(xquicClient: XquicClient, originalRequest: XRequest) {
                     xWebSocket = null
                     isDestroy = true
                     idleAtNanos = 0
+                    xquicClient.connectionPool().remove(this@XConnection)//clean conn
                     XLogUtils.debug(TAG, "onFailure")
                     xCallBackMap.forEach(action = {
                         it.value?.onFailure(emptyXCall, Exception(t))

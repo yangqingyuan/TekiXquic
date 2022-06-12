@@ -1,7 +1,6 @@
 package com.lizhi.component.net.xquic.impl
 
 import com.lizhi.component.net.xquic.mode.XRequest
-import java.util.*
 import java.util.concurrent.TimeUnit
 
 /**
@@ -12,7 +11,7 @@ import java.util.concurrent.TimeUnit
 class XConnectionPool(
     private val maxIdleConnections: Int = 5,
     private val keepAliveDuration: Long = 2,
-    timeUnit: TimeUnit = TimeUnit.MINUTES
+    private val timeUnit: TimeUnit = TimeUnit.MINUTES
 ) {
 
     private val keepAliveDurationNs: Long = timeUnit.toNanos(keepAliveDuration)
@@ -22,9 +21,9 @@ class XConnectionPool(
         require(keepAliveDuration > 0) { "keepAliveDuration <= 0: $keepAliveDuration" }
     }
 
-    private val connections: Deque<XConnection> = ArrayDeque()
+    private val connections: MutableList<XConnection> = mutableListOf()
 
-    private fun cleanup(now: Long): Long {
+    fun cleanup(now: Long): Long {
         var idleConnectionCount = 0
         var longestIdleConnection: XConnection? = null
         var longestIdleDurationNs = Long.MIN_VALUE
@@ -81,11 +80,17 @@ class XConnectionPool(
         }
     }
 
-
     fun put(connection: XConnection) {
         synchronized(this) {
             cleanup(System.nanoTime())
             connections.add(connection)
+        }
+    }
+
+    fun remove(connection: XConnection) {
+        synchronized(this) {
+            connections.remove(connection)
+            cleanup(System.nanoTime())
         }
     }
 }
