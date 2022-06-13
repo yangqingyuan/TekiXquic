@@ -35,6 +35,11 @@ class XAsyncCall(
      */
     private val xquicShortNative = XquicShortNative()
 
+    /**
+     * xRttInfo
+     */
+    private val xRttInfoCache = xquicClient.xRttInfoCache
+
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
@@ -52,8 +57,8 @@ class XAsyncCall(
 
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url)
-                .setToken(XRttInfoCache.tokenMap[authority()])
-                .setSession(XRttInfoCache.sessionMap[authority()])
+                .setToken(xRttInfoCache.tokenMap[authority()])
+                .setSession(xRttInfoCache.sessionMap[authority()])
                 .setConnectTimeOut(xquicClient.connectTimeOut)
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
@@ -106,10 +111,10 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TOKEN -> {
-                    XRttInfoCache.tokenMap.put(authority(), data)
+                    xRttInfoCache.tokenMap.put(authority(), data)
                 }
                 XquicMsgType.SESSION -> {
-                    XRttInfoCache.sessionMap.put(authority(), data)
+                    xRttInfoCache.sessionMap.put(authority(), data)
                 }
 
                 XquicMsgType.DESTROY -> {
@@ -117,7 +122,7 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TP -> {
-                    XRttInfoCache.tpMap.put(authority(), data)
+                    xRttInfoCache.tpMap.put(authority(), data)
                 }
                 XquicMsgType.HEAD -> {
                     try {

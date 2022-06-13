@@ -10,7 +10,7 @@ import java.util.concurrent.*
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class XDispatcher {
+class XDispatcher(private val executor: ExecutorService) {
 
     private val maxRequests = 64
     private val maxRequestsPerHost = 5
@@ -26,7 +26,7 @@ class XDispatcher {
     private val runningSyncCalls: Deque<XRealCall> = ArrayDeque()
 
     private fun executorService(): ExecutorService {
-        return XExecutorService.executorService
+        return executor
     }
 
     fun enqueue(xAsyncCall: XRunnable) {

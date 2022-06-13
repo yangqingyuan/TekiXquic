@@ -1,9 +1,6 @@
 package com.lizhi.component.net.xquic
 
-import com.lizhi.component.net.xquic.impl.XConnectionPool
-import com.lizhi.component.net.xquic.impl.XDispatcher
-import com.lizhi.component.net.xquic.impl.XRealCall
-import com.lizhi.component.net.xquic.impl.XRealWebSocket
+import com.lizhi.component.net.xquic.impl.*
 import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.CCType
@@ -51,6 +48,11 @@ open class XquicClient internal constructor(builder: Builder) {
      */
     var reuse: Boolean = builder.reuse
 
+    /**
+     * 0RttInfo
+     */
+    var xRttInfoCache = builder.xRttInfoCache
+
 
     private val dispatcher = builder.dispatcher
 
@@ -86,10 +88,12 @@ open class XquicClient internal constructor(builder: Builder) {
         internal var ccType = CCType.CUBIC
         internal var dns: XDns? = null
         internal var reuse: Boolean = false
-        internal var dispatcher = XDispatcher()
+        internal var dispatcher = XDispatcher(XExecutorService().executorService)
         internal var interceptors = mutableListOf<XInterceptor>()
         internal var networkInterceptors = mutableListOf<XInterceptor>()
         internal var xConnectionPool: XConnectionPool = XConnectionPool()
+        internal var xRttInfoCache = XRttInfoCache()
+
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
                 return "ping"
@@ -113,6 +117,7 @@ open class XquicClient internal constructor(builder: Builder) {
             networkInterceptors = xquicClient.networkInterceptors
             xConnectionPool = xquicClient.xConnectionPool
             pingListener = xquicClient.pingListener
+            xRttInfoCache = xquicClient.xRttInfoCache
         }
 
         fun build(): XquicClient {
@@ -181,7 +186,7 @@ open class XquicClient internal constructor(builder: Builder) {
      */
     fun newWebSocket(xRequest: XRequest, listener: XWebSocketListener): XRealWebSocket {
         val xRealWebSocket =
-            XRealWebSocket(xRequest, listener, Random(), pingInterval, pingListener)
+            XRealWebSocket(xRequest, listener, xRttInfoCache, Random(), pingInterval, pingListener)
         xRealWebSocket.connect(this)
         return xRealWebSocket
     }

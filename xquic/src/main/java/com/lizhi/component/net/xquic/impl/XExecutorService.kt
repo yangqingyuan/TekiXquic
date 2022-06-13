@@ -5,7 +5,7 @@ import java.util.concurrent.*
 /**
  * common thread pool
  */
-object XExecutorService {
+class XExecutorService {
 
     /** Executes calls. Created lazily.  */
     var executorService: ExecutorService = ThreadPoolExecutor(

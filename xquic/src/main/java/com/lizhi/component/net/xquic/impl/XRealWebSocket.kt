@@ -27,6 +27,7 @@ import java.util.concurrent.TimeUnit
 class XRealWebSocket(
     private val xRequest: XRequest,
     private val listener: XWebSocketListener,
+    private val xRttInfoCache:XRttInfoCache,
     random: Random,
     pingInterval: Long,
     private val pingListener: XPingListener
@@ -210,8 +211,8 @@ class XRealWebSocket(
 
                 val sendParamsBuilder = SendParams.Builder()
                     .setUrl(url)
-                    .setToken(XRttInfoCache.tokenMap[authority()])
-                    .setSession(XRttInfoCache.sessionMap[authority()])
+                    .setToken(xRttInfoCache.tokenMap[authority()])
+                    .setSession(xRttInfoCache.sessionMap[authority()])
                     .setConnectTimeOut(xquicClient.connectTimeOut)
                     .setReadTimeOut(xquicClient.readTimeout)
                     .setMaxRecvLenght(1024 * 1024)
@@ -424,13 +425,13 @@ class XRealWebSocket(
                     listener.onOpen(this, xResponse)
                 }
                 XquicMsgType.TOKEN -> {
-                    XRttInfoCache.tokenMap.put(authority(), data)
+                    xRttInfoCache.tokenMap.put(authority(), data)
                 }
                 XquicMsgType.SESSION -> {
-                    XRttInfoCache.sessionMap.put(authority(), data)
+                    xRttInfoCache.sessionMap.put(authority(), data)
                 }
                 XquicMsgType.TP -> {
-                    XRttInfoCache.tpMap.put(authority(), data)
+                    xRttInfoCache.tpMap.put(authority(), data)
                 }
                 XquicMsgType.HEAD -> {
                     try {

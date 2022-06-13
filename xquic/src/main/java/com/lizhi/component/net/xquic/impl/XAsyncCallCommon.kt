@@ -52,7 +52,7 @@ abstract class XAsyncCallCommon(
         /**
          * check clientCtx Valid
          */
-        internal fun checkClientCtx(clientCtx: Long): Boolean {
+        fun checkClientCtx(clientCtx: Long): Boolean {
             if (clientCtx != 0L && clientCtx != -1L) {
                 return true
             }

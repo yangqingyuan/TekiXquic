@@ -7,7 +7,7 @@ import android.util.LruCache
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-object XRttInfoCache {
+class XRttInfoCache {
     /**
      * token
      */
