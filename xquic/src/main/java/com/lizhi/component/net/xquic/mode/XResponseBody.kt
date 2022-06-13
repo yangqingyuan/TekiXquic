@@ -19,7 +19,11 @@ class XResponseBody(var data: String) {
 
     init {
         val jsonObject = JSONObject(data)
-        body = jsonObject.getString("recv_body")
+        body = if (jsonObject.has("recv_body")) {
+            jsonObject.getString("recv_body")
+        } else {
+            ""
+        }
         if (jsonObject.has("tag")) {
             tag = jsonObject.getString("tag")
         }
