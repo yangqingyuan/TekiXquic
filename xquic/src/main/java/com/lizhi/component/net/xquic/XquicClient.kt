@@ -11,7 +11,7 @@ import java.util.*
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-open class XquicClient internal constructor(builder: Builder) {
+open class XquicClient internal constructor(val builder: Builder) {
 
     /**
      * unit second
@@ -69,7 +69,7 @@ open class XquicClient internal constructor(builder: Builder) {
     /**
      * 链接管理
      */
-    private var xConnectionPool = builder.xConnectionPool
+    private var xConnectionPool: XConnectionPool? = builder.xConnectionPool
 
     /**
      * ping listener
@@ -91,7 +91,7 @@ open class XquicClient internal constructor(builder: Builder) {
         internal var dispatcher = XDispatcher(XExecutorService().executorService)
         internal var interceptors = mutableListOf<XInterceptor>()
         internal var networkInterceptors = mutableListOf<XInterceptor>()
-        internal var xConnectionPool: XConnectionPool = XConnectionPool()
+        internal var xConnectionPool: XConnectionPool? = null
         internal var xRttInfoCache = XRttInfoCache()
 
         internal var pingListener: XPingListener = object : XPingListener {
@@ -160,10 +160,6 @@ open class XquicClient internal constructor(builder: Builder) {
             this.reuse = isReuse
         }
 
-        fun connectionPool(xConnectionPool: XConnectionPool) = apply {
-            this.xConnectionPool = xConnectionPool
-        }
-
         fun addNetworkInterceptor(xInterceptor: XInterceptor) = apply {
             this.networkInterceptors.add(xInterceptor)
         }
@@ -178,7 +174,11 @@ open class XquicClient internal constructor(builder: Builder) {
     }
 
     fun connectionPool(): XConnectionPool {
-        return xConnectionPool
+        if (xConnectionPool == null) {//new a connection pool
+            xConnectionPool = XConnectionPool()
+            builder.xConnectionPool = xConnectionPool
+        }
+        return xConnectionPool!!
     }
 
     /**

@@ -133,7 +133,6 @@ class ShortConnActivity : AppCompatActivity() {
             //.addHeader("testA", "testA")
             //.addHeader("Keep-Alive", "timeout=300, max=1000")
             .tag("tag")
-            .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
             .build()
         request(index, xRequest)
     }
@@ -154,7 +153,6 @@ class ShortConnActivity : AppCompatActivity() {
             .addHeader("tenantId", "soacp")
             .addHeader("clientId", "portalApp")
             .tag("tag")
-            .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
             .build()
         request(index, xRequest)
     }

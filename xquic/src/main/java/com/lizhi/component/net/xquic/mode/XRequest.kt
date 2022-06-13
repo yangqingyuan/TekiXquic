@@ -1,6 +1,8 @@
 package com.lizhi.component.net.xquic.mode
 
-import androidx.fragment.app.FragmentActivity
+import android.app.Activity
+import java.lang.ref.WeakReference
+
 
 /**
  * 作用:
@@ -19,6 +21,10 @@ class XRequest(val builder: Builder) {
 
     fun tag(): String? {
         return tags[builder.key]
+    }
+
+    fun tag(key: String): String? {
+        return tags[key]
     }
 
     /**
@@ -64,9 +70,14 @@ class XRequest(val builder: Builder) {
             this.tags[key] = tag
         }
 
-        fun life(activity: FragmentActivity) = apply {
-            //this.life = WeakReference(activity)
+        fun tag(key: String, tag: String) = apply {
+            this.tags[key] = tag
         }
+
+        /* 由外部去监听，避免内部对象无法回收问题
+        fun life(activity: FragmentActivity) = apply {
+            this.life = WeakReference(activity)
+        }*/
 
         fun headers(header: XHeaders) = apply {
             this.headers = header
