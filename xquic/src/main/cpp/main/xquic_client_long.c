@@ -16,10 +16,12 @@
  * @return
  */
 int client_long_open_log_file(xqc_cli_ctx_t *ctx) {
+#if 0
     ctx->log_fd = open(ctx->log_path, (O_WRONLY | O_APPEND | O_CREAT), 0644);
     if (ctx->log_fd <= 0) {
         return XQC_ERROR;
     }
+#endif
     return XQC_OK;
 }
 
@@ -42,10 +44,12 @@ int client_long_close_log_file(xqc_cli_ctx_t *ctx) {
  * @param ctx
  */
 int client_long_open_keylog_file(xqc_cli_ctx_t *ctx) {
+#if 0
     ctx->keylog_fd = open(ctx->args->env_cfg.key_out_path, (O_WRONLY | O_APPEND | O_CREAT), 0644);
     if (ctx->keylog_fd <= 0) {
         return XQC_ERROR;
     }
+#endif
     return XQC_OK;
 }
 
@@ -71,7 +75,7 @@ int client_long_close_keylog_file(xqc_cli_ctx_t *ctx) {
  */
 void client_long_init_ctx(xqc_cli_ctx_t *pctx, xqc_cli_client_args_t *args) {
     DEBUG;
-    strncpy(pctx->log_path, args->env_cfg.log_path, sizeof(pctx->log_path) - 1);
+    //strncpy(pctx->log_path, args->env_cfg.log_path, sizeof(pctx->log_path) - 1);
     pctx->args = args;
     client_long_open_log_file(pctx);
     client_long_open_keylog_file(pctx);

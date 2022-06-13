@@ -226,11 +226,11 @@ typedef struct xqc_cli_quic_config_s {
  */
 typedef struct xqc_cli_env_config_s {
     /* log path */
-    char log_path[256];
+    //char log_path[256];
     int log_level;
 
     /* out file */
-    char out_file_dir[256];
+    //char out_file_dir[256];
 
     /* key export */
     int key_output_flag;
@@ -246,7 +246,7 @@ typedef struct xqc_cli_env_config_s {
 * all configuration on request should be put under this section
 * ============================================================================
 */
-#define MAX_REQUEST_CNT 2048    /* client might deal MAX_REQUEST_CNT requests once */
+#define MAX_REQUEST_CNT 1024    /* client might deal MAX_REQUEST_CNT requests once */
 #define MAX_REQUEST_LEN 256     /* the max length of a request */
 #define PATH_LEN            512
 #define RESOURCE_LEN        256
@@ -282,7 +282,7 @@ typedef struct xqc_cli_request_s {
  */
 typedef struct xqc_cli_requests_s {
     /* requests */
-    char urls[MAX_REQUEST_CNT * MAX_REQUEST_LEN];
+    //char urls[MAX_REQUEST_CNT * MAX_REQUEST_LEN];
     int request_cnt;    /* requests cnt in urls */
     xqc_cli_request_t reqs[MAX_REQUEST_CNT];
 } xqc_cli_requests_t;
