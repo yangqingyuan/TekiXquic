@@ -105,12 +105,12 @@ class XDispatcher(private val executor: ExecutorService) {
 
     fun cancel(tag: String) {
         for (asyncCall in readyAsyncCalls) {
-            if (asyncCall.get().request().tag() == tag) {
+            if (asyncCall.get().request().tag().contains(tag)) {
                 asyncCall.cancel()
             }
         }
         for (asyncCall in runningAsyncCalls) {
-            if (asyncCall.get().request().tag() == tag) {
+            if (asyncCall.get().request().tag().contains(tag)) {
                 asyncCall.cancel()
             }
         }

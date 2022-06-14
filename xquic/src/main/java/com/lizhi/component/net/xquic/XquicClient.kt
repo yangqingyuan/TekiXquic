@@ -1,5 +1,9 @@
 package com.lizhi.component.net.xquic
 
+import android.os.Handler
+import android.os.Looper
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import com.lizhi.component.net.xquic.impl.*
 import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
@@ -75,6 +79,17 @@ open class XquicClient internal constructor(val builder: Builder) {
      * ping listener
      */
     private var pingListener = builder.pingListener
+
+    private var handler = Handler(Looper.getMainLooper())
+
+    /**
+     * when lifecycle destroy to cancel tag cell
+     */
+    private val lifecycleEventObserver = LifecycleEventObserver { source, event ->
+        if (event == Lifecycle.Event.ON_DESTROY) {
+            cancel(source.lifecycle.toString())
+        }
+    }
 
     fun newBuilder(): Builder {
         return Builder(this)
@@ -166,6 +181,16 @@ open class XquicClient internal constructor(val builder: Builder) {
     }
 
     fun newCall(xRequest: XRequest): XCall {
+        /**
+         * add lifecycleEventObserver to cancel cell when it is not end
+         */
+        xRequest.life?.get()?.lifecycle?.let {
+            val tag = xRequest.life?.get()?.lifecycle.toString()//use lifecycle to be tag
+            xRequest.builder.tag(tag, tag)
+            handler.post {
+                it.addObserver(lifecycleEventObserver)
+            }
+        }
         return XRealCall(this, xRequest)
     }
 
