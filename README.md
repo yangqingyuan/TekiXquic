@@ -23,7 +23,7 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 |  ----  | ----  |----  |
 | quic-go  | https://zhuanlan.zhihu.com/p/502352169 |升级sdk到1.0.2版本或者关闭accpetToken可以正常通讯 |
 | 阿里云  | 正常通讯 | |
-| clouefirle  | 正常通讯 | |
+| cloudflare  | 正常通讯 | |
 
 
 # sdk 接入
