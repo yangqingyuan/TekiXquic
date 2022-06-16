@@ -45,7 +45,7 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.2-SNAPSHOT'
 # 版本更新
 |  version   | 更新内容  | 时间  |
 |  ----  | ----  |----  |
-| 1.0.2-SNAPSHOT  | 1.支持链接复用</br> 2.升级xquic到v1.1.0-beta.2 </br> 3.修复若干问题</br> 4. 优化逻辑 </br>| 2022/06/15 |
+| 1.0.2-SNAPSHOT  | 1.支持链接复用</br> 2.升级xquic到v1.1.0-beta.2 </br> 3.修复若干问题</br> 4. 优化逻辑 </br> 5. 支持DNS替换 </br> | 2022/06/15 |
 | 1.0.1  | 1.支持长链接</br> 2.支持生命周期感知</br> 3.支持取消</br> 4. 其他优化等 </br>| 2022/05/07 |
 | 1.0.0  | 支持短链接 |2022/04/21|
 
@@ -57,13 +57,14 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.2-SNAPSHOT'
         .connectTimeOut(13)
         .setReadTimeOut(30)
         .ccType(CCType.BBR) //可选，拥塞算法
+        //.dns(XDns.SYSTEM)
         .build()
     val xRequest = XRequest.Builder()
         .url("https://192.168.10.245:8443")
         .life(this)//可选，如果传递这个参数，内部可以根据activity的生命周期取消没有执行的任务或者正在执行的任务，例如超时
         .addHeader("testA", "testA")// 可选，携带自定义头信息
         .get() //Default
-        .reuse(true)//是否链接复用，注意要看后端是否支持，例如：阿里云这些是支持的，默认false
+        .reuse(true)//是否链接复用，注意要看服务端是否支持，例如：阿里云这些是支持的，默认false
         .tag("tag")//可选
         .build()
 
@@ -86,6 +87,7 @@ val xquicClient = XquicClient.Builder()
     .connectTimeOut(13)
     .setReadTimeOut(30)
     .ccType(CCType.BBR) //可选，拥塞算法
+    //.dns(XDns.SYSTEM)
     .build()
 
 val xRequestBody =XRequestBody.create(XMediaType.parse(XMediaType.MEDIA_TYPE_TEXT), "test")
@@ -120,6 +122,7 @@ val xquicClient = XquicClient.Builder()
     .connectTimeOut(SetCache.getConnTimeout(applicationContext))
     .ccType(SetCache.getCCType(applicationContext))
     .pingInterval(5000)//
+    //.dns(XDns.SYSTEM)
     .build()
 
  val xRequest = XRequest.Builder()
