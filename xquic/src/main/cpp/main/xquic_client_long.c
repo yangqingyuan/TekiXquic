@@ -460,7 +460,7 @@ client_long_init_connection_settings(xqc_conn_settings_t *settings, xqc_cli_clie
     settings->cc_params.customize_on = 1;//是否打开自定义
     settings->cc_params.init_cwnd = 32;//拥塞窗口数
     settings->so_sndbuf = 1024 * 1024;//socket send  buf的大小
-    settings->proto_version = XQC_VERSION_V1;
+    settings->proto_version = args->net_cfg.version;
     settings->init_idle_time_out = (args->net_cfg.conn_timeout) * 1000;//xquic default 10s
     settings->idle_time_out = (args->net_cfg.read_timeout) * 1000;//xquic default
     settings->spurious_loss_detect_on = 1;//散列丢失检测
@@ -807,6 +807,7 @@ int client_long_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_
     args->net_cfg.mode = MODE_SCMR;
     args->net_cfg.cc = user_param->cc;
     args->net_cfg.conn_type = CONN_TYPE_LONG;
+    args->net_cfg.version = user_param->version;
 
     args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
 

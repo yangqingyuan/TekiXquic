@@ -134,6 +134,9 @@ typedef struct xqc_cli_net_config_s {
     short server_port;
     char host[256];
 
+    /* proto version */
+    xqc_proto_version_t version;
+
     /* ipv4 or ipv6 */
     int ip_type;
 
@@ -341,6 +344,9 @@ typedef struct xqc_cli_user_data_params_s {
 
     /* headers */
     xqc_http_headers_t h3_hdrs;
+
+    /* proto version */
+    xqc_proto_version_t version;
 
 } xqc_cli_user_data_params_t;
 

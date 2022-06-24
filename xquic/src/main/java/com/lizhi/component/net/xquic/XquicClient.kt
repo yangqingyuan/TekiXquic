@@ -8,6 +8,7 @@ import com.lizhi.component.net.xquic.impl.*
 import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.CCType
+import com.lizhi.component.net.xquic.native.ProtoVersion
 import java.util.*
 
 /**
@@ -41,6 +42,11 @@ open class XquicClient internal constructor(val builder: Builder) {
      * 拥塞算法
      */
     var ccType = builder.ccType
+
+    /**
+     * proto version
+     */
+    var protoVersion: Int = builder.protoVersion
 
     /**
      * dns
@@ -108,6 +114,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var networkInterceptors = mutableListOf<XInterceptor>()
         internal var xConnectionPool: XConnectionPool? = null
         internal var xRttInfoCache = XRttInfoCache()
+        internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
@@ -153,6 +160,10 @@ open class XquicClient internal constructor(val builder: Builder) {
 
         fun ccType(@CCType.Type ccType: Int) = apply {
             this.ccType = ccType
+        }
+
+        fun setProtoVersion(@ProtoVersion.Version version: Int) = apply {
+            this.protoVersion = version
         }
 
         fun pingInterval(pingInterval: Long) = apply {

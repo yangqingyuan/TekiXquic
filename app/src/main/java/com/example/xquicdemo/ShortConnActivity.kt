@@ -13,6 +13,7 @@ import com.lizhi.component.net.xquic.mode.XMediaType
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XRequestBody
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.native.ProtoVersion
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
 import java.lang.Exception
@@ -48,6 +49,7 @@ class ShortConnActivity : AppCompatActivity() {
             .writeTimeout(15)//TODO 未实现
             //.dns(XDns.SYSTEM)
             .reuse(SetCache.getReuse(applicationContext) == 1)//默认值false
+            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
             .build()
 
         textView = findViewById(R.id.tv_result)

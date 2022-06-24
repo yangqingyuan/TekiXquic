@@ -61,59 +61,59 @@ class SendParams {
      */
     var headersSize = 0
 
+    /**
+     * proto version
+     */
+    var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
+
 
     open class Builder {
         private val params = SendParams()
 
-        fun setUrl(url: String): Builder {
+        fun setUrl(url: String) = apply {
             params.url = url
-            return this
         }
 
-        fun setToken(token: String?): Builder {
+        fun setToken(token: String?) = apply {
             if (!token.isNullOrBlank()) {
                 params.token = token
             }
-            return this
         }
 
-        fun setSession(session: String?): Builder {
+        fun setSession(session: String?) = apply {
             if (!session.isNullOrBlank()) {
                 params.session = session
             }
-            return this
         }
 
-        fun setContent(content: String): Builder {
+        fun setContent(content: String) = apply {
             params.content = content
-            return this
         }
 
-        fun setConnectTimeOut(timeOut: Int): Builder {
+        fun setConnectTimeOut(timeOut: Int) = apply {
             params.connectTimeOut = timeOut
-            return this
         }
 
-        fun setReadTimeOut(timeOut: Int): Builder {
+        fun setReadTimeOut(timeOut: Int) = apply {
             params.readTimeOut = timeOut
-            return this
         }
 
-        fun setMaxRecvLenght(length: Int): Builder {
+        fun setMaxRecvLenght(length: Int) = apply {
             params.maxRecvDataLen = length
-            return this
         }
 
-        fun setCCType(@CCType.Type ccType: Int): Builder {
+        fun setCCType(@CCType.Type ccType: Int) = apply {
             params.ccType = ccType
-            return this
         }
 
-        fun setHeaders(headers: HashMap<String, String>): Builder {
+        fun setProtoVersion(@ProtoVersion.Version version: Int) = apply {
+            params.protoVersion = version
+        }
+
+        fun setHeaders(headers: HashMap<String, String>) = apply {
             if (headers.isNotEmpty()) {
                 params.headers.putAll(headers)
             }
-            return this
         }
 
         fun build(): SendParams {

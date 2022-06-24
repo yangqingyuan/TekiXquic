@@ -63,6 +63,7 @@ class XAsyncCall(
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
                 .setCCType(xquicClient.ccType)
+                .setProtoVersion(xquicClient.protoVersion)
 
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
