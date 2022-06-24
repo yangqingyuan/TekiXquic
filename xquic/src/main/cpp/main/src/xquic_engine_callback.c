@@ -9,19 +9,21 @@ void client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *
     //DEBUG;
     switch (lvl) {
         case XQC_LOG_REPORT:
+            break;
         case XQC_LOG_FATAL:
+            break;
         case XQC_LOG_ERROR:
-            //LOGE("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            LOGE("log:%s\n", buf);
             break;
         case XQC_LOG_WARN:
-            //LOGW("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGW("log:%s\n", buf);
             break;
         case XQC_LOG_INFO:
         case XQC_LOG_STATS:
-            //LOGI("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGI("log:%s\n", buf);
             break;
         case XQC_LOG_DEBUG:
-            //LOGD("fun:%s,line:%d,log:%s\n", __FUNCTION__, __LINE__, buf);
+            //LOGD("log:%s\n", buf);
             break;
     }
 }

@@ -1,12 +1,49 @@
 #include <xquic_common.h>
 #include <assert.h>
-#include "native_xquic_common.h"
+#include "xquic_client_short.h"
+#include "xquic_client_long.h"
 
-static JavaVM *g_jvm;
-static pthread_mutex_t mutex;
+#define JNI_CLASS_XQUIC_SHORT   "com/lizhi/component/net/xquic/native/XquicShortNative"
+#define JNI_CLASS_XQUIC_LONG   "com/lizhi/component/net/xquic/native/XquicLongNative"
 
+typedef struct xquic_fields_t {
+    jclass clazz_short;
+    jclass clazz_long;
+    JavaVM *g_jvm;
+    pthread_mutex_t mutex;
+} xquic_fields_t;
+static xquic_fields_t g_clazz;
 
-void correctUtfBytes(char* bytes) {
+#ifndef NELEM
+#define NELEM(x) ((int) (sizeof(x) / sizeof((x)[0])))
+#endif
+
+int J4A_ExceptionCheck__catchAll(JNIEnv *env) {
+    if ((*env)->ExceptionCheck(env)) {
+        (*env)->ExceptionDescribe(env);
+        (*env)->ExceptionClear(env);
+        return 1;
+    }
+    return 0;
+}
+
+#define XQUIC_FIND_JAVA_CLASS(env__, var__, classsign__) \
+    do { \
+        jclass clazz = (*env__)->FindClass(env__, classsign__); \
+        if (J4A_ExceptionCheck__catchAll(env) || !(clazz)) { \
+            LOGE("FindClass failed: %s", classsign__); \
+            return -1; \
+        } \
+        var__ = (*env__)->NewGlobalRef(env__, clazz); \
+        if (J4A_ExceptionCheck__catchAll(env) || !(var__)) { \
+            LOGE("FindClass::NewGlobalRef failed: %s", classsign__); \
+            (*env__)->DeleteLocalRef(env__, clazz); \
+            return -1; \
+        } \
+        (*env__)->DeleteLocalRef(env__, clazz); \
+    } while(0);
+
+static void correctUtfBytes(char *bytes) {
     char three = 0;
     while (*bytes != '\0') {
         unsigned char utf8 = *(bytes++);
@@ -33,14 +70,14 @@ void correctUtfBytes(char* bytes) {
                  * Note: 1111 is valid for normal UTF-8, but not the
                  * modified UTF-8 used here.
                  */
-                *(bytes-1) = '?';
+                *(bytes - 1) = '?';
                 break;
             case 0x0e:
                 // Bit pattern 1110, so there are two additional bytes.
                 utf8 = *(bytes++);
                 if ((utf8 & 0xc0) != 0x80) {
                     --bytes;
-                    *(bytes-1) = '?';
+                    *(bytes - 1) = '?';
                     break;
                 }
                 three = 1;
@@ -51,8 +88,8 @@ void correctUtfBytes(char* bytes) {
                 utf8 = *(bytes++);
                 if ((utf8 & 0xc0) != 0x80) {
                     --bytes;
-                    if(three)--bytes;
-                    *(bytes-1)='?';
+                    if (three)--bytes;
+                    *(bytes - 1) = '?';
                 }
                 break;
         }
@@ -67,10 +104,10 @@ void correctUtfBytes(char* bytes) {
  * @param len
  * @param user_data
  */
-void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *data,
-                          unsigned len, void *user_data) {
+static void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *data,
+                                 unsigned len, void *user_data) {
     JNIEnv *env;
-    (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+    (*g_clazz.g_jvm)->AttachCurrentThread(g_clazz.g_jvm, &env, NULL);
 
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
@@ -114,11 +151,11 @@ void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *d
  * @param user_data
  * @return callback data to java
  */
-int callback_data_to_java(void *object_android, int core, const char *data, ssize_t len,
-                          void *user_data) {
+static int callback_data_to_java(void *object_android, int core, const char *data, ssize_t len,
+                                 void *user_data) {
 
     JNIEnv *env;
-    (*g_jvm)->AttachCurrentThread(g_jvm, &env, NULL);
+    (*g_clazz.g_jvm)->AttachCurrentThread(g_clazz.g_jvm, &env, NULL);
 
     /* find class and get method */
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
@@ -131,7 +168,6 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     }
 
     //correctUtfBytes(data);//FIXME 打开后可以将非utf-8的数据转成标准utf-8数据
-
     cJSON *usr = cJSON_CreateObject();
     cJSON_AddStringToObject(usr, "recv_body", data);
     if (user_data != NULL) {
@@ -154,7 +190,7 @@ int callback_data_to_java(void *object_android, int core, const char *data, ssiz
     return 0;
 }
 
-jstring getString(JNIEnv *env, jobject param, const char *field) {
+static jstring getString(JNIEnv *env, jobject param, const char *field) {
     jclass sendParamsClass = (*env)->GetObjectClass(env, param);
     jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "Ljava/lang/String;");
     if (!jfieldId) {
@@ -165,7 +201,7 @@ jstring getString(JNIEnv *env, jobject param, const char *field) {
     return string;
 }
 
-jint getInt(JNIEnv *env, jobject param, const char *field) {
+static jint getInt(JNIEnv *env, jobject param, const char *field) {
     jclass sendParamsClass = (*env)->GetObjectClass(env, param);
     jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "I");
     if (!jfieldId) {
@@ -177,8 +213,8 @@ jint getInt(JNIEnv *env, jobject param, const char *field) {
 }
 
 
-int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
-                              xqc_http_header_t *heards) {
+static int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
+                                     xqc_http_header_t *heards) {
     jclass sendParamsClass = (*env)->GetObjectClass(env, param);
     jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "Ljava/util/HashMap;");
     if (!jfieldId) {
@@ -218,8 +254,8 @@ int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
         const char *valueChar = (*env)->GetStringUTFChars(env, valueString, 0);
 
         xqc_http_header_t header = {
-                .name = {.iov_base = (void*)keyChar, .iov_len = strlen(keyChar)},
-                .value = {.iov_base = (void*)valueChar, .iov_len = strlen(valueChar)},
+                .name = {.iov_base = (void *) keyChar, .iov_len = strlen(keyChar)},
+                .value = {.iov_base = (void *) valueChar, .iov_len = strlen(valueChar)},
                 .flags = 0,
         };
         heards[i] = header;
@@ -242,7 +278,7 @@ int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
 /*
  * get params
  */
-xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback) {
+static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback) {
 
     jstring url = getString(env, param, "url");
 
@@ -298,7 +334,7 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
     user_cfg->conn_timeout = connect_time_out;
     user_cfg->read_timeout = read_time_out;
     user_cfg->max_recv_data_len = max_recv_data_len;
-    user_cfg->mutex = &mutex;
+    user_cfg->mutex = &g_clazz.mutex;
 
     /* headers */
     user_cfg->h3_hdrs.headers = headers;
@@ -326,20 +362,152 @@ xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject 
 }
 
 
+/**
+ * 短链接发送
+ * @param env
+ * @param this
+ * @param param
+ * @param callback
+ * @return
+ */
+static int short_send(JNIEnv *env, jobject this, jobject param, jobject callback) {
+    xqc_cli_user_data_params_t *user_param = get_data_params(env, param, callback);
+    if (user_param == NULL) {
+        return -1;
+    }
+
+    /* start to send data */
+    return client_short_send(user_param);
+}
+
+/**
+ * 短链接取消
+ * @param env
+ * @param this
+ * @param clientCtx
+ * @return
+ */
+static int short_cancel(JNIEnv *env, jobject this, jlong clientCtx) {
+    return client_short_cancel(jlong_to_ptr(clientCtx));
+}
+
+/**
+ * 长链接连接
+ * @param env
+ * @param this
+ * @param param
+ * @param callback
+ * @return
+ */
+static long long_connect(JNIEnv *env, jobject this, jobject param, jobject callback) {
+    xqc_cli_user_data_params_t *user_param = get_data_params(env, param, callback);
+    if (user_param == NULL) {
+        return -1;
+    }
+
+    xqc_cli_ctx_t *ctx = client_long_conn(user_param);
+    if (ctx == NULL) {
+        return -1;
+    }
+    return ptr_to_jlong(ctx);
+}
+
+/**
+ * 长连接开始
+ * @param env
+ * @param this
+ * @param clientCtx
+ * @return
+ */
+static int long_start(JNIEnv *env, jobject this, jlong clientCtx) {
+    return client_long_start(jlong_to_ptr(clientCtx));
+}
+
+/**
+ * 长链接发送ping
+ * @param env
+ * @param this
+ * @param clientCtx
+ * @param pingContent
+ * @return
+ */
+static int long_send_ping(JNIEnv *env, jobject this, jlong clientCtx, jstring pingContent) {
+    return client_long_send_ping(jlong_to_ptr(clientCtx),
+                                 (*env)->GetStringUTFChars(env, pingContent, 0));
+}
+
+/**
+ * 长连接发送内容
+ * @param env
+ * @param this
+ * @param clientCtx
+ * @param content
+ * @return
+ */
+static int long_send(JNIEnv *env, jobject this, jlong clientCtx, jstring content) {
+    return client_long_send(jlong_to_ptr(clientCtx), (*env)->GetStringUTFChars(env, content, 0));
+}
+
+/**
+ * 长连接取消
+ * @param env
+ * @param this
+ * @param clientCtx
+ * @return
+ */
+static int long_cancel(JNIEnv *env, jobject this, jlong clientCtx) {
+    return client_long_cancel(jlong_to_ptr(clientCtx));
+}
+
+
+/**
+ * 短链接方法映射
+ */
+static JNINativeMethod g_short_methods[] = {
+        {"send",   "(Lcom/lizhi/component/net/xquic/native/SendParams;Lcom/lizhi/component/net/xquic/native/XquicCallback;)I", (void *) short_send},
+        {"cancel", "(J)I",                                                                                                     (void *) short_cancel},
+};
+
+/**
+ * 长链接方法映射
+ */
+static JNINativeMethod g_long_methods[] = {
+        {"connect",  "(Lcom/lizhi/component/net/xquic/native/SendParams;Lcom/lizhi/component/net/xquic/native/XquicCallback;)J", (void *) long_connect},
+        {"start",    "(J)I",                                                                                                     (void *) long_start},
+        {"sendPing", "(JLjava/lang/String;)I",                                                                                   (void *) long_send_ping},
+        {"send",     "(JLjava/lang/String;)I",                                                                                   (void *) long_send},
+        {"cancel",   "(J)I",                                                                                                     (void *) long_cancel},
+};
+
+/**
+ * jni 加载
+ * @param vm
+ * @param reserved
+ * @return
+ */
 JNIEXPORT jint JNI_OnLoad(JavaVM *vm, void *reserved) {
     DEBUG;
     JNIEnv *env = NULL;
-    g_jvm = vm;
+    g_clazz.g_jvm = vm;
     if ((*vm)->GetEnv(vm, (void **) &env, JNI_VERSION_1_4) != JNI_OK) {
         return -1;
     }
     assert(env != NULL);
+
+    /* register short methods*/
+    XQUIC_FIND_JAVA_CLASS(env, g_clazz.clazz_short, JNI_CLASS_XQUIC_SHORT);
+    (*env)->RegisterNatives(env, g_clazz.clazz_short, g_short_methods, NELEM(g_short_methods));
+
+    /* register long methods*/
+    XQUIC_FIND_JAVA_CLASS(env, g_clazz.clazz_long, JNI_CLASS_XQUIC_LONG);
+    (*env)->RegisterNatives(env, g_clazz.clazz_long, g_long_methods, NELEM(g_long_methods));
+
     /* init lock */
-    pthread_mutex_init(&mutex, NULL);
+    pthread_mutex_init(&g_clazz.mutex, NULL);
     return JNI_VERSION_1_4;
 }
 
 JNIEXPORT void JNI_OnUnload(JavaVM *jvm, void *reserved) {
     DEBUG;
-    pthread_mutex_destroy(&mutex);
+    pthread_mutex_destroy(&g_clazz.mutex);
 }
