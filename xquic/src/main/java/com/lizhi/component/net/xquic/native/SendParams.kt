@@ -66,6 +66,10 @@ class SendParams {
      */
     var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
 
+    /**
+     * alpn type
+     */
+    var alpnType = AlpnType.ALPN_H3
 
     open class Builder {
         private val params = SendParams()
@@ -114,6 +118,10 @@ class SendParams {
             if (headers.isNotEmpty()) {
                 params.headers.putAll(headers)
             }
+        }
+
+        fun setAlpnType(@AlpnType.Type type: Int) = apply {
+            params.alpnType = type
         }
 
         fun build(): SendParams {

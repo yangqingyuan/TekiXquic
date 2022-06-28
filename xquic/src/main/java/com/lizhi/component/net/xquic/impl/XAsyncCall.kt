@@ -6,10 +6,7 @@ import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponseBody
-import com.lizhi.component.net.xquic.native.SendParams
-import com.lizhi.component.net.xquic.native.XquicCallback
-import com.lizhi.component.net.xquic.native.XquicMsgType
-import com.lizhi.component.net.xquic.native.XquicShortNative
+import com.lizhi.component.net.xquic.native.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
 import java.lang.Exception
@@ -40,6 +37,11 @@ class XAsyncCall(
      */
     private val xRttInfoCache = xquicClient.xRttInfoCache
 
+    /**
+     * alpn type
+     */
+    private val alpnType = xquicClient.alpnType
+
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
@@ -64,6 +66,7 @@ class XAsyncCall(
                 .setMaxRecvLenght(1024 * 1024)
                 .setCCType(xquicClient.ccType)
                 .setProtoVersion(xquicClient.protoVersion)
+                .setAlpnType(xquicClient.alpnType)
 
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
@@ -112,10 +115,16 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TOKEN -> {
-                    xRttInfoCache.tokenMap.put(authority(), data)
+                    if (alpnType == AlpnType.ALPN_H3) {
+                        xRttInfoCache.tokenMap.put(authority(), data)
+                    } else {//TODO HQ或者其他协议，不支持
+                    }
                 }
                 XquicMsgType.SESSION -> {
-                    xRttInfoCache.sessionMap.put(authority(), data)
+                    if (alpnType == AlpnType.ALPN_H3) {
+                        xRttInfoCache.sessionMap.put(authority(), data)
+                    } else {//TODO HQ或者其他协议，不支持
+                    }
                 }
 
                 XquicMsgType.DESTROY -> {

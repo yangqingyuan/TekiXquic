@@ -295,6 +295,7 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     jint read_time_out = getInt(env, param, "readTimeOut");
     jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
     jint cc_type = getInt(env, param, "ccType");
+    jint alpn_type = getInt(env, param, "alpnType");
     jint protoVersion = getInt(env, param, "protoVersion");
     jint headersSize = getInt(env, param, "headersSize");
 
@@ -373,6 +374,17 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
             break;
         default:
             user_cfg->version = XQC_VERSION_V1;
+    }
+
+    switch (alpn_type) {
+        case 0:
+            user_cfg->alpn_type = ALPN_HQ;
+            break;
+        case 1:
+            user_cfg->alpn_type = ALPN_H3;
+            break;
+        default:
+            user_cfg->alpn_type = ALPN_H3;
     }
 
     /* callback */

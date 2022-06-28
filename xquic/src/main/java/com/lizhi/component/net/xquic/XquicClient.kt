@@ -7,6 +7,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.lizhi.component.net.xquic.impl.*
 import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
+import com.lizhi.component.net.xquic.native.AlpnType
 import com.lizhi.component.net.xquic.native.CCType
 import com.lizhi.component.net.xquic.native.ProtoVersion
 import java.util.*
@@ -63,6 +64,11 @@ open class XquicClient internal constructor(val builder: Builder) {
      */
     var xRttInfoCache = builder.xRttInfoCache
 
+    /**
+     * 协议类型（应用层协议协商（Application-Layer Protocol Negotiation，简称ALPN））
+     */
+    var alpnType = builder.alpnType
+
 
     private val dispatcher = builder.dispatcher
 
@@ -115,6 +121,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var xConnectionPool: XConnectionPool? = null
         internal var xRttInfoCache = XRttInfoCache()
         internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
+        internal var alpnType = AlpnType.ALPN_HQ
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
@@ -184,6 +191,10 @@ open class XquicClient internal constructor(val builder: Builder) {
 
         fun reuse(isReuse: Boolean) = apply {
             this.reuse = isReuse
+        }
+
+        fun setAlpnType(@AlpnType.Type type: Int) = apply {
+            this.alpnType = type
         }
 
         fun addNetworkInterceptor(xInterceptor: XInterceptor) = apply {

@@ -26,6 +26,8 @@
 #include <pthread.h>
 #include <cQueue.h>
 
+#define XQC_ALPN_TRANSPORT "transport"
+
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
 #define MAX_REC_DATA_LEN           1024*1024     /* recv data max len */
@@ -92,6 +94,8 @@ typedef struct xqc_cli_user_stream_s {
     size_t recv_body_max_len;
     int recv_fin;
     xqc_msec_t start_time;
+
+    xqc_stream_t *hq_request;
 
     /* h3 request content */
     xqc_h3_request_t *h3_request;
@@ -348,6 +352,8 @@ typedef struct xqc_cli_user_data_params_s {
     /* proto version */
     xqc_proto_version_t version;
 
+    /* alpn type */
+    xqc_cli_alpn_type_t alpn_type;
 } xqc_cli_user_data_params_t;
 
 /**
