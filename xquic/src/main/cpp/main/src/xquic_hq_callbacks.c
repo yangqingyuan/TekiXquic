@@ -1,4 +1,4 @@
-#include "xquic_app_proto_callbacks.h"
+#include "xquic_hq_callbacks.h"
 #include "xquic_hq_ctrl.h"
 
 int xqc_client_conn_create_notify(xqc_connection_t *conn, const xqc_cid_t *cid, void *user_data,
@@ -100,7 +100,7 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
         if (read == -XQC_EAGAIN) {
             break;
         } else if (read < 0) {
-            LOGE("xqc h3 request recv body error %zd", read);
+            LOGE("xqc hq request recv body error=%zd ,fin=%d", read,fin);
             return 0;
         }
 

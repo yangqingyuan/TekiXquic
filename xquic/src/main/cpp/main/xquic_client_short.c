@@ -4,7 +4,7 @@
 #include "xquic_common.h"
 #include "xquic_client_short.h"
 #include "xquic_engine_callbacks.h"
-#include "xquic_app_proto_callbacks.h"
+#include "xquic_hq_callbacks.h"
 #include "xquic_transport_callbacks.h"
 #include "xquic_socket.h"
 #include "xquic_h3_callbacks.h"
@@ -148,6 +148,7 @@ client_init_engine_callback(xqc_engine_callback_t *cb, xqc_transport_callbacks_t
  * @return
  */
 int client_init_alpn(xqc_cli_ctx_t *ctx) {
+    int ret;
     if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
         xqc_h3_callbacks_t h3_cbs = {
                 .h3c_cbs={
@@ -164,7 +165,7 @@ int client_init_alpn(xqc_cli_ctx_t *ctx) {
                 }
         };
 
-        int ret = xqc_h3_ctx_init(ctx->engine, &h3_cbs);
+        ret = xqc_h3_ctx_init(ctx->engine, &h3_cbs);
         if (ret != XQC_OK) {
             LOGE("init h3 context error, ret:%d", ret);
             return XQC_ERROR;
@@ -183,7 +184,11 @@ int client_init_alpn(xqc_cli_ctx_t *ctx) {
                         .stream_close_notify = xqc_client_stream_close_notify,
                 }
         };
-        xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
+        ret = xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
+        if (ret != XQC_OK) {
+            LOGE("engine register alpn error, ret:%d", ret);
+            return XQC_ERROR;
+        }
     }
     LOGD("client init alpn success");
     return XQC_OK;

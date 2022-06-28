@@ -27,7 +27,7 @@ import java.util.concurrent.TimeUnit
 class XRealWebSocket(
     private val xRequest: XRequest,
     private val listener: XWebSocketListener,
-    private val xRttInfoCache:XRttInfoCache,
+    private val xRttInfoCache: XRttInfoCache,
     random: Random,
     pingInterval: Long,
     private val pingListener: XPingListener
@@ -94,6 +94,11 @@ class XRealWebSocket(
      * user default close reason ,will return at onClosed
      */
     private var reason: String? = null
+
+    /**
+     * alpn type
+     */
+    private var alpnType = AlpnType.ALPN_H3
 
     @Volatile
     private var cancelOrClose = 0// 2 cancle 1:close
@@ -208,6 +213,7 @@ class XRealWebSocket(
                     )
                     return@execute
                 }
+                alpnType = xquicClient.alpnType
 
                 val sendParamsBuilder = SendParams.Builder()
                     .setUrl(url)
@@ -217,6 +223,7 @@ class XRealWebSocket(
                     .setReadTimeOut(xquicClient.readTimeout)
                     .setMaxRecvLenght(1024 * 1024)
                     .setCCType(xquicClient.ccType)
+                    .setAlpnType(alpnType)
 
                 sendParamsBuilder.setHeaders(parseHttpHeads())
 
@@ -425,10 +432,16 @@ class XRealWebSocket(
                     listener.onOpen(this, xResponse)
                 }
                 XquicMsgType.TOKEN -> {
-                    xRttInfoCache.tokenMap.put(authority(), data)
+                    if (alpnType == AlpnType.ALPN_H3) {
+                        xRttInfoCache.tokenMap.put(authority(), data)
+                    } else {
+                    }
                 }
                 XquicMsgType.SESSION -> {
-                    xRttInfoCache.sessionMap.put(authority(), data)
+                    if (alpnType == AlpnType.ALPN_H3) {
+                        xRttInfoCache.sessionMap.put(authority(), data)
+                    } else {
+                    }
                 }
                 XquicMsgType.TP -> {
                     xRttInfoCache.tpMap.put(authority(), data)

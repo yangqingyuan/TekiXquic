@@ -100,7 +100,7 @@ int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
  * @param user_conn
  * @return
  */
-int client_send_H3_ping(xqc_cli_user_conn_t *user_conn, char *ping_user_data) {
+ssize_t client_send_H3_ping(xqc_cli_user_conn_t *user_conn, char *ping_user_data) {
     xqc_h3_conn_send_ping(user_conn->ctx->engine, &user_conn->cid, ping_user_data);
     return 0;
 }

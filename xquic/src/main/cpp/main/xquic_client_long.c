@@ -8,6 +8,8 @@
 #include "xquic_socket.h"
 #include "xquic_h3_callbacks.h"
 #include "xquic_h3_ctrl.h"
+#include "xquic_hq_ctrl.h"
+#include "xquic_hq_callbacks.h"
 
 
 /**
@@ -146,25 +148,48 @@ void client_long_init_engine_callback(xqc_engine_callback_t *cb,
  * @return
  */
 int client_long_init_alpn(xqc_cli_ctx_t *ctx) {
-    xqc_h3_callbacks_t h3_cbs = {
-            .h3c_cbs={
-                    .h3_conn_create_notify = client_h3_conn_create_notify,
-                    .h3_conn_close_notify = client_h3_conn_close_notify,
-                    .h3_conn_handshake_finished = client_h3_conn_handshake_finished,
-                    .h3_conn_ping_acked =client_h3_conn_ping_acked_notify,
-            },
-            .h3r_cbs={
-                    .h3_request_create_notify = client_h3_request_create_notify,
-                    .h3_request_close_notify = client_h3_request_close_notify,
-                    .h3_request_read_notify = client_h3_request_read_notify,
-                    .h3_request_write_notify = client_h3_request_write_notify,
-            }
-    };
 
-    int ret = xqc_h3_ctx_init(ctx->engine, &h3_cbs);
-    if (ret != XQC_OK) {
-        LOGE("init h3 context error, ret:%d", ret);
-        return XQC_ERROR;
+    int ret = 0;
+    if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
+        xqc_h3_callbacks_t h3_cbs = {
+                .h3c_cbs={
+                        .h3_conn_create_notify = client_h3_conn_create_notify,
+                        .h3_conn_close_notify = client_h3_conn_close_notify,
+                        .h3_conn_handshake_finished = client_h3_conn_handshake_finished,
+                        .h3_conn_ping_acked =client_h3_conn_ping_acked_notify,
+                },
+                .h3r_cbs={
+                        .h3_request_create_notify = client_h3_request_create_notify,
+                        .h3_request_close_notify = client_h3_request_close_notify,
+                        .h3_request_read_notify = client_h3_request_read_notify,
+                        .h3_request_write_notify = client_h3_request_write_notify,
+                }
+        };
+
+        ret = xqc_h3_ctx_init(ctx->engine, &h3_cbs);
+        if (ret != XQC_OK) {
+            LOGE("init h3 context error, ret:%d", ret);
+            return XQC_ERROR;
+        }
+    } else {
+        xqc_app_proto_callbacks_t ap_cbs = {
+                .conn_cbs = {
+                        .conn_create_notify = xqc_client_conn_create_notify,
+                        .conn_close_notify = xqc_client_conn_close_notify,
+                        .conn_handshake_finished = xqc_client_conn_handshake_finished,
+                        .conn_ping_acked = xqc_client_conn_ping_acked_notify,
+                },
+                .stream_cbs = {
+                        .stream_write_notify = xqc_client_stream_write_notify,
+                        .stream_read_notify = xqc_client_stream_read_notify,
+                        .stream_close_notify = xqc_client_stream_close_notify,
+                }
+        };
+        ret = xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
+        if (ret != XQC_OK) {
+            LOGE("engine register alpn error, ret:%d", ret);
+            return XQC_ERROR;
+        }
     }
     LOGD("client init alpn success");
     return XQC_OK;
@@ -392,7 +417,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
         if (user_conn->ctx->args->quic_cfg.alpn_type == ALPN_H3) {
             rc = xqc_h3_conn_close(user_conn->ctx->engine, &user_conn->cid);
         } else {
-            LOGE("不支持其他协议");
+            rc = xqc_conn_close(user_conn->ctx->engine, &user_conn->cid);
         }
 
         if (rc != XQC_OK) {
@@ -504,24 +529,29 @@ int client_long_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_a
     xqc_conn_ssl_config_t conn_ssl_config;
     client_long_init_connection_ssl_config(&conn_ssl_config, args);
 
+    const xqc_cid_t *cid;
     if (args->quic_cfg.alpn_type == ALPN_H3) {
-        const xqc_cid_t *cid = xqc_h3_connect(user_conn->ctx->engine, &conn_settings,
-                                              (const unsigned char *) args->quic_cfg.token,
-                                              args->quic_cfg.token_len,
-                                              args->net_cfg.host, 0, &conn_ssl_config,
-                                              (struct sockaddr *) &args->net_cfg.addr,
-                                              args->net_cfg.addr_len, user_conn);
-
-        if (cid == NULL) {
-            LOGE("xqc h3 connect error");
-            return -1;
-        }
-
-        memcpy(&user_conn->cid, cid, sizeof(xqc_cid_t));
+        cid = xqc_h3_connect(user_conn->ctx->engine, &conn_settings,
+                             (const unsigned char *) args->quic_cfg.token,
+                             args->quic_cfg.token_len,
+                             args->net_cfg.host, 0, &conn_ssl_config,
+                             (struct sockaddr *) &args->net_cfg.addr,
+                             args->net_cfg.addr_len, user_conn);
     } else {
-        LOGE("只支持H3，暂时不支持其他类型");
+        cid = xqc_connect(user_conn->ctx->engine, &conn_settings,
+                          (const unsigned char *) args->quic_cfg.token, args->quic_cfg.token_len,
+                          args->net_cfg.host, 0,
+                          &conn_ssl_config,
+                          (struct sockaddr *) &args->net_cfg.addr, args->net_cfg.addr_len,
+                          XQC_ALPN_TRANSPORT,
+                          user_conn);
+    }
+    if (cid == NULL) {
+        LOGE("xqc h3 connect error");
         return -1;
     }
+
+    memcpy(&user_conn->cid, cid, sizeof(xqc_cid_t));
     return 0;
 }
 
@@ -614,7 +644,15 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                 goto end;
             }
         } else {
-            LOGE("只持者 h3发送");
+            if (client_send_hq_requests(user_conn,user_stream, request) < 0) {
+                char err_msg[214];
+                sprintf(err_msg,
+                        "xqc hq request create error,please check network or retry,host=%s",
+                        user_conn->ctx->args->net_cfg.host);
+                LOGE("%s", err_msg);
+                callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
+                goto end;
+            }
         }
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
 
@@ -817,7 +855,7 @@ int client_long_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_
     //strncpy(args->env_cfg.out_file_dir,"xxxx",sizeof (args->env_cfg.out_file_dir));
 
     /*quic配置 */
-    args->quic_cfg.alpn_type = ALPN_H3;
+    args->quic_cfg.alpn_type = user_param->alpn_type;
     strncpy(args->quic_cfg.alpn, "hq-interop", sizeof(args->quic_cfg.alpn));
     args->quic_cfg.keyupdate_pkt_threshold = UINT16_MAX;
 
@@ -926,6 +964,12 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
     ev_loop_destroy(ctx->eb);
 
     /* engine destroy */
+    xqc_cli_alpn_type_t alpn_type = ctx->args->quic_cfg.alpn_type;
+    if (alpn_type == ALPN_H3) {
+        xqc_h3_ctx_destroy(ctx->engine);
+    } else {
+        xqc_engine_unregister_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9);
+    }
     xqc_engine_destroy(ctx->engine);
 
     /* destroy queue */

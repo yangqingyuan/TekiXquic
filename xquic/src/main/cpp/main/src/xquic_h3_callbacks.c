@@ -248,7 +248,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
 }
 
 
-int client_h3_request_write_notify(xqc_h3_request_t *h3_request, void *user_data) {
+ssize_t client_h3_request_write_notify(xqc_h3_request_t *h3_request, void *user_data) {
     DEBUG;
     xqc_cli_user_stream_t *user_stream = (xqc_cli_user_stream_t *) user_data;
     return client_send_h3_content(user_stream);

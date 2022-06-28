@@ -26,7 +26,7 @@ int client_h3_request_close_notify(xqc_h3_request_t *h3_request, void *user_data
 
 int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_notify_flag_t flag, void *user_data);
 
-int client_h3_request_write_notify(xqc_h3_request_t *h3_request, void *user_data);
+ssize_t client_h3_request_write_notify(xqc_h3_request_t *h3_request, void *user_data);
 
 #ifdef __cplusplus
 }

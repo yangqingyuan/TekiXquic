@@ -5,6 +5,7 @@
 #include "xquic_hq_ctrl.h"
 
 ssize_t client_send_hq_content(xqc_cli_user_stream_t *user_stream) {
+    DEBUG;
     ssize_t ret = 0;
     if (!user_stream->hdr_sent) {
         if (user_stream->start_time == 0) {

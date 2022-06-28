@@ -121,7 +121,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var xConnectionPool: XConnectionPool? = null
         internal var xRttInfoCache = XRttInfoCache()
         internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
-        internal var alpnType = AlpnType.ALPN_HQ
+        internal var alpnType = AlpnType.ALPN_H3
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
