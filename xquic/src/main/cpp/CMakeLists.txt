@@ -46,7 +46,6 @@ add_library( # Sets the name of the library.
 
              # Provides a relative path to your source file(s).
              ${SRC_LIST} ${MAIN_SRC_LIST} ${XUQIC_SRC_LIST}
-            share_libs/src/cQueue.c
             share_libs/src/cJSON.c
             share_libs/src/ev/ev.c
             share_libs/src/ev/event.c)

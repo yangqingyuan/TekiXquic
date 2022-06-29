@@ -24,7 +24,7 @@
 #include "common.h"
 #include <cJSON.h>
 #include <pthread.h>
-#include <cQueue.h>
+#include <xquic_msg_queue.h>
 
 #define XQC_ALPN_TRANSPORT "transport"
 
@@ -462,7 +462,7 @@ typedef struct xqc_cli_user_data_msg_s {
     char ping_data[256];
 
     /* queue to cache send data */
-    queue_t queue;
+    xqc_cli_message_queue_t message_queue;
 } xqc_cli_user_data_msg_t;
 
 /***

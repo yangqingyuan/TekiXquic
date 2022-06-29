@@ -564,22 +564,23 @@ int client_long_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_a
  * @param req_cnt
  */
 void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *args,
-                               xqc_cli_request_t *reqs, queue_t *queue, int req_cut) {
+                               xqc_cli_request_t *reqs, xqc_cli_message_queue_t *queue,
+                               int req_cut) {
     DEBUG;
 
     /* get data from queue to create one or more request */
-    while (!queue_empty(queue)) {
+    while (!xqc_cli_msg_empty(queue)) {
         /* get first data */
-        char *data = queue_front(queue);
-
+        xqc_cli_message_t message;
+        int ret = xqc_cli_msg_queue_get(queue, &message);
+        if (!ret) {
+            continue;
+        }
         /* parse json data */
-        cJSON *json_data = cJSON_Parse(data);
+        cJSON *json_data = cJSON_Parse((char *) message.obj);
         char *content = cJSON_GetObjectItem(json_data, "send_body")->valuestring;
         char *tag = cJSON_GetObjectItem(json_data, "user_tag")->valuestring;
         cJSON *headers_json = cJSON_GetObjectItem(json_data, "headers");
-
-        /* remove pop data */
-        queue_pop(queue);
 
         /* new a stream */
         xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
@@ -644,7 +645,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                 goto end;
             }
         } else {
-            if (client_send_hq_requests(user_conn,user_stream, request) < 0) {
+            if (client_send_hq_requests(user_conn, user_stream, request) < 0) {
                 char err_msg[214];
                 sprintf(err_msg,
                         "xqc hq request create error,please check network or retry,host=%s",
@@ -658,7 +659,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
 
         end:
         /* free data */
-        free(data);
+        xqc_cli_msg_free_res(&message);
         cJSON_Delete(json_data);
     }
 }
@@ -756,11 +757,14 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
                 int task_idx = task->task_idx;
 
                 /* req_cun + queue size */
-                ctx->task_ctx.tasks[task_idx].req_cnt += queue_size(&ctx->msg_data.queue);
+                //ctx->task_ctx.tasks[task_idx].req_cnt += queue_size(&ctx->msg_data.queue);
+                ctx->task_ctx.tasks[task_idx].req_cnt += xqc_cli_msg_size(
+                        &ctx->msg_data.message_queue);
+
                 ctx->task_ctx.schedule.schedule_info[task_idx].fin_flag = 0;
 
                 client_long_send_requests(task->user_conn, ctx->args, task->reqs,
-                                          &ctx->msg_data.queue,
+                                          &ctx->msg_data.message_queue,
                                           ctx->task_ctx.tasks[task_idx].req_cnt);
 
             }
@@ -924,8 +928,7 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_param) {
     ctx->mutex = user_param->mutex;
 
     /* init queue */
-    queue_init(&ctx->msg_data.queue);
-
+    xqc_cli_msg_queue_init(&ctx->msg_data.message_queue);
     /* active */
     ctx->active = 1;
     return ctx;
@@ -973,7 +976,7 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
     xqc_engine_destroy(ctx->engine);
 
     /* destroy queue */
-    queue_destroy(&ctx->msg_data.queue);
+    xqc_cli_msg_queue_destroy(&ctx->msg_data.message_queue);
 
     /* free ctx */
     client_long_free_ctx(ctx);
@@ -1020,12 +1023,10 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
 
     /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;
-    char *data = malloc(len);
-    memset(data, 0, len);
-    strcpy(data, content);
 
     /* push to queue */
-    queue_push(&ctx->msg_data.queue, data);
+    xqc_cli_msg_queue_put_simple(&ctx->msg_data.message_queue, 0,
+                                 (void *) content, len);
 
     /* notify send */
     ev_async_send(ctx->eb, &ctx->ev_task);
