@@ -62,7 +62,7 @@ open class XquicClient internal constructor(val builder: Builder) {
     /**
      * 0RttInfo
      */
-    var xRttInfoCache = builder.xRttInfoCache
+    var xRttInfoListener: XRttInfoListener = builder.xRttInfoListener
 
     /**
      * 协议类型（应用层协议协商（Application-Layer Protocol Negotiation，简称ALPN））
@@ -119,7 +119,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var interceptors = mutableListOf<XInterceptor>()
         internal var networkInterceptors = mutableListOf<XInterceptor>()
         internal var xConnectionPool: XConnectionPool? = null
-        internal var xRttInfoCache = XRttInfoCache()
+        internal var xRttInfoListener: XRttInfoListener = XRttInfoCache()
         internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
         internal var alpnType = AlpnType.ALPN_H3
 
@@ -146,7 +146,7 @@ open class XquicClient internal constructor(val builder: Builder) {
             networkInterceptors = xquicClient.networkInterceptors
             xConnectionPool = xquicClient.xConnectionPool
             pingListener = xquicClient.pingListener
-            xRttInfoCache = xquicClient.xRttInfoCache
+            xRttInfoListener = xquicClient.xRttInfoListener
         }
 
         fun build(): XquicClient {
@@ -193,6 +193,10 @@ open class XquicClient internal constructor(val builder: Builder) {
             this.reuse = isReuse
         }
 
+        fun setRttInfo(xRttInfoListener: XRttInfoListener) = apply {
+            this.xRttInfoListener = xRttInfoListener
+        }
+
         fun setAlpnType(@AlpnType.Type type: Int) = apply {
             this.alpnType = type
         }
@@ -233,7 +237,7 @@ open class XquicClient internal constructor(val builder: Builder) {
      */
     fun newWebSocket(xRequest: XRequest, listener: XWebSocketListener): XRealWebSocket {
         val xRealWebSocket =
-            XRealWebSocket(xRequest, listener, xRttInfoCache, Random(), pingInterval, pingListener)
+            XRealWebSocket(xRequest, listener, xRttInfoListener, Random(), pingInterval, pingListener)
         xRealWebSocket.connect(this)
         return xRealWebSocket
     }

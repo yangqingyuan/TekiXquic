@@ -3,6 +3,7 @@ package com.lizhi.component.net.xquic.impl
 import com.google.gson.Gson
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XPingListener
+import com.lizhi.component.net.xquic.listener.XRttInfoListener
 import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XHeaders
@@ -27,7 +28,7 @@ import java.util.concurrent.TimeUnit
 class XRealWebSocket(
     private val xRequest: XRequest,
     private val listener: XWebSocketListener,
-    private val xRttInfoCache: XRttInfoCache,
+    private val xRttInfoCache: XRttInfoListener,
     random: Random,
     pingInterval: Long,
     private val pingListener: XPingListener
@@ -218,8 +219,8 @@ class XRealWebSocket(
 
                 val sendParamsBuilder = SendParams.Builder()
                     .setUrl(url)
-                    .setToken(xRttInfoCache.tokenMap[authority()])
-                    .setSession(xRttInfoCache.sessionMap[authority()])
+                    .setToken(xRttInfoCache.getToken(authority()))
+                    .setSession(xRttInfoCache.getSession(authority()))
                     .setConnectTimeOut(xquicClient.connectTimeOut)
                     .setReadTimeOut(xquicClient.readTimeout)
                     .setMaxRecvLenght(1024 * 1024)
@@ -468,18 +469,18 @@ class XRealWebSocket(
                 }
                 XquicMsgType.TOKEN -> {
                     if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.tokenMap.put(authority(), data)
+                        xRttInfoCache.tokenBack(authority(),data)
                     } else {
                     }
                 }
                 XquicMsgType.SESSION -> {
                     if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.sessionMap.put(authority(), data)
+                        xRttInfoCache.sessionBack(authority(),data)
                     } else {
                     }
                 }
                 XquicMsgType.TP -> {
-                    xRttInfoCache.tpMap.put(authority(), data)
+
                 }
                 XquicMsgType.HEAD -> {
                     try {

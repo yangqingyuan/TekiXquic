@@ -34,7 +34,7 @@ class XAsyncCall(
     /**
      * xRttInfo
      */
-    private val xRttInfoCache = xquicClient.xRttInfoCache
+    private val xRttInfoCache = xquicClient.xRttInfoListener
 
 
     override fun execute() {
@@ -54,8 +54,8 @@ class XAsyncCall(
 
             val sendParamsBuilder = SendParams.Builder()
                 .setUrl(url)
-                .setToken(xRttInfoCache.tokenMap[authority()])
-                .setSession(xRttInfoCache.sessionMap[authority()])
+                .setToken(xRttInfoCache.getToken(authority()))
+                .setSession(xRttInfoCache.getSession(authority()))
                 .setConnectTimeOut(xquicClient.connectTimeOut)
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
@@ -111,13 +111,13 @@ class XAsyncCall(
 
                 XquicMsgType.TOKEN -> {
                     if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.tokenMap.put(authority(), data)
+                        xRttInfoCache.tokenBack(authority(), data)
                     } else {//TODO HQ或者其他协议，不支持
                     }
                 }
                 XquicMsgType.SESSION -> {
                     if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.sessionMap.put(authority(), data)
+                        xRttInfoCache.sessionBack(authority(), data)
                     } else {//TODO HQ或者其他协议，不支持
                     }
                 }
@@ -127,7 +127,7 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TP -> {
-                    xRttInfoCache.tpMap.put(authority(), data)
+
                 }
                 XquicMsgType.HEAD -> {
                     try {
