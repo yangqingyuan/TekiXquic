@@ -14,7 +14,7 @@ interface XquicCallback {
     /**
      * 读取后端返回的数据
      */
-    fun callBackData(ret: Int, data: String)
+    fun callBackData(ret: Int, data: ByteArray)
 
 
     /**
@@ -23,5 +23,5 @@ interface XquicCallback {
      * 1:session
      * 2:tp
      */
-    fun callBackMessage(msgType: Int, data: String)
+    fun callBackMessage(msgType: Int, data: ByteArray)
 }

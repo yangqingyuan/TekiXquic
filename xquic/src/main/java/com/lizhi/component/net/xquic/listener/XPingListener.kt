@@ -7,5 +7,5 @@ package com.lizhi.component.net.xquic.listener
  */
 interface XPingListener {
     fun ping(): String
-    fun pong(data: String)
+    fun pong(data: ByteArray)
 }

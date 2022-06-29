@@ -43,58 +43,6 @@ int J4A_ExceptionCheck__catchAll(JNIEnv *env) {
         (*env__)->DeleteLocalRef(env__, clazz); \
     } while(0);
 
-static void correctUtfBytes(char *bytes) {
-    char three = 0;
-    while (*bytes != '\0') {
-        unsigned char utf8 = *(bytes++);
-        three = 0;
-        // Switch on the high four bits.
-        switch (utf8 >> 4) {
-            case 0x00:
-            case 0x01:
-            case 0x02:
-            case 0x03:
-            case 0x04:
-            case 0x05:
-            case 0x06:
-            case 0x07:
-                // Bit pattern 0xxx. No need for any extra bytes.
-                break;
-            case 0x08:
-            case 0x09:
-            case 0x0a:
-            case 0x0b:
-            case 0x0f:
-                /*
-                 * Bit pattern 10xx or 1111, which are illegal start bytes.
-                 * Note: 1111 is valid for normal UTF-8, but not the
-                 * modified UTF-8 used here.
-                 */
-                *(bytes - 1) = '?';
-                break;
-            case 0x0e:
-                // Bit pattern 1110, so there are two additional bytes.
-                utf8 = *(bytes++);
-                if ((utf8 & 0xc0) != 0x80) {
-                    --bytes;
-                    *(bytes - 1) = '?';
-                    break;
-                }
-                three = 1;
-                // Fall through to take care of the final byte.
-            case 0x0c:
-            case 0x0d:
-                // Bit pattern 110x, so there is one additional byte.
-                utf8 = *(bytes++);
-                if ((utf8 & 0xc0) != 0x80) {
-                    --bytes;
-                    if (three)--bytes;
-                    *(bytes - 1) = '?';
-                }
-                break;
-        }
-    }
-}
 
 /**
  * callback msg to java
@@ -105,7 +53,7 @@ static void correctUtfBytes(char *bytes) {
  * @param user_data
  */
 static void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const char *data,
-                                 unsigned len, void *user_data) {
+                                 uint32_t len, void *user_data) {
     JNIEnv *env;
     (*g_clazz.g_jvm)->AttachCurrentThread(g_clazz.g_jvm, &env, NULL);
 
@@ -113,19 +61,19 @@ static void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const 
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
     jmethodID jmid = (*env)->GetMethodID(env, callbackClass, "callBackMessage",
-                                         "(ILjava/lang/String;)V");
+                                         "(I[B)V");
     if (!jmid) {
         LOGE("call back java error,can not find methodId callBackMessage");
         return;
     }
 
     /* data to jstring*/
-    jstring recv_body;
+    jbyteArray recv_body;
     if (data != NULL) {
-        correctUtfBytes(data);
-        recv_body = (*env)->NewStringUTF(env, data);
+        recv_body = (*env)->NewByteArray(env, (jsize) len);
+        (*env)->SetByteArrayRegion(env, recv_body, 0, (jsize) len, (jbyte *) data);
     } else {
-        recv_body = (*env)->NewStringUTF(env, "");
+        recv_body = (*env)->NewByteArray(env, 0);
     }
 
     /* call back */
@@ -161,13 +109,12 @@ static int callback_data_to_java(void *object_android, int core, const char *dat
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
     jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData",
-                                          "(ILjava/lang/String;)V");
+                                          "(I[B)V");
     if (!jm_id) {
         LOGE("call back error,can not find methodId callBackReadData");
         return -1;
     }
 
-    //correctUtfBytes(data);//FIXME 打开后可以将非utf-8的数据转成标准utf-8数据
     cJSON *usr = cJSON_CreateObject();
     cJSON_AddStringToObject(usr, "recv_body", data);
     if (user_data != NULL) {
@@ -175,8 +122,10 @@ static int callback_data_to_java(void *object_android, int core, const char *dat
     }
     char *json_data = cJSON_Print(usr);
 
-    /* data to jstring*/
-    jstring recv_body = (*env)->NewStringUTF(env, json_data);
+    /* data to jbyteArray*/
+    size_t length = strlen(json_data);
+    jbyteArray recv_body = (*env)->NewByteArray(env, (jsize) length);
+    (*env)->SetByteArrayRegion(env, recv_body, 0, (jsize) length, (jbyte *) json_data);
 
     /* call back */
     (*env)->CallVoidMethod(env, j_obj, jm_id, core, recv_body);
@@ -211,6 +160,18 @@ static jint getInt(JNIEnv *env, jobject param, const char *field) {
     (*env)->DeleteLocalRef(env, sendParamsClass);
     return data;
 }
+
+static jbyteArray getByteArray(JNIEnv *env, jobject param, const char *field) {
+    jclass sendParamsClass = (*env)->GetObjectClass(env, param);
+    jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "[B");
+    if (!jfieldId) {
+        return 0;
+    }
+    jbyteArray data = (*env)->GetObjectField(env, param, jfieldId);
+    (*env)->DeleteLocalRef(env, sendParamsClass);
+    return data;
+}
+
 
 
 static int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
@@ -289,8 +250,8 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
 
     jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
-    jstring token = getString(env, param, "token");
-    jstring session = getString(env, param, "session");
+    jbyteArray token = getByteArray(env, param, "token");
+    jbyteArray session = getByteArray(env, param, "session");
     jint connect_time_out = getInt(env, param, "connectTimeOut");
     jint read_time_out = getInt(env, param, "readTimeOut");
     jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
@@ -316,11 +277,11 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
 
     const char *cToken = NULL;
     if (token != NULL) {
-        cToken = (*env)->GetStringUTFChars(env, token, 0);
+        cToken = (*env)->GetByteArrayElements(env, token, 0);
     }
     const char *cSession = NULL;
     if (session != NULL) {
-        cSession = (*env)->GetStringUTFChars(env, session, 0);
+        cSession = (*env)->GetByteArrayElements(env, session, 0);
     }
 
     /* user custom callback */

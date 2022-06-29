@@ -11,15 +11,15 @@ class XRttInfoCache {
     /**
      * token
      */
-    val tokenMap = LruCache<String, String>(100)
+    val tokenMap = LruCache<String, ByteArray>(16)
 
     /**
      * session
      */
-    val sessionMap = LruCache<String, String>(100)
+    val sessionMap = LruCache<String, ByteArray>(16)
 
     /**
      * tp
      */
-    val tpMap = LruCache<String, String>(100)
+    val tpMap = LruCache<String, ByteArray>(16)
 }

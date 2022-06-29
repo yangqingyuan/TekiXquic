@@ -411,21 +411,25 @@ class XRealWebSocket(
      * callback data
      */
     @Synchronized
-    override fun callBackData(ret: Int, data: String) {
+    override fun callBackData(ret: Int, data: ByteArray) {
         if (ret == XquicCallback.XQC_OK) {
             xResponse.xResponseBody = XResponseBody(data)
             listener.onMessage(this, xResponse)
         } else {
             clientCtx = 0
             failed = true
-            listener.onFailure(this, Exception(JSONObject(data).getString("recv_body")), xResponse)
+            listener.onFailure(
+                this,
+                Exception(JSONObject(String(data)).getString("recv_body")),
+                xResponse
+            )
         }
     }
 
     /**
      * call back message
      */
-    override fun callBackMessage(msgType: Int, data: String) {
+    override fun callBackMessage(msgType: Int, data: ByteArray) {
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.HANDSHAKE -> {
@@ -448,7 +452,7 @@ class XRealWebSocket(
                 }
                 XquicMsgType.HEAD -> {
                     try {
-                        val headJson = JSONObject(data)
+                        val headJson = JSONObject(String(data))
                         val xHeaderBuild = XHeaders.Builder()
                         for (key in headJson.keys()) {
                             xHeaderBuild.add(key, headJson.getString(key))

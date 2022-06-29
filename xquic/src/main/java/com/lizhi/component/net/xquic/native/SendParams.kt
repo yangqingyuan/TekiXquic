@@ -15,12 +15,12 @@ class SendParams {
     /**
      * optional param
      */
-    var token: String? = null
+    var token: ByteArray? = null
 
     /**
      * optional param
      */
-    var session: String? = null
+    var session: ByteArray? = null
 
     /**
      * post content
@@ -78,16 +78,12 @@ class SendParams {
             params.url = url
         }
 
-        fun setToken(token: String?) = apply {
-            if (!token.isNullOrBlank()) {
-                params.token = token
-            }
+        fun setToken(token: ByteArray?) = apply {
+            params.token = token
         }
 
-        fun setSession(session: String?) = apply {
-            if (!session.isNullOrBlank()) {
-                params.session = session
-            }
+        fun setSession(session: ByteArray?) = apply {
+            params.session = session
         }
 
         fun setContent(content: String) = apply {

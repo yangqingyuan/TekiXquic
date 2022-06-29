@@ -9,7 +9,6 @@ import com.lizhi.component.net.xquic.mode.XResponseBody
 import com.lizhi.component.net.xquic.native.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
-import java.lang.Exception
 
 
 /**
@@ -103,12 +102,12 @@ class XAsyncCall(
         }
     }
 
-    override fun callBackMessage(msgType: Int, data: String) {
+    override fun callBackMessage(msgType: Int, data: ByteArray) {
         synchronized(this) {
             when (msgType) {
                 XquicMsgType.INIT -> {
                     try {
-                        clientCtx = data.toLong()
+                        clientCtx = String(data).toLong()
                     } catch (e: Exception) {
                         XLogUtils.error(e)
                     }
@@ -136,7 +135,7 @@ class XAsyncCall(
                 }
                 XquicMsgType.HEAD -> {
                     try {
-                        val headJson = JSONObject(data)
+                        val headJson = JSONObject(String(data))
                         val xHeaderBuild = XHeaders.Builder()
                         for (key in headJson.keys()) {
                             xHeaderBuild.add(key, headJson.getString(key))
@@ -154,7 +153,7 @@ class XAsyncCall(
     }
 
 
-    override fun callBackData(ret: Int, data: String) {
+    override fun callBackData(ret: Int, data: ByteArray) {
         synchronized(isCallback) {
             if (isCallback) {
                 XLogUtils.warn(
@@ -170,7 +169,7 @@ class XAsyncCall(
             } else {
                 responseCallback?.onFailure(
                     xCall,
-                    Exception(JSONObject(data).getString("recv_body"))
+                    Exception(JSONObject(String(data)).getString("recv_body"))
                 )
             }
             isCallback = true

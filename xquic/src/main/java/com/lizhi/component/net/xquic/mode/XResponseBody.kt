@@ -1,5 +1,6 @@
 package com.lizhi.component.net.xquic.mode
 
+import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
 
 
@@ -8,7 +9,7 @@ import org.json.JSONObject
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class XResponseBody(var data: String) {
+class XResponseBody(var data: ByteArray) {
 
     var body: String
 
@@ -18,14 +19,19 @@ class XResponseBody(var data: String) {
     var tag: String? = null
 
     init {
-        val jsonObject = JSONObject(data)
-        body = if (jsonObject.has("recv_body")) {
-            jsonObject.getString("recv_body")
-        } else {
-            ""
-        }
-        if (jsonObject.has("tag")) {
-            tag = jsonObject.getString("tag")
+        try {
+            val jsonObject = JSONObject(String(data))
+            body = if (jsonObject.has("recv_body")) {
+                jsonObject.getString("recv_body")
+            } else {
+                ""
+            }
+            if (jsonObject.has("tag")) {
+                tag = jsonObject.getString("tag")
+            }
+        } catch (e: Exception) {
+            XLogUtils.error(e)
+            body = ""
         }
     }
 }
