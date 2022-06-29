@@ -11,6 +11,7 @@ import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.native.AlpnType
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
@@ -44,10 +45,13 @@ class LongConnActivity : AppCompatActivity() {
             launch = CoroutineScope(Dispatchers.Default).launch {
                 index = 0
                 for (i in (1..testCount)) {
-                    webSocket.send(
-                        etContent.text.toString() + ",index=" + i,
-                        System.currentTimeMillis().toString() //这里使用当前时间来做tag发送，是为了收到消息的时候计算耗时
-                    )
+                    webSocket.send((etContent.text.toString() + ",index=" + i).toByteArray())
+
+                    /* webSocket.send(
+                         etContent.text.toString() + ",index=" + i,
+                         System.currentTimeMillis().toString() //这里使用当前时间来做tag发送，是为了收到消息的时候计算耗时
+                     )*/
+
                     if (timeSpace > 0) {
                         delay(timeSpace * 1000L)
                     }
@@ -76,13 +80,14 @@ class LongConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .pingInterval(5000)//
             //.dns(XDns.SYSTEM)
+            .setAlpnType(AlpnType.ALPN_HQ)
             .addPingListener(object : XPingListener {
                 //可选
                 override fun ping(): String {
                     return "ping data"
                 }
 
-                override fun pong(data: String) {
+                override fun pong(data: ByteArray?) {
                     //XLogUtils.info("data=$data")
                 }
 
@@ -167,7 +172,10 @@ class LongConnActivity : AppCompatActivity() {
         index++
         var costTime = 0L
         tag?.let {
-            costTime = System.currentTimeMillis() - tag.toLong()
+            try {
+                costTime = System.currentTimeMillis() - tag.toLong()
+            } catch (e: Exception) {
+            }
         }
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length

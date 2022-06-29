@@ -572,31 +572,24 @@ int client_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t
 void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *args,
                           xqc_cli_request_t *reqs, int req_cnt) {
     DEBUG;
-
     /*send request */
     for (int i = 0; i < req_cnt; i++) {
         args->user_stream.user_conn = user_conn;
-
+        ssize_t ret;
         if (args->quic_cfg.alpn_type == ALPN_H3) {
-            if (client_send_h3_requests(user_conn, &args->user_stream, reqs + i) < 0) {
-                char err_msg[214];
-                sprintf(err_msg,
-                        "xqc h3 request create error,please check network or retry,host=%s",
-                        user_conn->ctx->args->net_cfg.host);
-                LOGE("%s", err_msg);
-                callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
-                return;
-            }
+            ret = client_send_h3_requests(user_conn, &args->user_stream, reqs + i);
         } else {
-            if (client_send_hq_requests(user_conn, &args->user_stream, reqs + i) < 0) {
-                char err_msg[214];
-                sprintf(err_msg,
-                        "xqc hq request create error,please check network or retry,host=%s",
-                        user_conn->ctx->args->net_cfg.host);
-                LOGE("%s", err_msg);
-                callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
-                return;
-            }
+            ret = client_send_hq_requests(user_conn, &args->user_stream, reqs + i);
+        }
+        if (ret < 0) {
+            char err_msg[214];
+            sprintf(err_msg,
+                    "xqc send (alpn_type=%d) error,please check network or retry,host=%s",
+                    args->quic_cfg.alpn_type,
+                    user_conn->ctx->args->net_cfg.host);
+            LOGE("%s", err_msg);
+            callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
+            return;
         }
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
     }

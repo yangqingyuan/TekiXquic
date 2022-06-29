@@ -438,8 +438,28 @@ static int long_send_ping(JNIEnv *env, jobject this, jlong clientCtx, jstring pi
  * @param content
  * @return
  */
-static int long_send(JNIEnv *env, jobject this, jlong clientCtx, jstring content) {
-    return client_long_send(jlong_to_ptr(clientCtx), (*env)->GetStringUTFChars(env, content, 0));
+static int long_send_string(JNIEnv *env, jobject this, jlong clientCtx, jstring content) {
+    return client_long_send(jlong_to_ptr(clientCtx), (*env)->GetStringUTFChars(env, content, 0),
+                            DATA_TYPE_JSON);
+}
+
+/**
+ * send byte
+ * @param env
+ * @param this
+ * @param clientCtx
+ * @param content
+ * @return
+ */
+static int lang_send_byte(JNIEnv *env, jobject this, jlong clientCtx, jbyteArray content) {
+    const char *cContent = NULL;
+    if (content != NULL) {
+        cContent = (*env)->GetByteArrayElements(env, content, 0);
+    }
+    if (cContent == NULL){
+        return -1;
+    }
+    return client_long_send(jlong_to_ptr(clientCtx), cContent, DATA_TYPE_BYTE);
 }
 
 /**
@@ -469,7 +489,8 @@ static JNINativeMethod g_long_methods[] = {
         {"connect",  "(Lcom/lizhi/component/net/xquic/native/SendParams;Lcom/lizhi/component/net/xquic/native/XquicCallback;)J", (void *) long_connect},
         {"start",    "(J)I",                                                                                                     (void *) long_start},
         {"sendPing", "(JLjava/lang/String;)I",                                                                                   (void *) long_send_ping},
-        {"send",     "(JLjava/lang/String;)I",                                                                                   (void *) long_send},
+        {"send",     "(JLjava/lang/String;)I",                                                                                   (void *) long_send_string},
+        {"sendByte", "(J[B)I",                                                                                                   (void *) lang_send_byte},
         {"cancel",   "(J)I",                                                                                                     (void *) long_cancel},
 };
 

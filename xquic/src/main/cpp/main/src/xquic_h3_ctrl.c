@@ -32,7 +32,8 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
 
         if (user_stream->send_offset < user_stream->send_body_len) {
             ret = xqc_h3_request_send_body(user_stream->h3_request,
-                                           (unsigned char *)user_stream->send_body + user_stream->send_offset,
+                                           (unsigned char *) user_stream->send_body +
+                                           user_stream->send_offset,
                                            user_stream->send_body_len -
                                            user_stream->send_offset,
                                            1);
@@ -57,8 +58,8 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
  * @param args
  * @return
  */
-int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
-                            xqc_cli_user_stream_t *user_stream, xqc_cli_request_t *req) {
+ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
+                                xqc_cli_user_stream_t *user_stream, xqc_cli_request_t *req) {
     DEBUG;
 
     /* 创建请求 */
@@ -90,7 +91,7 @@ int client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         }
         LOGD("============ request head end ================");
         //发送h3内容
-        client_send_h3_content(user_stream);
+        return client_send_h3_content(user_stream);
     }
     return 0;
 }

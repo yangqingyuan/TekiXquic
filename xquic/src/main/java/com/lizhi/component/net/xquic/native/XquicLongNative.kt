@@ -31,9 +31,14 @@ class XquicLongNative {
     external fun sendPing(clientCtx: Long, content: String): Int
 
     /**
-     * 发送数据
+     * 发送数据，适合http请求
      */
     external fun send(clientCtx: Long, json: String): Int
+
+    /**
+     * 发送byte数据，适合传递音视频数据
+     */
+    external fun sendByte(clientCtx: Long, byte: ByteArray): Int
 
     /**
      * 取消

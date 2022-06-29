@@ -9,6 +9,7 @@ import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.listener.XRunnable
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.native.AlpnType
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.io.InterruptedIOException
 import java.lang.Exception
@@ -85,6 +86,11 @@ abstract class XAsyncCallCommon(
      */
     var isFinish = false
 
+    /**
+     * alpn type
+     */
+    val alpnType = xquicClient.alpnType
+
     init {
         if (indexTag >= Int.MAX_VALUE) {
             atomicInteger.set(0)
@@ -138,19 +144,22 @@ abstract class XAsyncCallCommon(
     fun parseHttpHeads(): HashMap<String, String> {
         /* set headers */
         val headers = hashMapOf<String, String>()
-        headers[":method"] = originalRequest.method
-        headers[":scheme"] = originalRequest.url.scheme
-        headers[":authority"] = originalRequest.url.authority
-        originalRequest.url.path?.let {
-            headers[":path"] = it
+        if (alpnType == AlpnType.ALPN_H3) {
+            headers[":method"] = originalRequest.method
+            headers[":scheme"] = originalRequest.url.scheme
+            headers[":authority"] = originalRequest.url.authority
+            originalRequest.url.path?.let {
+                headers[":path"] = it
+            }
+            originalRequest.body?.let {
+                val body = it
+                headers["content-type"] = body.mediaType.mediaType
+                headers["content-length"] = body.content.length.toString()
+            }
         }
 
         headers.putAll(originalRequest.headers.headersMap)
-        originalRequest.body?.let {
-            val body = it
-            headers["content-type"] = body.mediaType.mediaType
-            headers["content-length"] = body.content.length.toString()
-        }
+
         return headers
     }
 

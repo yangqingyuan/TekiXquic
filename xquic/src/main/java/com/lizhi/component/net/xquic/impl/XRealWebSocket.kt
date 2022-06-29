@@ -176,21 +176,22 @@ class XRealWebSocket(
      * more headers "https://zhuanlan.zhihu.com/p/282737965"
      */
     private fun parseHttpHeads(): HashMap<String, String> {
-        /* set headers */
         val headers = hashMapOf<String, String>()
-        headers["Upgrade"] = "websocket"
-        headers["Connection"] = "Upgrade"
-        headers["Sec-WebSocket-Key"] = "key"
-        headers["Sec-WebSocket-Version"] = "13"
+        if (alpnType == AlpnType.ALPN_H3) {
+            /* set headers */
+            headers["Upgrade"] = "websocket"
+            headers["Connection"] = "Upgrade"
+            headers["Sec-WebSocket-Key"] = "key"
+            headers["Sec-WebSocket-Version"] = "13"
 
-        /* set headers */
-        headers[":method"] = xRequest.method
-        headers[":scheme"] = xRequest.url.scheme
-        headers[":authority"] = xRequest.url.authority
-        xRequest.url.path?.let {
-            headers[":path"] = it
+            /* set headers */
+            headers[":method"] = xRequest.method
+            headers[":scheme"] = xRequest.url.scheme
+            headers[":authority"] = xRequest.url.authority
+            xRequest.url.path?.let {
+                headers[":path"] = it
+            }
         }
-
         headers.putAll(xRequest.headers.headersMap)
         return headers
     }
@@ -258,7 +259,12 @@ class XRealWebSocket(
             when (msg.msgType) {
                 Message.MSG_TYPE_SEND -> {//
                     if (checkClientCtx(clientCtx) && !failed && !enqueuedClose) {
-                        when (xquicLongNative.send(clientCtx, msg.getContent())) {
+                        val result = if (msg.dataType == Message.DATA_TYPE_JSON) {
+                            xquicLongNative.send(clientCtx, msg.getContent())
+                        } else {
+                            xquicLongNative.sendByte(clientCtx, msg.getByteContent())
+                        }
+                        when (result) {
                             XquicCallback.XQC_OK -> {
                                 synchronized(this) { queueSize -= msg.msgContent.length }
                             }
@@ -296,18 +302,24 @@ class XRealWebSocket(
      * message object
      */
     class Message(
+        var dataType: Int = DATA_TYPE_JSON,
         var msgType: Int = MSG_TYPE_SEND,
         var msgContent: String,
         var tag: String? = null,
         var header: HashMap<String, String>? = null
     ) {
         companion object {
+            const val DATA_TYPE_OTHER = 0
+            const val DATA_TYPE_JSON = 1
+            const val DATA_TYPE_BYTE = 2
+
             const val MSG_TYPE_SEND = 0
             const val MSG_TYPE_CLOSE = 1
             val gson = Gson()
         }
 
         private val sendBody = SendBody()
+        var byteArray: ByteArray? = null
 
         init {
             sendBody.send_body = msgContent
@@ -319,6 +331,10 @@ class XRealWebSocket(
 
         fun getContent(): String {
             return gson.toJson(sendBody)
+        }
+
+        fun getByteContent(): ByteArray {
+            return byteArray!!
         }
     }
 
@@ -354,8 +370,22 @@ class XRealWebSocket(
         }
 
         queueSize += data.length
-        messageQueue.add(Message(Message.MSG_TYPE_SEND, data, tag))
+        messageQueue.add(Message(Message.DATA_TYPE_JSON, Message.MSG_TYPE_SEND, data, tag))
 
+        runWriter()
+        return true
+    }
+
+    override fun send(byteArray: ByteArray): Boolean {
+        // Don't send new frames after we've failed or enqueued a close frame.
+        if (!check()) return false
+        val message = Message(
+            Message.DATA_TYPE_BYTE,
+            Message.MSG_TYPE_SEND,
+            ""
+        )
+        message.byteArray = byteArray
+        messageQueue.add(message)
         runWriter()
         return true
     }
@@ -384,6 +414,7 @@ class XRealWebSocket(
         // Enqueue the close frame.
         messageQueue.add(
             Message(
+                Message.DATA_TYPE_OTHER,
                 Message.MSG_TYPE_CLOSE, "close"
             )
         )

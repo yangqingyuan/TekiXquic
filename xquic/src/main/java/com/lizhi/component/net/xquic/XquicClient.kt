@@ -128,7 +128,7 @@ open class XquicClient internal constructor(val builder: Builder) {
                 return "ping"
             }
 
-            override fun pong(data: String) {
+            override fun pong(data: ByteArray?) {
                 //XLogUtils.debug("pong callBack= $data")
             }
         }

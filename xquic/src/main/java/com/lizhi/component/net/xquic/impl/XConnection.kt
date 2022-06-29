@@ -117,6 +117,7 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
         }
         xCallBackMap[tag] = xCallBack
         val message = XRealWebSocket.Message(
+            XRealWebSocket.Message.DATA_TYPE_JSON,
             XRealWebSocket.Message.MSG_TYPE_SEND,
             content ?: "test",
             tag, headers

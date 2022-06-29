@@ -75,6 +75,13 @@ typedef enum msg_type_s {
     MSG_TYPE_DESTROY
 } MSG_TYPE;
 
+/**
+ * send data type
+ */
+typedef enum send_data_type_s {
+    DATA_TYPE_JSON = 0,
+    DATA_TYPE_BYTE = 1
+} send_data_type_t;
 
 /**
  * 数据流
@@ -551,11 +558,12 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
  * @param user_conn
  * @param errMsg
  */
-inline void callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data,void* user_data) {
+inline void
+callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data, void *user_data) {
     xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
     if (user_callback) {
         int len = 0;
-        if (data != NULL){
+        if (data != NULL) {
             len = strlen(data);
         }
         user_callback->user_data_callback.callback_data(

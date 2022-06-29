@@ -36,10 +36,6 @@ class XAsyncCall(
      */
     private val xRttInfoCache = xquicClient.xRttInfoCache
 
-    /**
-     * alpn type
-     */
-    private val alpnType = xquicClient.alpnType
 
     override fun execute() {
         val startTime = System.currentTimeMillis()

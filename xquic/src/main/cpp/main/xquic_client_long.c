@@ -576,56 +576,13 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         if (!ret) {
             continue;
         }
-        /* parse json data */
-        cJSON *json_data = cJSON_Parse((char *) message.obj);
-        char *content = cJSON_GetObjectItem(json_data, "send_body")->valuestring;
-        char *tag = cJSON_GetObjectItem(json_data, "user_tag")->valuestring;
-        cJSON *headers_json = cJSON_GetObjectItem(json_data, "headers");
+
+        cJSON *json_data = NULL;
+        char *content;
 
         /* new a stream */
         xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
         user_stream->user_conn = user_conn;
-
-        /* copy tag */
-        if (tag != NULL && strlen(tag) != 0) {
-            memset(user_stream->user_tag, 0, 512);
-            strcpy(user_stream->user_tag, tag);
-        }
-
-        /*copy send content */
-        if (content != NULL) {
-            size_t content_len = strlen(content);
-            user_stream->send_body = malloc(content_len);
-            strcpy(user_stream->send_body, content);//copy data
-            user_stream->send_body_len = content_len;
-        }
-
-        /* format request */
-        xqc_cli_request_t *request = NULL;
-        if (headers_json != NULL) {
-            if (req_cut > MAX_REQUEST_CNT) {
-                req_cut = 0;
-            }
-            req_cut++;
-            request = reqs + req_cut; //loop user request
-            int size = cJSON_GetArraySize(headers_json);
-            request->count = size;
-
-            for (int i = 0; i < size; i++) {
-                cJSON *item = cJSON_GetArrayItem(headers_json, i);
-
-                char *name = cJSON_GetObjectItem(item, "name")->valuestring;
-                char *value = cJSON_GetObjectItem(item, "value")->valuestring;
-                int flags = cJSON_GetObjectItem(item, "flags")->valueint;
-
-                xqc_http_header_t header = {
-                        .name = {.iov_base = name, .iov_len = strlen(name)},
-                        .value = {.iov_base = value, .iov_len = strlen(value)},
-                        .flags = flags,
-                };
-                request->headers[i] = header;
-            }
-        }
 
         /*set recv body max len */
         if (args->user_callback->max_recv_data_len > 0) {
@@ -634,33 +591,91 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             user_stream->recv_body_max_len = MAX_REC_DATA_LEN;
         }
 
-        if (args->quic_cfg.alpn_type == ALPN_H3) {
-            if (client_send_h3_requests(user_conn, user_stream, request) < 0) {
-                char err_msg[214];
-                sprintf(err_msg,
-                        "xqc h3 request create error,please check network or retry,host=%s",
-                        user_conn->ctx->args->net_cfg.host);
-                LOGE("%s", err_msg);
-                callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
-                goto end;
-            }
-        } else {
-            if (client_send_hq_requests(user_conn, user_stream, request) < 0) {
-                char err_msg[214];
-                sprintf(err_msg,
-                        "xqc hq request create error,please check network or retry,host=%s",
-                        user_conn->ctx->args->net_cfg.host);
-                LOGE("%s", err_msg);
-                callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
-                goto end;
-            }
+        /* loop user request */
+        xqc_cli_request_t *request = NULL;
+        if (req_cut > MAX_REQUEST_CNT) {
+            req_cut = 0;
         }
-        user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
+        req_cut++;
+        request = reqs + req_cut;
 
-        end:
+        switch (message.what) {
+            case DATA_TYPE_JSON: {
+                /* parse json data */
+                json_data = cJSON_Parse((char *) message.obj);
+                content = cJSON_GetObjectItem(json_data, "send_body")->valuestring;
+                char *tag = cJSON_GetObjectItem(json_data, "user_tag")->valuestring;
+                cJSON *headers_json = cJSON_GetObjectItem(json_data, "headers");
+
+                /* copy tag */
+                if (tag != NULL && strlen(tag) != 0) {
+                    memset(user_stream->user_tag, 0, 512);
+                    strcpy(user_stream->user_tag, tag);
+                }
+
+                /*copy send content */
+                if (content != NULL) {
+                    size_t content_len = strlen(content);
+                    user_stream->send_body = malloc(content_len);
+                    strcpy(user_stream->send_body, content);//copy data
+                    user_stream->send_body_len = content_len;
+                }
+
+                /* format request */
+                if (headers_json != NULL) {
+                    int size = cJSON_GetArraySize(headers_json);
+                    request->count = size;
+
+                    for (int i = 0; i < size; i++) {
+                        cJSON *item = cJSON_GetArrayItem(headers_json, i);
+
+                        char *name = cJSON_GetObjectItem(item, "name")->valuestring;
+                        char *value = cJSON_GetObjectItem(item, "value")->valuestring;
+                        int flags = cJSON_GetObjectItem(item, "flags")->valueint;
+
+                        xqc_http_header_t header = {
+                                .name = {.iov_base = name, .iov_len = strlen(name)},
+                                .value = {.iov_base = value, .iov_len = strlen(value)},
+                                .flags = flags,
+                        };
+                        request->headers[i] = header;
+                    }
+                }
+            }
+                break;
+            case DATA_TYPE_BYTE: {
+                content = (char *) message.obj;
+                /*copy send content */
+                if (content != NULL) {
+                    size_t content_len = strlen(content);
+                    user_stream->send_body = malloc(content_len);
+                    strcpy(user_stream->send_body, content);//copy data
+                    user_stream->send_body_len = content_len;
+                }
+            }
+                break;
+        }
+
+        ssize_t ret_send;
+        if (args->quic_cfg.alpn_type == ALPN_H3) {
+            ret_send = client_send_h3_requests(user_conn, user_stream, request);
+        } else {
+            ret_send = client_send_hq_requests(user_conn, user_stream, request);
+        }
+        if (ret_send <= 0) {
+            char err_msg[214];
+            sprintf(err_msg,
+                    "xqc send (alpn_type=%d) error,please check network or retry,host=%s",
+                    args->quic_cfg.alpn_type,
+                    user_conn->ctx->args->net_cfg.host);
+            LOGE("%s", err_msg);
+            callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
+        } else {
+            user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;
+        }
         /* free data */
-        xqc_cli_msg_free_res(&message);
         cJSON_Delete(json_data);
+        xqc_cli_msg_free_res(&message);
     }
 }
 
@@ -1006,10 +1021,11 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
 /**
  * H3的方式发送内容
  * @param ctx
+ * @param data_type 0:json  1:other
  * @param content
  * @return
  */
-int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
+int client_long_send(xqc_cli_ctx_t *ctx, const char *content, send_data_type_t data_type) {
     DEBUG;
 
     if (ctx == NULL || ctx->active <= 0) {
@@ -1025,7 +1041,7 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content) {
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;
 
     /* push to queue */
-    xqc_cli_msg_queue_put_simple(&ctx->msg_data.message_queue, 0,
+    xqc_cli_msg_queue_put_simple(&ctx->msg_data.message_queue, data_type,
                                  (void *) content, len);
 
     /* notify send */

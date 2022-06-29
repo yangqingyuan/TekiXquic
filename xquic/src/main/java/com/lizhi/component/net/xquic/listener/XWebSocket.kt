@@ -17,6 +17,11 @@ interface XWebSocket {
      */
     fun send(text: String, tag: String): Boolean
 
+    /**
+     * 发送byte数组
+     */
+    fun send(byteArray: ByteArray): Boolean
+
     fun send(message: XRealWebSocket.Message): Boolean
 
     fun cancel()
