@@ -926,12 +926,14 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
     ev_loop_destroy(ctx->eb);
 
     /* free ctx */
+#if 10 //FIXME 开启后并发请求下会有异常
     xqc_cli_alpn_type_t alpn_type = ctx->args->quic_cfg.alpn_type;
     if (alpn_type == ALPN_H3) {
         xqc_h3_ctx_destroy(ctx->engine);
     } else {
         xqc_engine_unregister_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9);
     }
+#endif
     xqc_engine_destroy(ctx->engine);
     client_free_ctx(ctx);
 
