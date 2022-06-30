@@ -109,33 +109,29 @@ static int callback_data_to_java(void *object_android, int core, const char *dat
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
     jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData",
-                                          "(I[B)V");
+                                          "(ILjava/lang/String;[B)V");
     if (!jm_id) {
         LOGE("call back error,can not find methodId callBackReadData");
         return -1;
     }
 
-    cJSON *usr = cJSON_CreateObject();
-    cJSON_AddStringToObject(usr, "recv_body", data);
-    if (user_data != NULL) {
-        cJSON_AddStringToObject(usr, "tag", user_data);
-    }
-    char *json_data = cJSON_Print(usr);
-
     /* data to jbyteArray*/
-    size_t length = strlen(json_data);
-    jbyteArray recv_body = (*env)->NewByteArray(env, (jsize) length);
-    (*env)->SetByteArrayRegion(env, recv_body, 0, (jsize) length, (jbyte *) json_data);
+    jbyteArray recv_body = (*env)->NewByteArray(env, (jsize) len);
+    (*env)->SetByteArrayRegion(env, recv_body, 0, (jsize) len, (jbyte *) data);
+    jstring tag = NULL;
+    if (user_data) {
+        tag = (*env)->NewStringUTF(env, user_data);
+    }
 
     /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jm_id, core, recv_body);
+    (*env)->CallVoidMethod(env, j_obj, jm_id, core, tag, recv_body);
 
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
     (*env)->DeleteLocalRef(env, recv_body);
     (*env)->DeleteLocalRef(env, callbackClass);
-    cJSON_free(json_data);
-    cJSON_Delete(usr);
+    (*env)->DeleteLocalRef(env, tag);
+
     return 0;
 }
 
@@ -456,7 +452,7 @@ static int lang_send_byte(JNIEnv *env, jobject this, jlong clientCtx, jbyteArray
     if (content != NULL) {
         cContent = (*env)->GetByteArrayElements(env, content, 0);
     }
-    if (cContent == NULL){
+    if (cContent == NULL) {
         return -1;
     }
     return client_long_send(jlong_to_ptr(clientCtx), cContent, DATA_TYPE_BYTE);

@@ -80,7 +80,7 @@ class LongConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .pingInterval(5000)//
             //.dns(XDns.SYSTEM)
-            .setAlpnType(AlpnType.ALPN_HQ)
+            //.setAlpnType(AlpnType.ALPN_HQ)
             .addPingListener(object : XPingListener {
                 //可选
                 override fun ping(): String {
@@ -167,7 +167,7 @@ class LongConnActivity : AppCompatActivity() {
     }
 
     private fun parseResponse(response: XResponse) {
-        var content = response.xResponseBody.body
+        var content = response.xResponseBody.body()
         val tag = response.xResponseBody.tag
         index++
         var costTime = 0L

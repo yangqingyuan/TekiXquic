@@ -149,7 +149,7 @@ class XAsyncCall(
     }
 
 
-    override fun callBackData(ret: Int, data: ByteArray) {
+    override fun callBackData(ret: Int, tag: String?, data: ByteArray) {
         synchronized(isCallback) {
             if (isCallback) {
                 XLogUtils.warn(
@@ -159,13 +159,13 @@ class XAsyncCall(
             }
             handle.removeMessages(indexTag)
             if (ret == XquicCallback.XQC_OK) {
-                xResponse.xResponseBody = XResponseBody(data)
+                xResponse.xResponseBody = XResponseBody(data, userTag)
                 xResponse.code = ret
                 responseCallback?.onResponse(xCall, xResponse)
             } else {
                 responseCallback?.onFailure(
                     xCall,
-                    Exception(JSONObject(String(data)).getString("recv_body"))
+                    Exception(String(data))
                 )
             }
             isCallback = true

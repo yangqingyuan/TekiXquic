@@ -91,6 +91,11 @@ abstract class XAsyncCallCommon(
      */
     val alpnType = xquicClient.alpnType
 
+    /**
+     * user tag
+     */
+    val userTag = originalRequest.userTag()
+
     init {
         if (indexTag >= Int.MAX_VALUE) {
             atomicInteger.set(0)

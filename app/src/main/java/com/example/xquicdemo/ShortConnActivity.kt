@@ -13,14 +13,15 @@ import com.lizhi.component.net.xquic.mode.XMediaType
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XRequestBody
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.native.AlpnType
 import com.lizhi.component.net.xquic.native.ProtoVersion
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
-import java.lang.Exception
 import java.lang.StringBuilder
 import java.text.SimpleDateFormat
 import java.util.*
 import java.util.concurrent.atomic.AtomicInteger
+import kotlin.Exception
 
 
 class ShortConnActivity : AppCompatActivity() {
@@ -50,6 +51,7 @@ class ShortConnActivity : AppCompatActivity() {
             //.dns(XDns.SYSTEM)
             .reuse(SetCache.getReuse(applicationContext) == 1)//默认值false
             //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
+            //.setAlpnType(AlpnType.ALPN_HQ)
             .build()
 
         textView = findViewById(R.id.tv_result)
@@ -134,7 +136,7 @@ class ShortConnActivity : AppCompatActivity() {
             .addHeader("clientId", "portalApp")
             //.addHeader("testA", "testA")
             //.addHeader("Keep-Alive", "timeout=300, max=1000")
-            .tag("tag")
+            .tag("index:$index")
             .build()
         request(index, xRequest)
     }
@@ -154,7 +156,7 @@ class ShortConnActivity : AppCompatActivity() {
             .post(xRequestBody) //Default
             .addHeader("tenantId", "soacp")
             .addHeader("clientId", "portalApp")
-            .tag("tag")
+            .tag("index:$index")
             .build()
         request(index, xRequest)
     }
@@ -212,7 +214,7 @@ class ShortConnActivity : AppCompatActivity() {
     }
 
     private fun parseResponse(startTime: Long, index: Int, xResponse: XResponse) {
-        var content: String = xResponse.xResponseBody.body
+        var content: String = xResponse.xResponseBody.body()
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }

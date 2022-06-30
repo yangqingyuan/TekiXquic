@@ -61,6 +61,7 @@ class XAsyncCallReuse(
                     }
 
                     override fun onResponse(call: XCall, xResponse: XResponse) {
+                        xResponse.xResponseBody.tag = userTag
                         responseCallback?.onResponse(xCall, xResponse)
                         finish(true)
                     }

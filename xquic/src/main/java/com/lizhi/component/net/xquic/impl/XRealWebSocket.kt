@@ -443,16 +443,16 @@ class XRealWebSocket(
      * callback data
      */
     @Synchronized
-    override fun callBackData(ret: Int, data: ByteArray) {
+    override fun callBackData(ret: Int, tag: String?, data: ByteArray) {
         if (ret == XquicCallback.XQC_OK) {
-            xResponse.xResponseBody = XResponseBody(data)
+            xResponse.xResponseBody = XResponseBody(data, tag)
             listener.onMessage(this, xResponse)
         } else {
             clientCtx = 0
             failed = true
             listener.onFailure(
                 this,
-                Exception(JSONObject(String(data)).getString("recv_body")),
+                Exception(String(data)),
                 xResponse
             )
         }
@@ -469,13 +469,13 @@ class XRealWebSocket(
                 }
                 XquicMsgType.TOKEN -> {
                     if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.tokenBack(authority(),data)
+                        xRttInfoCache.tokenBack(authority(), data)
                     } else {
                     }
                 }
                 XquicMsgType.SESSION -> {
                     if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.sessionBack(authority(),data)
+                        xRttInfoCache.sessionBack(authority(), data)
                     } else {
                     }
                 }
