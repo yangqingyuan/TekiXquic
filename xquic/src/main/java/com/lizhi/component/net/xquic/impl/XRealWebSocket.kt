@@ -13,6 +13,8 @@ import com.lizhi.component.net.xquic.mode.XResponseBody
 import com.lizhi.component.net.xquic.native.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
+import java.nio.BufferOverflowException
+import java.nio.ByteBuffer
 import java.util.*
 import java.util.concurrent.ScheduledExecutorService
 import java.util.concurrent.ScheduledThreadPoolExecutor
@@ -39,8 +41,9 @@ class XRealWebSocket(
         private const val STATUS_CLOSE = 1
         private const val STATUS_CANCEL = 2
 
-        private const val MAX_QUEUE_SIZE = (16 * 1024 * 1024 // 16 MiB.
-                ).toLong()
+        private const val MAX_BUFF_SIZE = 1024 * 1024
+
+        private const val MAX_QUEUE_SIZE = (16 * 1024 * 1024).toLong() // 16 MiB.
 
         /**
          * check clientCtx Valid
@@ -63,6 +66,7 @@ class XRealWebSocket(
     @Volatile
     private var failed = false
 
+    @Volatile
     private var queueSize: Long = 0
 
     @Volatile
@@ -102,7 +106,13 @@ class XRealWebSocket(
     private var alpnType = AlpnType.ALPN_H3
 
     @Volatile
-    private var cancelOrClose = 0// 2 cancle 1:close
+    private var cancelOrClose = 0// 2 cancel 1:close
+
+
+    /**
+     * Shared memory is more efficient,default 1M
+     */
+    private var byteBuffer = ByteBuffer.allocateDirect(MAX_BUFF_SIZE)
 
     private fun threadFactory(): ThreadFactory {
         return ThreadFactory { runnable ->
@@ -260,14 +270,16 @@ class XRealWebSocket(
             when (msg.msgType) {
                 Message.MSG_TYPE_SEND -> {//
                     if (checkClientCtx(clientCtx) && !failed && !enqueuedClose) {
-                        val result = if (msg.dataType == Message.DATA_TYPE_JSON) {
-                            xquicLongNative.send(clientCtx, msg.getContent())
-                        } else {
-                            xquicLongNative.sendByte(clientCtx, msg.getByteContent())
-                        }
-                        when (result) {
+                        byteBuffer.clear()//notice clear data
+                        byteBuffer.put(msg.getContent()) //use byte buffer to Memory sharing
+                        when (xquicLongNative.sendByte(
+                            clientCtx,
+                            msg.dataType,
+                            byteBuffer,
+                            msg.getContentLength()
+                        )) {
                             XquicCallback.XQC_OK -> {
-                                synchronized(this) { queueSize -= msg.msgContent.length }
+                                queueSize -= msg.getContentLength()
                             }
                             else -> {
                                 listener.onFailure(
@@ -302,40 +314,60 @@ class XRealWebSocket(
     /**
      * message object
      */
-    class Message(
-        var dataType: Int = DATA_TYPE_JSON,
-        var msgType: Int = MSG_TYPE_SEND,
-        var msgContent: String,
-        var tag: String? = null,
-        var header: HashMap<String, String>? = null
-    ) {
+    class Message {
         companion object {
-            const val DATA_TYPE_OTHER = 0
-            const val DATA_TYPE_JSON = 1
-            const val DATA_TYPE_BYTE = 2
+            private const val DATA_TYPE_OTHER = -1
+            private const val DATA_TYPE_JSON = 0
+            private const val DATA_TYPE_BYTE = 1
 
             const val MSG_TYPE_SEND = 0
             const val MSG_TYPE_CLOSE = 1
-            val gson = Gson()
+            private val gson = Gson()
+
+            fun makeJsonMessage(
+                msgContent: String, tag: String? = null, header: HashMap<String, String>? = null
+            ): Message {
+                val message = Message()
+                message.dataType = DATA_TYPE_JSON
+                message.msgType = MSG_TYPE_SEND
+                val sendBody = SendBody()
+                sendBody.send_body = msgContent
+                sendBody.user_tag = tag
+                header?.forEach(action = {
+                    sendBody.headers.add(SendBody.Header(it.key, it.value))
+                })
+                message.byteArray = gson.toJson(sendBody).toByteArray()
+                return message
+            }
+
+            fun makeByteMessage(
+                byteArray: ByteArray
+            ): Message {
+                val message = Message()
+                message.dataType = DATA_TYPE_BYTE
+                message.msgType = MSG_TYPE_SEND
+                message.byteArray = byteArray
+                return message
+            }
+
+            fun makeCloseMessage(): Message {
+                val message = Message()
+                message.dataType = DATA_TYPE_OTHER
+                message.msgType = MSG_TYPE_CLOSE
+                return message
+            }
         }
 
-        private val sendBody = SendBody()
-        var byteArray: ByteArray? = null
+        var dataType: Int = DATA_TYPE_JSON
+        var msgType: Int = MSG_TYPE_SEND
+        lateinit var byteArray: ByteArray
 
-        init {
-            sendBody.send_body = msgContent
-            sendBody.user_tag = tag
-            header?.forEach(action = {
-                sendBody.headers.add(SendBody.Header(it.key, it.value))
-            })
+        fun getContent(): ByteArray {
+            return byteArray
         }
 
-        fun getContent(): String {
-            return gson.toJson(sendBody)
-        }
-
-        fun getByteContent(): ByteArray {
-            return byteArray!!
+        fun getContentLength(): Int {
+            return byteArray.size
         }
     }
 
@@ -371,7 +403,7 @@ class XRealWebSocket(
         }
 
         queueSize += data.length
-        messageQueue.add(Message(Message.DATA_TYPE_JSON, Message.MSG_TYPE_SEND, data, tag))
+        messageQueue.add(Message.makeJsonMessage(data, tag))
 
         runWriter()
         return true
@@ -380,13 +412,13 @@ class XRealWebSocket(
     override fun send(byteArray: ByteArray): Boolean {
         // Don't send new frames after we've failed or enqueued a close frame.
         if (!check()) return false
-        val message = Message(
-            Message.DATA_TYPE_BYTE,
-            Message.MSG_TYPE_SEND,
-            ""
-        )
-        message.byteArray = byteArray
-        messageQueue.add(message)
+
+        if (byteArray.size > MAX_BUFF_SIZE) {
+            XLogUtils.error("send error : byte size is too long")
+            throw BufferOverflowException()
+        }
+        queueSize += byteArray.size
+        messageQueue.add(Message.makeByteMessage(byteArray))
         runWriter()
         return true
     }
@@ -395,11 +427,11 @@ class XRealWebSocket(
         if (!check()) return false
 
         // If this frame overflows the buffer, reject it and close the web socket.
-        if (queueSize + message.msgContent.length > MAX_QUEUE_SIZE) {
+        if (queueSize + message.getContentLength() > MAX_QUEUE_SIZE) {
             close()
             return false
         }
-        queueSize += message.msgContent.length
+        queueSize += message.getContentLength()
         messageQueue.add(message)
         runWriter()
         return true
@@ -413,12 +445,7 @@ class XRealWebSocket(
     private fun close(): Boolean {
         if (failed || enqueuedClose) return false
         // Enqueue the close frame.
-        messageQueue.add(
-            Message(
-                Message.DATA_TYPE_OTHER,
-                Message.MSG_TYPE_CLOSE, "close"
-            )
-        )
+        messageQueue.add(Message.makeCloseMessage())
         runWriter()
         return true
     }

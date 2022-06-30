@@ -116,13 +116,7 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
             return
         }
         xCallBackMap[tag] = xCallBack
-        val message = XRealWebSocket.Message(
-            XRealWebSocket.Message.DATA_TYPE_JSON,
-            XRealWebSocket.Message.MSG_TYPE_SEND,
-            content ?: "test",
-            tag, headers
-        )
-
+        val message = XRealWebSocket.Message.makeJsonMessage(content ?: "test", tag, headers)
         if (xWebSocket != null) {
             xWebSocket?.send(message)
         } else {//如果没有链接，开始链接,并将参数缓存起来，握手成功后再发送信息

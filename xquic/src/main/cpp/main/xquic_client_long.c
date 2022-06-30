@@ -1031,7 +1031,7 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
  * @param content
  * @return
  */
-int client_long_send(xqc_cli_ctx_t *ctx, const char *content, send_data_type_t data_type) {
+int client_long_send(xqc_cli_ctx_t *ctx, const char *content, send_data_type_t data_type, int len) {
     DEBUG;
 
     if (ctx == NULL || ctx->active <= 0) {
@@ -1040,8 +1040,6 @@ int client_long_send(xqc_cli_ctx_t *ctx, const char *content, send_data_type_t d
     }
 
     pthread_mutex_lock(ctx->mutex);
-
-    size_t len = strlen(content);
 
     /* call method client_task_schedule_callback */
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_DATA;

@@ -41,7 +41,7 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, const char *ping_content);
  * @param content
  * @return
  */
-int client_long_send(xqc_cli_ctx_t *ctx, const char *content, send_data_type_t data_type);
+int client_long_send(xqc_cli_ctx_t *ctx, const char *content, send_data_type_t data_type, int len);
 
 /**
  *

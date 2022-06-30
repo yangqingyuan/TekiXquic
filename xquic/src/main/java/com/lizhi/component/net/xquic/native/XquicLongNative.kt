@@ -1,5 +1,7 @@
 package com.lizhi.component.net.xquic.native
 
+import java.nio.ByteBuffer
+
 /**
  * 长链接
  */
@@ -31,14 +33,13 @@ class XquicLongNative {
     external fun sendPing(clientCtx: Long, content: String): Int
 
     /**
-     * 发送数据，适合http请求
+     * 发送byte数据
+     * dataType : 1 jsonString, 2 byteArray
+     * 注意：
+     * （1）ByteBuffer是使用allocateDirect的方式，内存共享更加高效，通过profiler（内存分析）并发100请求，内存峰值减少50%
+     * （2）jsonString类型必须遵守SendBody的格式（因：内部需要）
      */
-    external fun send(clientCtx: Long, json: String): Int
-
-    /**
-     * 发送byte数据，适合传递音视频数据
-     */
-    external fun sendByte(clientCtx: Long, byte: ByteArray): Int
+    external fun sendByte(clientCtx: Long, dataType: Int, byte: ByteBuffer, len: Int): Int
 
     /**
      * 取消
