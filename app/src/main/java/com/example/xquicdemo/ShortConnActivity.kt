@@ -222,7 +222,7 @@ class ShortConnActivity : AppCompatActivity() {
         val now = System.currentTimeMillis()
 
         XLogUtils.error(
-            "index=$index, java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},content=${content}"
+            "index=$index, java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},tag=${xResponse.xResponseBody.tag},content=${content}"
         )
 
         //appendText("$content ,index=$index, time=${now - startTime - xResponse.delayTime}ms ,status=" + xResponse.getStatus())

@@ -899,6 +899,10 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
 
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
+    if (!ctx->eb) {
+        LOGE("ev loop new error ");
+        goto fail;
+    }
     ctx->ev_engine.data = ctx;
     ev_timer_init(&ctx->ev_engine, client_engine_callback, 0, 0);//EV_READ=1,EV_WRITE=2
     ev_timer_start(ctx->eb, &ctx->ev_engine);
@@ -926,7 +930,7 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
     ev_loop_destroy(ctx->eb);
 
     /* free ctx */
-#if 10 //FIXME 开启后并发请求下会有异常
+#if 0 //FIXME 开启后并发请求下会有异常
     xqc_cli_alpn_type_t alpn_type = ctx->args->quic_cfg.alpn_type;
     if (alpn_type == ALPN_H3) {
         xqc_h3_ctx_destroy(ctx->engine);

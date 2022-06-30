@@ -962,6 +962,10 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
     }
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
+    if (!ctx->eb) {
+        LOGE("ev loop new error ");
+        goto fail;
+    }
     ctx->ev_engine.data = ctx;
     ev_timer_init(&ctx->ev_engine, client_long_engine_callback, 0, 0);//EV_READ=1,EV_WRITE=2
     ev_timer_start(ctx->eb, &ctx->ev_engine);

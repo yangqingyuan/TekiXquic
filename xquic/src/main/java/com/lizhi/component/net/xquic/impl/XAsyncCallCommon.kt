@@ -115,6 +115,7 @@ abstract class XAsyncCallCommon(
     val handle: Handler = object : Handler(Looper.getMainLooper()) {
         override fun handleMessage(msg: Message) {
             super.handleMessage(msg)
+            isCallback = true
             responseCallback?.onFailure(xCall, Exception("read time out"))
             cancel()
         }
