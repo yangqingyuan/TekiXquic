@@ -409,6 +409,7 @@ class XRealWebSocket(
         return true
     }
 
+    @Synchronized
     override fun send(byteArray: ByteArray): Boolean {
         // Don't send new frames after we've failed or enqueued a close frame.
         if (!check()) return false
@@ -423,6 +424,7 @@ class XRealWebSocket(
         return true
     }
 
+    @Synchronized
     override fun send(message: Message): Boolean {
         if (!check()) return false
 
