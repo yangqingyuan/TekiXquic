@@ -298,50 +298,9 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     user_cfg->h3_hdrs.headers = headers;
     user_cfg->h3_hdrs.count = headersSize;
 
-    switch (cc_type) {
-        case 0:
-            user_cfg->cc = CC_TYPE_BBR;
-            break;
-        case 1:
-            user_cfg->cc = CC_TYPE_CUBIC;
-            break;
-        case 2:
-            user_cfg->cc = CC_TYPE_RENO;
-            break;
-        default:
-            user_cfg->cc = CC_TYPE_BBR;
-    }
-
-    switch (protoVersion) {
-        case 0:
-            user_cfg->version = XQC_IDRAFT_INIT_VER;
-            break;
-        case 1:
-            user_cfg->version = XQC_VERSION_V1;
-            break;
-        case 2:
-            user_cfg->version = XQC_IDRAFT_VER_29;
-            break;
-        case 3:
-            user_cfg->version = XQC_IDRAFT_VER_NEGOTIATION;
-            break;
-        case 4:
-            user_cfg->version = XQC_VERSION_MAX;
-            break;
-        default:
-            user_cfg->version = XQC_VERSION_V1;
-    }
-
-    switch (alpn_type) {
-        case 0:
-            user_cfg->alpn_type = ALPN_HQ;
-            break;
-        case 1:
-            user_cfg->alpn_type = ALPN_H3;
-            break;
-        default:
-            user_cfg->alpn_type = ALPN_H3;
-    }
+    user_cfg->cc = cc_type;
+    user_cfg->version = protoVersion;
+    user_cfg->alpn_type = alpn_type;
 
     /* callback */
     user_cfg->user_data_callback.object_android = gl_callback;
