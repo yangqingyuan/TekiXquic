@@ -31,7 +31,7 @@ ssize_t client_send_hq_content(xqc_cli_user_stream_t *user_stream) {
             }
         }
     }
-    return ret;
+    return 0;
 }
 
 ssize_t client_send_hq_requests(xqc_cli_user_conn_t *user_conn,

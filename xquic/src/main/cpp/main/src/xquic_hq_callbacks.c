@@ -8,7 +8,7 @@ int xqc_client_conn_create_notify(xqc_connection_t *conn, const xqc_cid_t *cid, 
     xqc_conn_set_alp_user_data(conn, user_conn);
     int ret = xqc_conn_is_ready_to_send_early_data(conn);
     LOGD("xqc_conn_is_ready_to_send_early_data:%d\n", ret);
-    return ret;
+    return 0;
 }
 
 int

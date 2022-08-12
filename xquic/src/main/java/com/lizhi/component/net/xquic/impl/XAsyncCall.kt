@@ -110,16 +110,10 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.TOKEN -> {
-                    if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.tokenBack(authority(), data)
-                    } else {//TODO HQ或者其他协议，不支持
-                    }
+                    xRttInfoCache.tokenBack(authority(), data)
                 }
                 XquicMsgType.SESSION -> {
-                    if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.sessionBack(authority(), data)
-                    } else {//TODO HQ或者其他协议，不支持
-                    }
+                    xRttInfoCache.sessionBack(authority(), data)
                 }
 
                 XquicMsgType.DESTROY -> {

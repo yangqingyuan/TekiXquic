@@ -554,7 +554,7 @@ int client_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t
     }
 
     if (cid == NULL) {
-        LOGE("xqc connect error type=%d", args->quic_cfg.alpn_type);
+        LOGE("xqc connect error alpn type=%d", args->quic_cfg.alpn_type);
         return -1;
     }
     memcpy(&user_conn->cid, cid, sizeof(xqc_cid_t));

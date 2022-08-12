@@ -23,7 +23,7 @@ class XConnectionPool(
 
     private val connections: MutableList<XConnection> = mutableListOf()
 
-    fun cleanup(now: Long): Long {
+    private fun cleanUp(now: Long): Long {
         var idleConnectionCount = 0
         var longestIdleConnection: XConnection? = null
         var longestIdleDurationNs = Long.MIN_VALUE
@@ -82,7 +82,7 @@ class XConnectionPool(
 
     fun put(connection: XConnection) {
         synchronized(this) {
-            cleanup(System.nanoTime())
+            cleanUp(System.nanoTime())
             connections.add(connection)
         }
     }
@@ -90,7 +90,7 @@ class XConnectionPool(
     fun remove(connection: XConnection) {
         synchronized(this) {
             connections.remove(connection)
-            cleanup(System.nanoTime())
+            cleanUp(System.nanoTime())
         }
     }
 }

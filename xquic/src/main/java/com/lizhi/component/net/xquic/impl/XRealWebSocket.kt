@@ -497,16 +497,10 @@ class XRealWebSocket(
                     listener.onOpen(this, xResponse)
                 }
                 XquicMsgType.TOKEN -> {
-                    if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.tokenBack(authority(), data)
-                    } else {
-                    }
+                    xRttInfoCache.tokenBack(authority(), data)
                 }
                 XquicMsgType.SESSION -> {
-                    if (alpnType == AlpnType.ALPN_H3) {
-                        xRttInfoCache.sessionBack(authority(), data)
-                    } else {
-                    }
+                    xRttInfoCache.sessionBack(authority(), data)
                 }
                 XquicMsgType.TP -> {
 
