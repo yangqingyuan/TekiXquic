@@ -14,7 +14,7 @@ android {
         versionCode 1
         versionName "1.0"
         ndk {
-            abiFilters "armeabi-v7a", "arm64-v8a"
+            abiFilters "armeabi-v7a", "arm64-v8a","x86_64"
         }
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -53,4 +53,9 @@ dependencies {
     //implementation 'io.github.yangqingyuan:teki-quic:1.0.1.1-SNAPSHOT'
     implementation project(":xquic")
     implementation 'com.google.code.gson:gson:2.8.9'
+
+    implementation 'com.squareup.retrofit2:retrofit:2.3.0'
+    implementation 'com.squareup.retrofit2:converter-gson:2.3.0'//ConverterFactory的Gson依赖包
+    implementation 'com.squareup.retrofit2:converter-scalars:2.3.0'//ConverterFactory的String依赖包
+    implementation("com.squareup.okhttp3:okhttp:4.9.1")
 }
