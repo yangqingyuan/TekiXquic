@@ -180,8 +180,8 @@ val xquicClient = XquicClient.Builder()
 # 帮助文档
 |  说明 | 链接 |
 |  ----  |----  |
-| 关于跟quic-go互通调试| https://zhuanlan.zhihu.com/p/502352169
-
+| 关于跟quic-go互通调试| https://zhuanlan.zhihu.com/p/502352169|
+| tekixquic跟Okhttp 传输性能测试| https://zhuanlan.zhihu.com/p/556931821|
 
 # 其他
 有任何问题，欢迎留言，有兴趣的同学可以一同完善tekixquic！</br>
