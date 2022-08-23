@@ -39,7 +39,7 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 第二步：导入sdk</br>
 ```
-implementation 'io.github.yangqingyuan:teki-quic:1.0.3-SNAPSHOT'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.4-SNAPSHOT'
 ```
 
 # 版本更新
@@ -177,24 +177,10 @@ val xquicClient = XquicClient.Builder()
 
 
 
-# 架构说明
-
-
-
-## 工程结构说明
-包说明：
-
-impl->包：逻辑实现类，里面封装了线程池和xquic的底层调用等
-
-native->包：xquic底层JNI实现和回调/参数等
-
-关键类说明：
-
-XquicClient->类： 短链接API入口
-
-XAsyncCall->类：真正的执行逻辑类
-
-XQuicShortNative->类：JNI接口
+# 帮助文档
+|  说明 | 链接 |
+|  ----  |----  |
+| 关于跟quic-go互通调试| https://zhuanlan.zhihu.com/p/502352169
 
 
 # 其他
