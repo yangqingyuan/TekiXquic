@@ -13,7 +13,7 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 使用到的第三方sdk
 
-（1）xquic （https://github.com/alibaba/xquic) 目前用的是最新的v1.1.0-beta.2版本
+（1）xquic （https://github.com/alibaba/xquic)
 
 （2）libev 4.33版本
 
