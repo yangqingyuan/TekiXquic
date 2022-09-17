@@ -39,12 +39,13 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 第二步：导入sdk</br>
 ```
-implementation 'io.github.yangqingyuan:teki-quic:1.0.4-SNAPSHOT'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.5'
 ```
 
 # 版本更新
 |  version   | 更新内容  | 时间  |
 |  ----  | ----  |----  |
+| 1.0.5  | 1.升级xquic到1.2.0 </br> 2.修复复用断网重连问题 |2022/09/17|
 | 1.0.4-SNAPSHOT  | 1.hq 支持0Rtt </br> 2.支持x86 </br> 3.升级xquic到xquic-1.1.0-stable |2022/08/23|
 | 1.0.3-SNAPSHOT  | 1.支持Hq协议，支持设置alpn</br> 2.优化java->jni 传输性能，支持传输byte </br> 3.其他优化 |2022/06/30|
 | 1.0.2-SNAPSHOT  | 1.支持链接复用</br> 2.升级xquic到v1.1.0-beta.2 </br> 3.修复若干问题</br> 4. 优化逻辑 </br> 5. 支持DNS替换 </br> | 2022/06/15 |
@@ -124,6 +125,9 @@ xquicClient.newCall(xRequest).enqueue(object : XCallBack {
 ## 长链接
 
 ```
+ /**
+  * 建议不直接使用该函数，使用XquicClient短链接，并将复用打开，内部也是使用了XRealWebSocket来实现
+  */
 val xquicClient = XquicClient.Builder()
     .connectTimeOut(13)
     .setReadTimeOut(30)
