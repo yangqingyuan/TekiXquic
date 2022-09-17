@@ -38,8 +38,8 @@ class XRealWebSocket(
 
     companion object {
 
-        private const val STATUS_CLOSE = 1
-        private const val STATUS_CANCEL = 2
+        private const val STATUS_CLOSE = 2
+        private const val STATUS_CANCEL = 1
 
         private const val MAX_BUFF_SIZE = 1024 * 1024
 
@@ -248,12 +248,14 @@ class XRealWebSocket(
                 }
 
                 /* 注意：阻塞结束说明已经内部已经结束了 */
-                executor.shutdownNow()
+                if(!executor.isShutdown) {
+                    executor.shutdownNow()
+                }
 
                 if (cancelOrClose == STATUS_CLOSE) {
                     listener.onClosed(this, code, reason)
-                } else if (cancelOrClose == STATUS_CANCEL) {
-                    listener.onFailure(this, Throwable("cancel"), xResponse)
+                } else if (cancelOrClose <= STATUS_CANCEL) {
+                    listener.onFailure(this, Throwable("cancel or exception"), xResponse)
                 }
 
             } catch (e: Exception) {
@@ -297,6 +299,9 @@ class XRealWebSocket(
                     messageQueue.clear()
                     if (checkClientCtx(clientCtx)) {
                         xquicLongNative.cancel(clientCtx)
+                    }
+                    if(!executor.isShutdown) {
+                        executor.shutdownNow()
                     }
                     return false
                 }

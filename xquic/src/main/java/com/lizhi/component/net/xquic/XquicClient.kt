@@ -234,6 +234,7 @@ open class XquicClient internal constructor(val builder: Builder) {
 
     /**
      * new webSocket
+     * 建议不直接使用该函数，使用XquicClient短链接，并将复用打开，内部也是使用了XRealWebSocket来实现
      */
     fun newWebSocket(xRequest: XRequest, listener: XWebSocketListener): XRealWebSocket {
         val xRealWebSocket =

@@ -89,6 +89,12 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
                 idleAtNanos = 0
                 xquicClient.connectionPool().remove(this@XConnection)//clean conn
                 XLogUtils.debug(TAG, "onClosed")
+                xCallBackMap.forEach(action = {
+                    it.value?.onFailure(
+                        emptyXCall,
+                        Exception("connect closed : code=$code,reason=$reason")
+                    )
+                })
             }
 
             override fun onFailure(webSocket: XWebSocket, t: Throwable, response: XResponse) {

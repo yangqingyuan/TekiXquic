@@ -118,6 +118,9 @@ class LongConnActivity : AppCompatActivity() {
                 .build()
         }
 
+        /**
+         * 建议不直接使用该函数，使用XquicClient短链接，并将复用打开，内部也是使用了XRealWebSocket来实现
+         */
         webSocket = xquicClient.newWebSocket(xRequest, object : XWebSocketListener {
             override fun onOpen(webSocket: XWebSocket, response: XResponse) {
                 XLogUtils.error("onOpen")
