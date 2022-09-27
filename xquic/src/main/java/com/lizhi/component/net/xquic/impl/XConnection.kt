@@ -152,7 +152,7 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
         }
     }
 
-    fun close() {
-        xWebSocket?.cancel()
+    fun close(code: Int = 0, reason: String? = null) {
+        xWebSocket?.close(code, reason)
     }
 }

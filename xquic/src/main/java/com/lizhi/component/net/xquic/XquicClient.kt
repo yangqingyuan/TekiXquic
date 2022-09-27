@@ -238,7 +238,14 @@ open class XquicClient internal constructor(val builder: Builder) {
      */
     fun newWebSocket(xRequest: XRequest, listener: XWebSocketListener): XRealWebSocket {
         val xRealWebSocket =
-            XRealWebSocket(xRequest, listener, xRttInfoListener, Random(), pingInterval, pingListener)
+            XRealWebSocket(
+                xRequest,
+                listener,
+                xRttInfoListener,
+                Random(),
+                pingInterval,
+                pingListener
+            )
         xRealWebSocket.connect(this)
         return xRealWebSocket
     }
@@ -248,6 +255,13 @@ open class XquicClient internal constructor(val builder: Builder) {
      */
     fun cancel(tag: String) {
         dispatcher.cancel(tag)
+    }
+
+    /**
+     * close the connect：Effective in the case of reuse
+     */
+    fun close(url: String, code: Int = 0, reason: String? = null) {
+        connectionPool().get(url)?.close(code, reason)
     }
 
 }

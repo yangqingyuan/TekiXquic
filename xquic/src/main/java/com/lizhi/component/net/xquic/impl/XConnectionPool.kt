@@ -80,6 +80,10 @@ class XConnectionPool(
         }
     }
 
+    fun get(url: String): XConnection? {
+        return get(XRequest.Builder().url(url).build())
+    }
+
     fun put(connection: XConnection) {
         synchronized(this) {
             cleanUp(System.nanoTime())

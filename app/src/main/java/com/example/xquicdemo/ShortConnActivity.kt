@@ -232,5 +232,9 @@ class ShortConnActivity : AppCompatActivity() {
         super.onDestroy()
         launch?.cancel()
         xquicClient.cancel("tag")
+        val url = SetCache.getSelectUrl(applicationContext)
+        url?.let {
+            xquicClient.close(it)
+        }
     }
 }
