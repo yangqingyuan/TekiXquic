@@ -4,6 +4,7 @@ import androidx.annotation.IntDef
 
 /**
  * 协议版本号
+ * QUIC protocol version
  */
 class ProtoVersion {
 
@@ -33,6 +34,7 @@ class ProtoVersion {
         /* Special version for version negotiation. */
         const val XQC_IDRAFT_VER_NEGOTIATION = 3
 
+        /* Support version count. */
         const val XQC_VERSION_MAX = 4
     }
 }

@@ -45,3 +45,8 @@ ssize_t client_send_hq_requests(xqc_cli_user_conn_t *user_conn,
     }
     return client_send_hq_content(user_stream);
 }
+
+ssize_t client_send_hq_ping(xqc_cli_user_conn_t *user_conn, char *ping_user_data) {
+    xqc_conn_send_ping(user_conn->ctx->engine, &user_conn->cid, ping_user_data);
+    return 0;
+}

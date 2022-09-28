@@ -761,7 +761,11 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
         case CMD_TYPE_SEND_PING://send ping
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
-                client_send_H3_ping(task->user_conn, ctx->msg_data.ping_data);
+                if (ctx->args->quic_cfg.alpn_type == ALPN_HQ){
+                    client_send_hq_ping(task->user_conn, ctx->msg_data.ping_data);
+                }else {
+                    client_send_H3_ping(task->user_conn, ctx->msg_data.ping_data);
+                }
             }
             break;
         case CMD_TYPE_SEND_DATA: //send data
