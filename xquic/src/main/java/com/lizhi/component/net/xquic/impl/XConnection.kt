@@ -85,33 +85,27 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
             }
 
             override fun onClosed(webSocket: XWebSocket, code: Int, reason: String?) {
-                xWebSocket = null
-                isDestroy = true
-                idleAtNanos = 0
-                xquicClient.connectionPool().remove(this@XConnection)//clean conn
-                XLogUtils.debug(TAG, "onClosed")
-                xCallBackMap.forEach(action = {
-                    it.value?.onFailure(
-                        emptyXCall,
-                        Exception("connect closed : code=$code,reason=$reason")
-                    )
-                })
+                callBackAndReleaseData(Exception("connect closed : code=$code,reason=$reason"))
             }
 
             override fun onFailure(webSocket: XWebSocket, t: Throwable, response: XResponse) {
-                synchronized(this) {
-                    xWebSocket = null
-                    isDestroy = true
-                    idleAtNanos = 0
-                    xquicClient.connectionPool().remove(this@XConnection)//clean conn
-                    XLogUtils.debug(TAG, "onFailure")
-                    xCallBackMap.forEach(action = {
-                        it.value?.onFailure(emptyXCall, Exception(t))
-                    })
-                    xCallBackMap.clear()//to free Reference
-                }
+                callBackAndReleaseData(t)
             }
         })
+    }
+
+    private fun callBackAndReleaseData(t: Throwable) {
+        synchronized(this) {
+            xWebSocket = null
+            isDestroy = true
+            idleAtNanos = 0
+            xquicClient.connectionPool().remove(this@XConnection)//clean conn
+            XLogUtils.debug(TAG, "onFailure")
+            xCallBackMap.forEach(action = {
+                it.value?.onFailure(emptyXCall, Exception(t))
+            })
+            xCallBackMap.clear()//to free Reference
+        }
     }
 
     @Synchronized

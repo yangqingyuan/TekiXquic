@@ -425,7 +425,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
             //return;
         }
 
-        LOGW("socket idle timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
+        LOGW("connect timeout(%ds), task failed, total task_cnt: %d, req_fin_cnt: %d, req_sent_cnt: %d, req_create_cnt: %d\n",
              user_conn->ctx->args->net_cfg.conn_timeout,
              user_conn->ctx->task_ctx.tasks[user_conn->task->task_idx].req_cnt,
              user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_fin_cnt,
@@ -437,7 +437,7 @@ void client_long_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int wh
 
         /* call back to client */
         char err_msg[214];
-        sprintf(err_msg, "socket idle timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
+        sprintf(err_msg, "connect timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
         callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
     }
 }

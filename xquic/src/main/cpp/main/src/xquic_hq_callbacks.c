@@ -52,6 +52,7 @@ xqc_client_conn_handshake_finished(xqc_connection_t *conn, void *user_data, void
     } else if (stats.early_data_flag == XQC_0RTT_REJECT) {
         strcpy(info, "0-RTT was rejected");
     }
+    user_conn->last_sock_read_time = xqc_now();
 
     sprintf(ortt_info, ">>>>>>>> 0rtt_flag:%d(%s)<<<<<<<<<", stats.early_data_flag, info);
     LOGI("%s", ortt_info);

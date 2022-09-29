@@ -125,7 +125,7 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
         xqc_int_t ret = getsockname(user_conn->fd, (struct sockaddr *) &user_conn->local_addr,
                                     &user_conn->local_addrlen);
         if (ret != 0) {
-            LOGE("getsocketname error,erron:%d", errno);
+            LOGE("get_socket_name error,error:%d", errno);
         }
 
         recv_sum += recv_size;
@@ -136,8 +136,8 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
                                         user_conn->local_addrlen, (struct sockaddr *) (&addr),
                                         addr_len, (xqc_msec_t) recv_time, user_conn);
         if (ret != XQC_OK) {
-            LOGE("xqc_engine_packet_process error %d",ret);
-            callback_data_to_client(user_conn, ret, "xqc_engine_packet_process error", NULL);
+            LOGE("xqc_engine_packet_process error(%d),tag(%s)",ret,user_conn->ctx->args->user_stream.user_tag);
+            callback_data_to_client(user_conn, ret, "xqc_engine_packet_process error", user_conn->ctx->args->user_stream.user_tag);
             return;
         }
 
