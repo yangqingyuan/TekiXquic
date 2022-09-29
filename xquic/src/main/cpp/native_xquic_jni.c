@@ -254,6 +254,7 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     jint alpn_type = getInt(env, param, "alpnType");
     jint protoVersion = getInt(env, param, "protoVersion");
     jint headersSize = getInt(env, param, "headersSize");
+    jint cryptoFlag = getInt(env, param, "cryptoFlag");
 
     /* build header from params */
     xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
@@ -293,6 +294,7 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     user_cfg->read_timeout = read_time_out;
     user_cfg->max_recv_data_len = max_recv_data_len;
     user_cfg->mutex = &g_clazz.mutex;
+    user_cfg->no_crypto_flag = cryptoFlag;
 
     /* headers */
     user_cfg->h3_hdrs.headers = headers;

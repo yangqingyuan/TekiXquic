@@ -60,7 +60,8 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.5'
         .connectTimeOut(13)
         .setReadTimeOut(30)
         .ccType(CCType.BBR) //可选，拥塞算法
-        .reuse(true)//是否链接复用，注意要看后端是否支持，能复用，强烈建议复用，在性能上会有非常大的提升，例如：阿里云这些是支持的，默认false
+        .reuse(true)//是否长链接复用，注意要看后端是否支持，能复用，强烈建议复用，在性能上会有非常大的提升，例如：阿里云这些是支持的，默认false
+        .setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//是否加密，默认加密
         //.dns(XDns.SYSTEM)
         //.setAlpnType(AlpnType.ALPN_HQ) //支持协议切换，默认H3
         //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//支持协议版本号设置 ，默认XQC_VERSION_V1
@@ -93,6 +94,7 @@ val xquicClient = XquicClient.Builder()
     .setReadTimeOut(30)
     .ccType(CCType.BBR) //可选，拥塞算法
     .reuse(true)//是否链接复用，注意要看后端是否支持，能复用，强烈建议复用，在性能上会有非常大的提升，例如：阿里云这些是支持的，默认false
+    .setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//是否加密，默认加密
     //.dns(XDns.SYSTEM)
     //.setAlpnType(AlpnType.ALPN_HQ) //支持协议切换，默认H3
     //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//支持协议版本号设置 ，默认XQC_VERSION_V1
@@ -126,13 +128,14 @@ xquicClient.newCall(xRequest).enqueue(object : XCallBack {
 
 ```
  /**
-  * 建议不直接使用该函数，使用XquicClient短链接，并将复用打开，内部也是使用了XRealWebSocket来实现
+  * 针对请求响应的场景，建议不直接使用该函数，使用XquicClient短链接，并将复用打开，内部也是使用了XRealWebSocket来实现
   */
 val xquicClient = XquicClient.Builder()
     .connectTimeOut(13)
     .setReadTimeOut(30)
     .ccType(CCType.BBR) //可选，拥塞算法
     .pingInterval(5000)//
+    .setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//是否加密，默认加密
     //.dns(XDns.SYSTEM)
     //.setAlpnType(AlpnType.ALPN_HQ) //支持协议切换，默认H3
     //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//支持协议版本号设置 ，默认XQC_VERSION_V1

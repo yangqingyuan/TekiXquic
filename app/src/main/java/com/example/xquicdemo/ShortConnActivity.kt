@@ -14,6 +14,7 @@ import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XRequestBody
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.native.AlpnType
+import com.lizhi.component.net.xquic.native.CryptoFlag
 import com.lizhi.component.net.xquic.native.ProtoVersion
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
@@ -48,6 +49,7 @@ class ShortConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .writeTimeout(15)//TODO 未实现
+            .setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
             .reuse(SetCache.getReuse(applicationContext) == 1)//默认值false
             //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)

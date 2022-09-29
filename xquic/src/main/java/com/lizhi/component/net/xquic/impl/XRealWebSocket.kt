@@ -235,6 +235,7 @@ class XRealWebSocket(
                     .setReadTimeOut(xquicClient.readTimeout)
                     .setMaxRecvLenght(1024 * 1024)
                     .setCCType(xquicClient.ccType)
+                    .setCryptoFlag(xquicClient.cryptoFlag)
                     .setAlpnType(alpnType)
 
                 sendParamsBuilder.setHeaders(parseHttpHeads())
@@ -248,7 +249,7 @@ class XRealWebSocket(
                 }
 
                 /* 注意：阻塞结束说明已经内部已经结束了 */
-                if(!executor.isShutdown) {
+                if (!executor.isShutdown) {
                     executor.shutdownNow()
                 }
 
@@ -300,7 +301,7 @@ class XRealWebSocket(
                     if (checkClientCtx(clientCtx)) {
                         xquicLongNative.cancel(clientCtx)
                     }
-                    if(!executor.isShutdown) {
+                    if (!executor.isShutdown) {
                         executor.shutdownNow()
                     }
                     return false

@@ -540,13 +540,13 @@ int client_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t
         cid = xqc_h3_connect(user_conn->ctx->engine, &conn_settings,
                              (const unsigned char *) args->quic_cfg.token,
                              args->quic_cfg.token_len,
-                             args->net_cfg.host, 0, &conn_ssl_config,
+                             args->net_cfg.host, args->quic_cfg.no_crypto_flag, &conn_ssl_config,
                              (struct sockaddr *) &args->net_cfg.addr,
                              args->net_cfg.addr_len, user_conn);
     } else {
         cid = xqc_connect(user_conn->ctx->engine, &conn_settings,
                           (const unsigned char *) args->quic_cfg.token, args->quic_cfg.token_len,
-                          args->net_cfg.host, 0,
+                          args->net_cfg.host, args->quic_cfg.no_crypto_flag,
                           &conn_ssl_config,
                           (struct sockaddr *) &args->net_cfg.addr, args->net_cfg.addr_len,
                           XQC_ALPN_TRANSPORT,
@@ -844,6 +844,9 @@ int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *u
             LOGE("session set error : to lang > %d", MAX_SESSION_TICKET_LEN);
         }
     }
+
+    /*set crypto 1:without crypto*/
+    args->quic_cfg.no_crypto_flag = user_param->no_crypto_flag;
 
     /* stream 配置 */
     if (user_param->content != NULL) {

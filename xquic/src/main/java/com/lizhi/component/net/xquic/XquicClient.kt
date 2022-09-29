@@ -9,6 +9,7 @@ import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.native.AlpnType
 import com.lizhi.component.net.xquic.native.CCType
+import com.lizhi.component.net.xquic.native.CryptoFlag
 import com.lizhi.component.net.xquic.native.ProtoVersion
 import java.util.*
 
@@ -69,6 +70,11 @@ open class XquicClient internal constructor(val builder: Builder) {
      */
     var alpnType = builder.alpnType
 
+    /**
+     * 0: crypto
+     * 1: 1:without crypto
+     */
+    var cryptoFlag = builder.cryptoFlag
 
     private val dispatcher = builder.dispatcher
 
@@ -122,6 +128,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var xRttInfoListener: XRttInfoListener = XRttInfoCache()
         internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
         internal var alpnType = AlpnType.ALPN_H3
+        internal var cryptoFlag = CryptoFlag.CRYPTO
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
@@ -147,6 +154,7 @@ open class XquicClient internal constructor(val builder: Builder) {
             xConnectionPool = xquicClient.xConnectionPool
             pingListener = xquicClient.pingListener
             xRttInfoListener = xquicClient.xRttInfoListener
+            cryptoFlag = xquicClient.cryptoFlag
         }
 
         fun build(): XquicClient {
@@ -175,6 +183,10 @@ open class XquicClient internal constructor(val builder: Builder) {
 
         fun pingInterval(pingInterval: Long) = apply {
             this.pingInterval = pingInterval
+        }
+
+        fun setCryptoFlag(@CryptoFlag.Type flag: Int) = apply {
+            this.cryptoFlag = flag
         }
 
         fun dns(xDns: XDns) = apply {

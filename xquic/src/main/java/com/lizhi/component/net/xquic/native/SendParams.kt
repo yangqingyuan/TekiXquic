@@ -6,123 +6,203 @@ package com.lizhi.component.net.xquic.native
  * 作者: yqy
  * 创建日期: 2022/4/1.
  */
-class SendParams {
+class SendParams(val builder: Builder) {
     /**
      * key param
      */
-    var url: String? = null
+    var url: String? = builder.url
 
     /**
      * optional param
      */
-    var token: ByteArray? = null
+    var token: ByteArray? = builder.token
 
     /**
      * optional param
      */
-    var session: ByteArray? = null
+    var session: ByteArray? = builder.session
 
     /**
      * post content
      */
-    var content: String? = null
+    var content: String? = builder.content
 
     /**
      * optional param
      * unit：second
      */
-    var connectTimeOut: Int = 30
+    var connectTimeOut: Int = builder.connectTimeOut
 
     /**
      * optional param
      * unit：second
      */
-    var readTimeOut: Int = 30
+    var readTimeOut: Int = builder.readTimeOut
 
     /**
      * optional param
      * default: 1M
      */
-    var maxRecvDataLen: Int = 1024 * 1024
+    var maxRecvDataLen: Int = builder.maxRecvDataLen
 
     /**
      * optional param
      * default: bbr
      */
-    var ccType: Int = CCType.BBR
+    var ccType: Int = builder.ccType
 
     /**
      * common head
      */
-    val headers = java.util.HashMap<String, String>()
+    val headers = builder.headers
 
     /**
      * commonHeaders size
      */
-    var headersSize = 0
+    var headersSize = builder.headersSize
 
     /**
      * proto version
      */
-    var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
+    var protoVersion: Int = builder.protoVersion
 
     /**
      * alpn type
      */
-    var alpnType = AlpnType.ALPN_H3
+    var alpnType = builder.alpnType
 
-    open class Builder {
-        private val params = SendParams()
+    /**
+     * 0: crypto
+     * 1: 1:without crypto
+     */
+    var cryptoFlag = builder.cryptoFlag
+
+    class Builder {
+
+        /**
+         * key param
+         */
+        internal var url: String? = null
+
+        /**
+         * optional param
+         */
+        internal var token: ByteArray? = null
+
+        /**
+         * optional param
+         */
+        internal var session: ByteArray? = null
+
+        /**
+         * post content
+         */
+        internal var content: String? = null
+
+        /**
+         * optional param
+         * unit：second
+         */
+        internal var connectTimeOut: Int = 30
+
+        /**
+         * optional param
+         * unit：second
+         */
+        internal var readTimeOut: Int = 30
+
+        /**
+         * optional param
+         * default: 1M
+         */
+        internal var maxRecvDataLen: Int = 1024 * 1024
+
+        /**
+         * optional param
+         * default: bbr
+         */
+        internal var ccType: Int = CCType.BBR
+
+        /**
+         * common head
+         */
+        internal val headers = java.util.HashMap<String, String>()
+
+        /**
+         * commonHeaders size
+         */
+        internal var headersSize = 0
+
+        /**
+         * proto version
+         */
+        internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
+
+        /**
+         * alpn type
+         */
+        internal var alpnType = AlpnType.ALPN_H3
+
+        /**
+         * 0: crypto
+         * 1: 1:without crypto
+         */
+        internal var cryptoFlag = 0
+
 
         fun setUrl(url: String) = apply {
-            params.url = url
+            this.url = url
         }
 
         fun setToken(token: ByteArray?) = apply {
-            params.token = token
+            this.token = token
         }
 
         fun setSession(session: ByteArray?) = apply {
-            params.session = session
+            this.session = session
         }
 
         fun setContent(content: String) = apply {
-            params.content = content
+            this.content = content
         }
 
         fun setConnectTimeOut(timeOut: Int) = apply {
-            params.connectTimeOut = timeOut
+            this.connectTimeOut = timeOut
         }
 
         fun setReadTimeOut(timeOut: Int) = apply {
-            params.readTimeOut = timeOut
+            this.readTimeOut = timeOut
         }
 
         fun setMaxRecvLenght(length: Int) = apply {
-            params.maxRecvDataLen = length
+            this.maxRecvDataLen = length
         }
 
         fun setCCType(@CCType.Type ccType: Int) = apply {
-            params.ccType = ccType
+            this.ccType = ccType
         }
 
         fun setProtoVersion(@ProtoVersion.Version version: Int) = apply {
-            params.protoVersion = version
+            this.protoVersion = version
         }
 
         fun setHeaders(headers: HashMap<String, String>) = apply {
             if (headers.isNotEmpty()) {
-                params.headers.putAll(headers)
+                this.headers.putAll(headers)
             }
         }
 
         fun setAlpnType(@AlpnType.Type type: Int) = apply {
-            params.alpnType = type
+            this.alpnType = type
+        }
+
+        fun setCryptoFlag(@CryptoFlag.Type type: Int) = apply {
+            this.alpnType = type
         }
 
         fun build(): SendParams {
-            params.headersSize = params.headers.size
-            return params
+            this.headersSize = this.headers.size
+            return SendParams(this)
         }
     }
 

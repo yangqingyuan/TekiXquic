@@ -77,6 +77,7 @@ class LongConnActivity : AppCompatActivity() {
     private fun initWebSocket() {
         val xquicClient = XquicClient.Builder()
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
+            .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .ccType(SetCache.getCCType(applicationContext))
             .pingInterval(5000)//
             //.dns(XDns.SYSTEM)
@@ -88,7 +89,7 @@ class LongConnActivity : AppCompatActivity() {
                 }
 
                 override fun pong(data: ByteArray?) {
-                    //XLogUtils.info("data=$data")
+                    XLogUtils.info("data=${String(data!!)}")
                 }
 
             })

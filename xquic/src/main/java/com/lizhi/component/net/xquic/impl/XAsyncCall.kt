@@ -60,6 +60,7 @@ class XAsyncCall(
                 .setReadTimeOut(xquicClient.readTimeout)
                 .setMaxRecvLenght(1024 * 1024)
                 .setCCType(xquicClient.ccType)
+                .setCryptoFlag(xquicClient.cryptoFlag)
                 .setProtoVersion(xquicClient.protoVersion)
                 .setAlpnType(xquicClient.alpnType)
 

@@ -221,6 +221,8 @@ typedef struct xqc_cli_quic_config_s {
 
     char *cipher_suites;                /* cipher suites */
 
+    uint8_t no_crypto_flag;             /* 1:without crypto */
+
     uint8_t use_0rtt;                   /* 0-rtt switch, default turned off */
     uint64_t keyupdate_pkt_threshold;   /* packet limit of a single 1-rtt key, 0 for unlimited */
 
@@ -341,6 +343,8 @@ typedef struct xqc_cli_user_data_params_s {
     int read_timeout;
 
     int max_recv_data_len;
+
+    int no_crypto_flag;/* 1:without crypto */
 
     const char *token;
     char *tp;
