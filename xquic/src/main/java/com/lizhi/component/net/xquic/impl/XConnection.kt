@@ -78,8 +78,9 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
             override fun onMessage(webSocket: XWebSocket, response: XResponse) {
                 synchronized(this) {
                     idleAtNanos = System.nanoTime()
-                    xCallBackMap[response.xResponseBody.tag]?.onResponse(emptyXCall, response)
-                    xCallBackMap.remove(response.xResponseBody.tag)//to free Reference
+                    val tag = response.xResponseBody.tag
+                    xCallBackMap[tag]?.onResponse(emptyXCall, response)
+                    xCallBackMap.remove(tag)//to free Reference
                 }
             }
 
