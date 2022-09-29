@@ -237,7 +237,7 @@ class XRealWebSocket(
                     .setCCType(xquicClient.ccType)
                     .setCryptoFlag(xquicClient.cryptoFlag)
                     .setAlpnType(alpnType)
-
+                
                 sendParamsBuilder.setHeaders(parseHttpHeads())
 
                 clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
@@ -460,18 +460,31 @@ class XRealWebSocket(
 
 
     /**
-     * cancel conn
+     * result on : onFailed
+     * 跟close的唯一区别是cancel会在onFailed中返回
      */
     override fun cancel() {
         cancelOrClose = STATUS_CANCEL
         close()
     }
 
+    /**
+     * result on : onClose
+     * 跟cancel的唯一区别是close会在onClose，将传递的参数逐一返回
+     */
     override fun close(code: Int, reason: String?) {
         this.code = code
         this.reason = reason
         cancelOrClose = STATUS_CLOSE
         close()
+    }
+
+    /**
+     * 判断是否已经关闭
+     */
+    override fun isClose(): Boolean {
+        if (failed || enqueuedClose || !checkClientCtx(clientCtx)) return true
+        return false
     }
 
     /**

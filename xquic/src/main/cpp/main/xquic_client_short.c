@@ -507,16 +507,20 @@ void client_init_connection_ssl_config(xqc_conn_ssl_config_t *conn_ssl_config,
     memset(conn_ssl_config, 0, sizeof(xqc_conn_ssl_config_t));
 
     /*set session ticket and transport parameter args */
-    if (args->quic_cfg.st_len < 0 || args->quic_cfg.tp_len < 0) {
+    /*set session ticket and transport parameter args */
+    if (args->quic_cfg.st_len <= 0){
         conn_ssl_config->session_ticket_data = NULL;
-        conn_ssl_config->transport_parameter_data = NULL;
-    } else {
+    } else{
         conn_ssl_config->session_ticket_data = args->quic_cfg.st;
         conn_ssl_config->session_ticket_len = args->quic_cfg.st_len;
+    }
+
+    if (args->quic_cfg.tp_len <= 0){
+        conn_ssl_config->transport_parameter_data = NULL;
+    } else{
         conn_ssl_config->transport_parameter_data = args->quic_cfg.tp;
         conn_ssl_config->transport_parameter_data_len = args->quic_cfg.tp_len;
     }
-
 }
 
 /**
