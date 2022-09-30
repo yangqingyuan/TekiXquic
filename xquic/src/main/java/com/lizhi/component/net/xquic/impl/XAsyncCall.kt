@@ -162,6 +162,7 @@ class XAsyncCall(
                     xCall,
                     Exception(String(data))
                 )
+                cancel()// cancel now
             }
             isCallback = true
         }

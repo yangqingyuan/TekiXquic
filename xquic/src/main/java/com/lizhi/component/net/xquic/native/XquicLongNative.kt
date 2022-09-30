@@ -4,6 +4,7 @@ import java.nio.ByteBuffer
 
 /**
  * 长链接
+ * 注意：如果使用该类，默认开启内部ping，xquic内部会有自己的ping，时间间隔为15秒
  */
 class XquicLongNative {
 
@@ -28,7 +29,7 @@ class XquicLongNative {
     external fun start(clientCtx: Long): Int
 
     /**
-     * 发送ping数据
+     * 发送ping数据，发送业务层的ping数据，例如自定义ping内容
      */
     external fun sendPing(clientCtx: Long, content: String): Int
 
