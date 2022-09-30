@@ -619,9 +619,9 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
 
                 /*copy send content */
                 if (content != NULL) {
-                    size_t content_len = strlen(content);
+                    size_t content_len = message.arg1;
                     user_stream->send_body = malloc(content_len);
-                    strcpy(user_stream->send_body, content);//copy data
+                    memcpy(user_stream->send_body, content, content_len);//copy data
                     user_stream->send_body_len = content_len;
                 }
 
@@ -651,9 +651,9 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                 content = (char *) message.obj;
                 /*copy send content */
                 if (content != NULL) {
-                    size_t content_len = strlen(content);
+                    size_t content_len = message.arg1;
                     user_stream->send_body = malloc(content_len);
-                    strcpy(user_stream->send_body, content);//copy data
+                    memcpy(user_stream->send_body, content, content_len);//copy data
                     user_stream->send_body_len = content_len;
                 }
             }
@@ -666,7 +666,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         } else {
             ret_send = client_send_hq_requests(user_conn, user_stream, request);
         }
-        if (ret_send <= 0) {
+        if (ret_send < 0) {
             char err_msg[214];
             sprintf(err_msg,
                     "xqc send (alpn_type=%d) error,please check network or retry,host=%s",

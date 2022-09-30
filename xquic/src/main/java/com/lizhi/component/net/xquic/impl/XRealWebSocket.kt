@@ -108,6 +108,10 @@ class XRealWebSocket(
     @Volatile
     private var cancelOrClose = 0// 2 cancel 1:close
 
+    /**
+     * isCallback
+     */
+    var isCallback = false
 
     /**
      * Shared memory is more efficient,default 1M
@@ -236,8 +240,9 @@ class XRealWebSocket(
                     .setMaxRecvLenght(1024 * 1024)
                     .setCCType(xquicClient.ccType)
                     .setCryptoFlag(xquicClient.cryptoFlag)
+                    .setFinishFlag(xquicClient.finishFlag)
                     .setAlpnType(alpnType)
-                
+
                 sendParamsBuilder.setHeaders(parseHttpHeads())
 
                 clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
@@ -247,7 +252,7 @@ class XRealWebSocket(
                     /* 注意：这里是阻塞的 */
                     xquicLongNative.start(clientCtx)
                 }
-
+                clientCtx = 0
                 /* 注意：阻塞结束说明已经内部已经结束了 */
                 if (!executor.isShutdown) {
                     executor.shutdownNow()
@@ -301,6 +306,8 @@ class XRealWebSocket(
                     if (checkClientCtx(clientCtx)) {
                         xquicLongNative.cancel(clientCtx)
                     }
+                    clientCtx = 0
+                    failed = true
                     if (!executor.isShutdown) {
                         executor.shutdownNow()
                     }
@@ -496,13 +503,18 @@ class XRealWebSocket(
             xResponse.xResponseBody = XResponseBody(data, tag)
             listener.onMessage(this, xResponse)
         } else {
-            clientCtx = 0
-            failed = true
-            listener.onFailure(
-                this,
-                Exception(String(data)),
-                xResponse
-            )
+            if (isCallback) {
+                XLogUtils.warn(
+                    "is callback on need to callback again!! ret=${ret},data=${String(data)}"
+                )
+                return
+            }
+            synchronized(isCallback) {
+                if (!isCallback) {
+                    close(ret, String(data))
+                    isCallback = true
+                }
+            }
         }
     }
 

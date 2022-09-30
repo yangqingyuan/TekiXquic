@@ -62,6 +62,7 @@ class XAsyncCall(
                 .setCCType(xquicClient.ccType)
                 .setCryptoFlag(xquicClient.cryptoFlag)
                 .setProtoVersion(xquicClient.protoVersion)
+                .setFinishFlag(xquicClient.finishFlag)
                 .setAlpnType(xquicClient.alpnType)
 
             sendParamsBuilder.setHeaders(parseHttpHeads())

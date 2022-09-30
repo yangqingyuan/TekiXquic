@@ -202,8 +202,8 @@ class SendParams(val builder: Builder) {
             }
         }
 
-        fun setFinishFlag(@FinishFlag.Type flag: Int) {
-            this.finishFlag = finishFlag
+        fun setFinishFlag(@FinishFlag.Type flag: Int) = apply {
+            this.finishFlag = flag
         }
 
         fun setAlpnType(@AlpnType.Type type: Int) = apply {

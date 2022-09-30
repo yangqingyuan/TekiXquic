@@ -116,6 +116,7 @@ inline static void xqc_cli_msg_queue_put_simple(xqc_cli_message_queue_t *q, int 
     xqc_cli_message_t msg;
     xqc_cli_msg_init_msg(&msg);
     msg.what = what;
+    msg.arg1 = obj_len;
     msg.obj = malloc(obj_len);
     memcpy(msg.obj, obj, obj_len);
     msg.free_l = xqc_cli_msg_obj_free_l;
