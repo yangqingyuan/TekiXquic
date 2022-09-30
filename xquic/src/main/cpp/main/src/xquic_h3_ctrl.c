@@ -6,7 +6,7 @@
  * @param user_stream
  * @return
  */
-ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
+ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream, int finish_flag) {
     ssize_t ret = 0;
     if (!user_stream->hdr_sent) {
         if (user_stream->start_time == 0) {
@@ -36,7 +36,7 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
                                            user_stream->send_offset,
                                            user_stream->send_body_len -
                                            user_stream->send_offset,
-                                           1);
+                                           finish_flag);
             if (ret < 0) {
                 LOGE("client send h3 body error size=%zd", ret);
                 return 0;
@@ -91,7 +91,7 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         }
         LOGD("============ request head end ================");
         //发送h3内容
-        return client_send_h3_content(user_stream);
+        return client_send_h3_content(user_stream, user_conn->ctx->args->req_cfg.finishFlag);
     }
     return 0;
 }

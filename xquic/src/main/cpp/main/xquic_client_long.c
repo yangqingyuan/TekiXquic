@@ -501,16 +501,16 @@ void client_long_init_connection_ssl_config(xqc_conn_ssl_config_t *conn_ssl_conf
     memset(conn_ssl_config, 0, sizeof(xqc_conn_ssl_config_t));
 
     /*set session ticket and transport parameter args */
-    if (args->quic_cfg.st_len <= 0){
+    if (args->quic_cfg.st_len <= 0) {
         conn_ssl_config->session_ticket_data = NULL;
-    } else{
+    } else {
         conn_ssl_config->session_ticket_data = args->quic_cfg.st;
         conn_ssl_config->session_ticket_len = args->quic_cfg.st_len;
     }
 
-    if (args->quic_cfg.tp_len <= 0){
+    if (args->quic_cfg.tp_len <= 0) {
         conn_ssl_config->transport_parameter_data = NULL;
-    } else{
+    } else {
         conn_ssl_config->transport_parameter_data = args->quic_cfg.tp;
         conn_ssl_config->transport_parameter_data_len = args->quic_cfg.tp_len;
     }
@@ -765,9 +765,9 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
         case CMD_TYPE_SEND_PING://send ping
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
-                if (ctx->args->quic_cfg.alpn_type == ALPN_HQ){
+                if (ctx->args->quic_cfg.alpn_type == ALPN_HQ) {
                     client_send_hq_ping(task->user_conn, ctx->msg_data.ping_data);
-                }else {
+                } else {
                     client_send_H3_ping(task->user_conn, ctx->msg_data.ping_data);
                 }
             }
@@ -875,6 +875,7 @@ int client_long_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_
     args->net_cfg.version = user_param->version;
 
     args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
+    args->req_cfg.finishFlag = user_param->finishFlag;
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
@@ -911,7 +912,7 @@ int client_long_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params
         if (session_len < MAX_SESSION_TICKET_LEN) {
             strcpy(args->quic_cfg.st, user_param->session);//拷贝session
             args->quic_cfg.st_len = session_len;
-            LOGE("session = %s",args->quic_cfg.st);
+            LOGE("session = %s", args->quic_cfg.st);
         } else {
             LOGE("session set error : to lang > %d", MAX_SESSION_TICKET_LEN);
         }

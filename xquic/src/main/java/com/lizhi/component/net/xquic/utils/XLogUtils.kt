@@ -15,7 +15,7 @@ object XLogUtils {
     }
 
     fun verbose(message: String?) {
-        Log.v("$commonTag", message ?: "")
+        Log.v(commonTag, message ?: "")
     }
 
     /**
@@ -27,7 +27,7 @@ object XLogUtils {
     }
 
     fun debug(message: String?) {
-        Log.d("$commonTag", message ?: "")
+        Log.d(commonTag, message ?: "")
     }
 
 
@@ -40,7 +40,7 @@ object XLogUtils {
     }
 
     fun info(message: String?) {
-        Log.i("$commonTag", message ?: "")
+        Log.i(commonTag, message ?: "")
     }
 
     /**
@@ -64,7 +64,7 @@ object XLogUtils {
     }
 
     fun error(message: String?) {
-        Log.e("$commonTag", message ?: "")
+        Log.e(commonTag, message ?: "")
     }
 
     /**

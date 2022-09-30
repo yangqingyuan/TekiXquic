@@ -7,10 +7,7 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.lizhi.component.net.xquic.impl.*
 import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.native.AlpnType
-import com.lizhi.component.net.xquic.native.CCType
-import com.lizhi.component.net.xquic.native.CryptoFlag
-import com.lizhi.component.net.xquic.native.ProtoVersion
+import com.lizhi.component.net.xquic.native.*
 import java.util.*
 
 /**
@@ -76,6 +73,14 @@ open class XquicClient internal constructor(val builder: Builder) {
      */
     var cryptoFlag = builder.cryptoFlag
 
+    /**
+     * request finish flag, 1 for finish.
+     */
+    var finishFlag = builder.finishFlag
+
+    /**
+     * 调度器
+     */
     private val dispatcher = builder.dispatcher
 
     /**
@@ -129,6 +134,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
         internal var alpnType = AlpnType.ALPN_H3
         internal var cryptoFlag = CryptoFlag.CRYPTO
+        internal var finishFlag = FinishFlag.FINISH
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
@@ -155,6 +161,7 @@ open class XquicClient internal constructor(val builder: Builder) {
             pingListener = xquicClient.pingListener
             xRttInfoListener = xquicClient.xRttInfoListener
             cryptoFlag = xquicClient.cryptoFlag
+            cryptoFlag = xquicClient.finishFlag
         }
 
         fun build(): XquicClient {
@@ -187,6 +194,10 @@ open class XquicClient internal constructor(val builder: Builder) {
 
         fun setCryptoFlag(@CryptoFlag.Type flag: Int) = apply {
             this.cryptoFlag = flag
+        }
+
+        fun setFinishFlag(@FinishFlag.Type flag: Int) = apply {
+            this.finishFlag = flag
         }
 
         fun dns(xDns: XDns) = apply {

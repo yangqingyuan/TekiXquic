@@ -49,7 +49,7 @@ class ShortConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .writeTimeout(15)//TODO 未实现
-            .setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
+            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
             .reuse(SetCache.getReuse(applicationContext) == 1)//默认值false
             //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
@@ -136,8 +136,8 @@ class ShortConnActivity : AppCompatActivity() {
             .get(xRequestBody) //Default
             .addHeader("tenantId", "soacp")
             .addHeader("clientId", "portalApp")
-            //.addHeader("testA", "testA")
-            //.addHeader("Keep-Alive", "timeout=300, max=1000")
+            .addHeader("testA", "testA")
+            .addHeader("Keep-Alive", "timeout=300, max=1000")
             .tag("index:$index")
             .build()
         request(index, xRequest)

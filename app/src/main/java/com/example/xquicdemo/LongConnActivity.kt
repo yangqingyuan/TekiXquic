@@ -12,6 +12,7 @@ import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.native.AlpnType
+import com.lizhi.component.net.xquic.native.ProtoVersion
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
@@ -27,7 +28,7 @@ class LongConnActivity : AppCompatActivity() {
 
     private var launch: Job? = null
 
-    private var index = 0;
+    private var index = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -79,9 +80,11 @@ class LongConnActivity : AppCompatActivity() {
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
             .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .ccType(SetCache.getCCType(applicationContext))
-            .pingInterval(5000)//
+            .pingInterval(0)//
+            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
-            //.setAlpnType(AlpnType.ALPN_HQ)
+            .setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
+            .setAlpnType(AlpnType.ALPN_HQ)
             .addPingListener(object : XPingListener {
                 //可选
                 override fun ping(): String {

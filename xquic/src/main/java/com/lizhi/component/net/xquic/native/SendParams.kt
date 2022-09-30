@@ -77,6 +77,11 @@ class SendParams(val builder: Builder) {
      */
     var cryptoFlag = builder.cryptoFlag
 
+    /**
+     * request finish flag, 1 for finish.
+     */
+    var finishFlag = builder.finishFlag
+
     class Builder {
 
         /**
@@ -147,7 +152,12 @@ class SendParams(val builder: Builder) {
          * 0: crypto
          * 1: 1:without crypto
          */
-        internal var cryptoFlag = 0
+        internal var cryptoFlag = CryptoFlag.CRYPTO
+
+        /**
+         * request finish flag, 1 for finish.
+         */
+        internal var finishFlag = FinishFlag.FINISH
 
 
         fun setUrl(url: String) = apply {
@@ -190,6 +200,10 @@ class SendParams(val builder: Builder) {
             if (headers.isNotEmpty()) {
                 this.headers.putAll(headers)
             }
+        }
+
+        fun setFinishFlag(@FinishFlag.Type flag: Int) {
+            this.finishFlag = finishFlag
         }
 
         fun setAlpnType(@AlpnType.Type type: Int) = apply {

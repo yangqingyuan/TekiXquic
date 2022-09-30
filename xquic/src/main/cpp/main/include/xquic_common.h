@@ -300,6 +300,7 @@ typedef struct xqc_cli_requests_s {
     /* requests */
     //char urls[MAX_REQUEST_CNT * MAX_REQUEST_LEN];
     int request_cnt;    /* requests cnt in urls */
+    int finishFlag;     /* request finish flag, 1 for finish. */
     xqc_cli_request_t reqs[MAX_REQUEST_CNT];
 } xqc_cli_requests_t;
 
@@ -345,6 +346,8 @@ typedef struct xqc_cli_user_data_params_s {
     int max_recv_data_len;
 
     int no_crypto_flag;/* 1:without crypto */
+
+    int finishFlag;    /* request finish flag, 1 for finish. */
 
     const char *token;
     char *tp;
