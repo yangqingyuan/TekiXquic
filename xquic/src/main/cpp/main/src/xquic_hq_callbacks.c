@@ -75,7 +75,7 @@ void xqc_client_conn_ping_acked_notify(xqc_connection_t *conn, const xqc_cid_t *
 int xqc_client_stream_write_notify(xqc_stream_t *stream, void *user_data) {
     DEBUG;
     xqc_cli_user_stream_t *user_stream = (xqc_cli_user_stream_t *) user_data;
-    return client_send_hq_content(user_stream,user_stream->user_conn->ctx->args->req_cfg.finishFlag);
+    return client_send_hq_content(user_stream,user_stream->user_conn->ctx->args->req_cfg.finish_flag);
 }
 
 int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {

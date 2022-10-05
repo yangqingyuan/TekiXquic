@@ -91,7 +91,7 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         }
         LOGD("============ request head end ================");
         //发送h3内容
-        return client_send_h3_content(user_stream, user_conn->ctx->args->req_cfg.finishFlag);
+        return client_send_h3_content(user_stream, user_conn->ctx->args->req_cfg.finish_flag);
     }
     return 0;
 }

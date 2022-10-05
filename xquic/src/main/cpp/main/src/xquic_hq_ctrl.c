@@ -43,7 +43,7 @@ ssize_t client_send_hq_requests(xqc_cli_user_conn_t *user_conn,
         LOGE("xqc hq request create error");
         return -1;
     }
-    return client_send_hq_content(user_stream, user_conn->ctx->args->req_cfg.finishFlag);
+    return client_send_hq_content(user_stream, user_conn->ctx->args->req_cfg.finish_flag);
 }
 
 ssize_t client_send_hq_ping(xqc_cli_user_conn_t *user_conn, char *ping_user_data) {
