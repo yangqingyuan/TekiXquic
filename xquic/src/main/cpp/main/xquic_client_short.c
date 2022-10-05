@@ -806,6 +806,8 @@ int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *us
 
     /* 短链接只有一个url请求*/
     args->req_cfg.request_cnt = 1;
+    /* 发送完毕标识*/
+    args->req_cfg.finish_flag = user_param->finish_flag;
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
@@ -851,6 +853,7 @@ int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *u
 
     /*set crypto 1:without crypto*/
     args->quic_cfg.no_crypto_flag = user_param->no_crypto_flag;
+
 
     /* stream 配置 */
     if (user_param->content != NULL) {

@@ -136,8 +136,8 @@ class ShortConnActivity : AppCompatActivity() {
             .get(xRequestBody) //Default
             .addHeader("tenantId", "soacp")
             .addHeader("clientId", "portalApp")
-            .addHeader("testA", "testA")
-            .addHeader("Keep-Alive", "timeout=300, max=1000")
+            //.addHeader("testA", "testA")
+            //.addHeader("Keep-Alive", "timeout=300, max=1000")
             .tag("index:$index")
             .build()
         request(index, xRequest)

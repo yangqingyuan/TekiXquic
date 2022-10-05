@@ -347,7 +347,7 @@ typedef struct xqc_cli_user_data_params_s {
 
     int no_crypto_flag;/* 1:without crypto */
 
-    int finishFlag;    /* request finish flag, 1 for finish. */
+    int finish_flag;    /* request finish flag, 1 for finish. */
 
     const char *token;
     char *tp;

@@ -296,7 +296,7 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     user_cfg->max_recv_data_len = max_recv_data_len;
     user_cfg->mutex = &g_clazz.mutex;
     user_cfg->no_crypto_flag = cryptoFlag;
-    user_cfg->finishFlag = finishFlag;
+    user_cfg->finish_flag = finishFlag;
 
     /* headers */
     user_cfg->h3_hdrs.headers = headers;

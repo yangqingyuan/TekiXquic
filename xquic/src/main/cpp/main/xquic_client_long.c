@@ -875,7 +875,8 @@ int client_long_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_
     args->net_cfg.version = user_param->version;
 
     args->req_cfg.request_cnt = 1;//TODO 这里默认一个url一个请求
-    args->req_cfg.finish_flag = user_param->finishFlag;
+    /* 发送完毕标识*/
+    args->req_cfg.finish_flag = user_param->finish_flag;
 
     /*环境配置 */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
