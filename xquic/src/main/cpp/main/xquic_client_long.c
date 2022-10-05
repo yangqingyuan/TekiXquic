@@ -619,7 +619,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
 
                 /*copy send content */
                 if (content != NULL) {
-                    size_t content_len = message.arg1;
+                    size_t content_len = strlen(content);
                     user_stream->send_body = malloc(content_len);
                     memcpy(user_stream->send_body, content, content_len);//copy data
                     user_stream->send_body_len = content_len;
