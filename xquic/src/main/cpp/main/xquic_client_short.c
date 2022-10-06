@@ -446,7 +446,7 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "connect timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
+        callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
     }
 }
 
@@ -508,16 +508,16 @@ void client_init_connection_ssl_config(xqc_conn_ssl_config_t *conn_ssl_config,
 
     /*set session ticket and transport parameter args */
     /*set session ticket and transport parameter args */
-    if (args->quic_cfg.st_len <= 0){
+    if (args->quic_cfg.st_len <= 0) {
         conn_ssl_config->session_ticket_data = NULL;
-    } else{
+    } else {
         conn_ssl_config->session_ticket_data = args->quic_cfg.st;
         conn_ssl_config->session_ticket_len = args->quic_cfg.st_len;
     }
 
-    if (args->quic_cfg.tp_len <= 0){
+    if (args->quic_cfg.tp_len <= 0) {
         conn_ssl_config->transport_parameter_data = NULL;
-    } else{
+    } else {
         conn_ssl_config->transport_parameter_data = args->quic_cfg.tp;
         conn_ssl_config->transport_parameter_data_len = args->quic_cfg.tp_len;
     }
@@ -592,7 +592,7 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
                     args->quic_cfg.alpn_type,
                     user_conn->ctx->args->net_cfg.host);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, XQC_ERROR, err_msg, NULL);
+            callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
             return;
         }
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;

@@ -59,7 +59,8 @@ xqc_client_conn_handshake_finished(xqc_connection_t *conn, void *user_data, void
 }
 
 void xqc_client_conn_ping_acked_notify(xqc_connection_t *conn, const xqc_cid_t *cid,
-                                  void *ping_user_data, void *user_data, void *conn_proto_data) {
+                                       void *ping_user_data, void *user_data,
+                                       void *conn_proto_data) {
     //DEBUG;
     xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
     uint64_t recv_time = xqc_now();
@@ -75,7 +76,8 @@ void xqc_client_conn_ping_acked_notify(xqc_connection_t *conn, const xqc_cid_t *
 int xqc_client_stream_write_notify(xqc_stream_t *stream, void *user_data) {
     DEBUG;
     xqc_cli_user_stream_t *user_stream = (xqc_cli_user_stream_t *) user_data;
-    return client_send_hq_content(user_stream,user_stream->user_conn->ctx->args->req_cfg.finish_flag);
+    return client_send_hq_content(user_stream,
+                                  user_stream->user_conn->ctx->args->req_cfg.finish_flag);
 }
 
 int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
@@ -101,7 +103,7 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
         if (read == -XQC_EAGAIN) {
             break;
         } else if (read < 0) {
-            LOGE("xqc hq request recv body error=%zd ,fin=%d", read,fin);
+            LOGE("xqc hq request recv body error=%zd ,fin=%d", read, fin);
             return 0;
         }
 
@@ -124,6 +126,7 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
 
         /* call back to client */
         callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                user_stream->recv_body_len,
                                 user_stream->user_tag);
 
         /* auto to close request */
@@ -135,6 +138,15 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
             ret = xqc_conn_close(user_stream->user_conn->ctx->engine,
                                  &user_stream->user_conn->cid);
             LOGD("auto to call xqc_conn_close ret=%d", ret);
+        }
+    } else {
+        /* call back to client */
+        if (!user_stream->user_conn->ctx->args->req_cfg.finish_flag) {
+            callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                    user_stream->recv_body_len,
+                                    user_stream->user_tag);
+        } else {
+            LOGW("stream read notify,but not finish");
         }
     }
     return 0;

@@ -231,6 +231,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
 
         /* call back to client */
         callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                user_stream->recv_body_len,
                                 user_stream->user_tag);
 
         /* auto to close request */
@@ -243,6 +244,15 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
             ret = xqc_h3_conn_close(user_stream->user_conn->ctx->engine,
                                     &user_stream->user_conn->cid);
             LOGD("auto to call xqc_h3_conn_close ret=%zd", ret);
+        }
+    } else {
+        /* call back to client */
+        if (!user_stream->user_conn->ctx->args->req_cfg.finish_flag) {
+            callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                    user_stream->recv_body_len,
+                                    user_stream->user_tag);
+        } else {
+            LOGW("stream read notify,but not finish");
         }
     }
     return 0;
