@@ -581,11 +581,14 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             continue;
         }
 
-        cJSON *json_data = NULL;
-        char *content;
-
-        /* new a stream */
-        xqc_cli_user_stream_t *user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
+        xqc_cli_user_stream_t *user_stream = NULL;
+        if (args->req_cfg.finish_flag || args->quic_cfg.alpn_type == ALPN_H3) {
+            /* new a stream */
+            user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
+        } else {
+            /* if reuse stream use the specific stream */
+            user_stream = &args->user_stream;
+        }
         user_stream->user_conn = user_conn;
 
         /*set recv body max len */
@@ -603,6 +606,8 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         req_cut++;
         request = reqs + req_cut;
 
+        cJSON *json_data = NULL;
+        char *content;
         switch (message.what) {
             case DATA_TYPE_JSON: {
                 /* parse json data */

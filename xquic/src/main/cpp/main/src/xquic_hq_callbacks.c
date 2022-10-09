@@ -178,8 +178,12 @@ int xqc_client_stream_close_notify(xqc_stream_t *stream, void *user_data) {
             free(user_stream->recv_body);
             user_stream->recv_body = NULL;
         }
-        free(user_stream);
-        user_stream = NULL;
+
+        if (user_stream->user_conn->ctx->args->req_cfg.finish_flag) {
+            /* if not reuse stream need to free */
+            free(user_stream);
+            user_stream = NULL;
+        }
         LOGD("free stream success");
     }
     return 0;

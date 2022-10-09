@@ -31,14 +31,30 @@ ssize_t client_send_hq_content(xqc_cli_user_stream_t *user_stream, int finish_fl
             }
         }
     }
+
+    /*if reuse stream,reset data */
+    if (!finish_flag) {
+        user_stream->hdr_sent = 0;
+        user_stream->send_offset = 0;
+    }
     return 0;
 }
 
 ssize_t client_send_hq_requests(xqc_cli_user_conn_t *user_conn,
                                 xqc_cli_user_stream_t *user_stream, xqc_cli_request_t *req) {
 
-    user_stream->hq_request = xqc_stream_create(user_conn->ctx->engine, &user_conn->cid,
-                                                user_stream);
+    if (user_conn->ctx->args->req_cfg.finish_flag) {
+        /* if not reuse stream create every time */
+        user_stream->hq_request = xqc_stream_create(user_conn->ctx->engine, &user_conn->cid,
+                                                    user_stream);
+    } else {
+        /* if reuse stream create stream when not create */
+        if (!user_stream->hq_request || user_stream->hq_request == NULL) {
+            user_stream->hq_request = xqc_stream_create(user_conn->ctx->engine, &user_conn->cid,
+                                                        user_stream);
+        }
+    }
+
     if (user_stream->hq_request == NULL) {
         LOGE("xqc hq request create error");
         return -1;
