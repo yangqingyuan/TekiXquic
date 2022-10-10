@@ -9,14 +9,18 @@ ssize_t client_write_socket(const unsigned char *buf, size_t size,
         errno = 0;
         res = sendto(user_conn->fd, buf, size, 0, peer_addr, peer_addrlen);
         if (res < 0) {
-            LOGE("write socket err %zd %s ,fd:%d, buf:%p, size:%zu, server_add:%s \n", res,
-                 strerror(errno), user_conn->fd, buf, size,
-                 user_conn->ctx->args->net_cfg.server_addr);
+            char err_msg[214];
+            sprintf(err_msg, "write socket err %zd %s ,fd:%d, buf:%p, size:%zu, server_add:%s", res,
+                    strerror(errno), user_conn->fd, buf, size,
+                    user_conn->ctx->args->net_cfg.server_addr);
+            LOGE("%s", err_msg);
             if (errno == EAGAIN) {
                 res = XQC_SOCKET_EAGAIN;
             }
+            if (res == XQC_SOCKET_ERROR) {
+                callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
+            }
         }
-
         user_conn->last_sock_write_time = xqc_now();
 
     } while ((res < 0) && (errno == EINTR));
@@ -30,7 +34,7 @@ void client_save_token(const unsigned char *token, unsigned token_len, void *use
         LOGE("save token error,user_conn is NULL");
         return;
     }
-    callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_TOKEN, (char *)token, token_len);
+    callback_msg_to_client(user_conn->ctx->args, MSG_TYPE_TOKEN, (char *) token, token_len);
 }
 
 void client_save_session_cb(const char *data, size_t data_len, void *user_data) {

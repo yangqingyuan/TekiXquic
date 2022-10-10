@@ -137,11 +137,9 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
                                         addr_len, (xqc_msec_t) recv_time, user_conn);
         if (ret != XQC_OK) {
             char err_msg[214];
-            sprintf(err_msg, "xqc_engine_packet_process error (%d),tag(%s)",
-                    user_conn->ctx->args->user_stream.user_tag);
+            sprintf(err_msg, "xqc_engine_packet_process error (%d)",ret);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, ret, err_msg, strlen(err_msg),
-                                    user_conn->ctx->args->user_stream.user_tag);
+            callback_data_to_client(user_conn, ret, err_msg, strlen(err_msg),NULL);
             return;
         }
 
