@@ -67,4 +67,6 @@ int client_cert_verify_cb(const unsigned char **certs,
 void client_conn_update_cid_notify(xqc_connection_t *conn, const xqc_cid_t *retire_cid,
                                    const xqc_cid_t *new_cid, void *user_data) {
     DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user_data;
+    memcpy(&user_conn->cid, new_cid, sizeof(*new_cid));
 }
