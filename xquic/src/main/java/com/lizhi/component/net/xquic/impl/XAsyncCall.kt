@@ -58,7 +58,7 @@ class XAsyncCall(
                 .setSession(xRttInfoCache.getSession(authority()))
                 .setConnectTimeOut(xquicClient.connectTimeOut)
                 .setReadTimeOut(xquicClient.readTimeout)
-                .setMaxRecvLenght(1024 * 1024)
+                .setMaxRecvLenght(xquicClient.maxRecvDataLen)
                 .setCCType(xquicClient.ccType)
                 .setCryptoFlag(xquicClient.cryptoFlag)
                 .setProtoVersion(xquicClient.protoVersion)

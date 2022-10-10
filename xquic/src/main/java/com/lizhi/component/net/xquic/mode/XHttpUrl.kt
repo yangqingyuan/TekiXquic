@@ -59,6 +59,10 @@ class XHttpUrl(val builder: Builder) {
         fun get(url: String): XHttpUrl {
             return Builder().parse(url).build()
         }
+
+        fun get(ip: String, port: Int): XHttpUrl {
+            return Builder().parse(ip, port).build()
+        }
     }
 
     /**
@@ -89,11 +93,17 @@ class XHttpUrl(val builder: Builder) {
 
     class Builder {
         lateinit var scheme: String
+        lateinit var url: String
+        lateinit var authority: String
+
         var path: String? = null
         var host: String? = null
-        lateinit var url: String
         var port: Int = 0
-        lateinit var authority: String
+
+        fun parse(ip: String, port: Int) = apply {
+            //Note: This is for the convenience of internal parsing, not really using the http protocol
+            parse("http://$ip:$port/")
+        }
 
         fun parse(url: String) = apply {
             this.url = url

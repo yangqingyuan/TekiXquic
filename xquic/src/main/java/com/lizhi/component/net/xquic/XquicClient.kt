@@ -79,6 +79,13 @@ open class XquicClient internal constructor(val builder: Builder) {
     var finishFlag = builder.finishFlag
 
     /**
+     * The buffer that accepts data after each request. The default is 512kb.
+     * If you already know the return size of back-end data,
+     * you can set the corresponding settings to facilitate optimal memory usage
+     */
+    var maxRecvDataLen = builder.maxRecvDataLen
+
+    /**
      * 调度器
      */
     private val dispatcher = builder.dispatcher
@@ -135,6 +142,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var alpnType = AlpnType.ALPN_H3
         internal var cryptoFlag = CryptoFlag.CRYPTO
         internal var finishFlag = FinishFlag.FINISH
+        internal var maxRecvDataLen = 1024 * 512
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): String {
@@ -162,6 +170,7 @@ open class XquicClient internal constructor(val builder: Builder) {
             xRttInfoListener = xquicClient.xRttInfoListener
             cryptoFlag = xquicClient.cryptoFlag
             cryptoFlag = xquicClient.finishFlag
+            maxRecvDataLen = xquicClient.maxRecvDataLen
         }
 
         fun build(): XquicClient {
@@ -222,6 +231,10 @@ open class XquicClient internal constructor(val builder: Builder) {
 
         fun setAlpnType(@AlpnType.Type type: Int) = apply {
             this.alpnType = type
+        }
+
+        fun setMaxRecvDataLen(MaxRecvDataLen: Int) = apply {
+            this.maxRecvDataLen = MaxRecvDataLen
         }
 
         fun addNetworkInterceptor(xInterceptor: XInterceptor) = apply {

@@ -93,8 +93,9 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
     //TODO 最好根据后端返回动态的调整
     if (user_stream->recv_body == NULL) {
         user_stream->recv_body = malloc(user_stream->recv_body_max_len);
-        memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
     }
+    memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
+
     ssize_t read = 0;
     ssize_t read_sum = 0;
     do {
@@ -149,6 +150,7 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
             LOGW("stream read notify,but not finish");
         }
     }
+    user_stream->recv_body_len = 0;
     return 0;
 }
 

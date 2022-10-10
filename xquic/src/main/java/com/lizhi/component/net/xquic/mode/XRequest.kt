@@ -66,6 +66,9 @@ class XRequest(val builder: Builder) {
             this.url = XHttpUrl.get(url)
         }
 
+        fun url(ip: String, port: Int) = apply {
+            this.url = XHttpUrl.get(ip, port)
+        }
 
         fun header(name: String, value: String) = apply {
             this.headers.headersMap[name] = value
