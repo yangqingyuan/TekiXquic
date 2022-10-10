@@ -3,8 +3,8 @@
 #include "xquic_client_short.h"
 #include "xquic_client_long.h"
 
-#define JNI_CLASS_XQUIC_SHORT   "com/lizhi/component/net/xquic/native/XquicShortNative"
-#define JNI_CLASS_XQUIC_LONG   "com/lizhi/component/net/xquic/native/XquicLongNative"
+#define JNI_CLASS_XQUIC_SHORT   "com/lizhi/component/net/xquic/quic/XquicShortNative"
+#define JNI_CLASS_XQUIC_LONG   "com/lizhi/component/net/xquic/quic/XquicLongNative"
 
 typedef struct xquic_fields_t {
     jclass clazz_short;
@@ -425,7 +425,7 @@ static int long_cancel(JNIEnv *env, jobject this, jlong clientCtx) {
  * 短链接方法映射
  */
 static JNINativeMethod g_short_methods[] = {
-        {"send",   "(Lcom/lizhi/component/net/xquic/native/SendParams;Lcom/lizhi/component/net/xquic/native/XquicCallback;)I", (void *) short_send},
+        {"send",   "(Lcom/lizhi/component/net/xquic/quic/SendParams;Lcom/lizhi/component/net/xquic/quic/XquicCallback;)I", (void *) short_send},
         {"cancel", "(J)I",                                                                                                     (void *) short_cancel},
 };
 
@@ -433,7 +433,7 @@ static JNINativeMethod g_short_methods[] = {
  * 长链接方法映射
  */
 static JNINativeMethod g_long_methods[] = {
-        {"connect",  "(Lcom/lizhi/component/net/xquic/native/SendParams;Lcom/lizhi/component/net/xquic/native/XquicCallback;)J", (void *) long_connect},
+        {"connect",  "(Lcom/lizhi/component/net/xquic/quic/SendParams;Lcom/lizhi/component/net/xquic/quic/XquicCallback;)J", (void *) long_connect},
         {"start",    "(J)I",                                                                                                     (void *) long_start},
         {"sendPing", "(JLjava/lang/String;)I",                                                                                   (void *) long_send_ping},
         {"sendByte", "(JILjava/nio/ByteBuffer;I)I",                                                                              (void *) lang_send_byte},

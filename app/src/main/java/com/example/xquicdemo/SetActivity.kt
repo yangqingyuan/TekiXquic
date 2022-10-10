@@ -3,7 +3,7 @@ package com.example.xquicdemo
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.widget.*
-import com.lizhi.component.net.xquic.native.CCType
+import com.lizhi.component.net.xquic.quic.CCType
 import com.lizhi.component.net.xquic.utils.XLogUtils
 
 class SetActivity : AppCompatActivity() {

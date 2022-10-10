@@ -9,7 +9,7 @@ import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.listener.XRunnable
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
-import com.lizhi.component.net.xquic.native.AlpnType
+import com.lizhi.component.net.xquic.quic.AlpnType
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.io.InterruptedIOException
 import java.lang.Exception

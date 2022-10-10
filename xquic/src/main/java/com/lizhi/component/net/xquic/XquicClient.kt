@@ -7,7 +7,8 @@ import androidx.lifecycle.LifecycleEventObserver
 import com.lizhi.component.net.xquic.impl.*
 import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.native.*
+import com.lizhi.component.net.xquic.quic.*
+import com.lizhi.component.net.xquic.quic.CCType
 import java.util.*
 
 /**

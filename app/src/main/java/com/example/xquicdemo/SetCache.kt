@@ -1,7 +1,7 @@
 package com.example.xquicdemo
 
 import android.content.Context
-import com.lizhi.component.net.xquic.native.CCType
+import com.lizhi.component.net.xquic.quic.CCType
 
 object SetCache {
 

@@ -10,7 +10,7 @@ import com.lizhi.component.net.xquic.mode.XHeaders
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
 import com.lizhi.component.net.xquic.mode.XResponseBody
-import com.lizhi.component.net.xquic.native.*
+import com.lizhi.component.net.xquic.quic.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
 import java.nio.BufferOverflowException

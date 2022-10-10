@@ -1,4 +1,4 @@
-package com.lizhi.component.net.xquic.native
+package com.lizhi.component.net.xquic.quic
 
 import java.nio.ByteBuffer
 

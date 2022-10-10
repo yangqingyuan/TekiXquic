@@ -11,8 +11,8 @@ import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.mode.XResponse
-import com.lizhi.component.net.xquic.native.AlpnType
-import com.lizhi.component.net.xquic.native.ProtoVersion
+import com.lizhi.component.net.xquic.quic.AlpnType
+import com.lizhi.component.net.xquic.quic.ProtoVersion
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
