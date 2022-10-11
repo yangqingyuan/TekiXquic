@@ -45,6 +45,7 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.5'
 # 版本更新
 |  version   | 更新内容  | 时间  |
 |  ----  | ----  |----  |
+| 1.0.6（正式使用）  | 1.支持stream复用 </br> 2.完善webSocket使用 </br> 3.修复其他问题 </br> |2022/10/17|
 | 1.0.5  | 1.升级xquic到1.2.0 </br> 2.修复复用断网重连问题 |2022/09/17|
 | 1.0.4-SNAPSHOT  | 1.hq 支持0Rtt </br> 2.支持x86 </br> 3.升级xquic到xquic-1.1.0-stable |2022/08/23|
 | 1.0.3-SNAPSHOT  | 1.支持Hq协议，支持设置alpn</br> 2.优化java->jni 传输性能，支持传输byte </br> 3.其他优化 |2022/06/30|
@@ -144,27 +145,23 @@ val xquicClient = XquicClient.Builder()
  val xRequest = XRequest.Builder()
             .url(url)//127.0.0.1:6121 //192.168.10.245:8443
             .addHeader("testA", "testA")
-            .addPingListener(object : XPingListener {//可选
-                override fun ping(): String {
-                    return "ping data"
-                }
-
-                override fun pong(data: String) {
-                    XLogUtils.info("data=$data")
-                }
-
-            })
             .build()
 
         webSocket = xquicClient.newWebSocket(xRequest, object : XWebSocketListener {
             override fun onOpen(webSocket: XWebSocket, response: XResponse) {
-
+                //握手成功后进行回调
             }
 
-            override fun onMessage(webSocket: XWebSocket, data: ByteArray) {
-
+            override fun onMessage(webSocket: XWebSocket, response: XResponse) {
+                //接收到消息后进行回调
+                //var body = response.xResponseBody.body() or
+                var bodyByteArray = response.xResponseBody.byteBody()
             }
 
+            override fun onClosed(webSocket: XWebSocket, code: Int, reason: String?) {
+                //链接关闭后回调
+            }
+            
             override fun onFailure(
                 webSocket: XWebSocket,
                 exception: Throwable,
@@ -189,6 +186,35 @@ val xquicClient = XquicClient.Builder()
 |  ----  |----  |
 | 关于跟quic-go互通调试| https://zhuanlan.zhihu.com/p/502352169|
 | tekixquic跟Okhttp 传输性能测试| https://zhuanlan.zhihu.com/p/556931821|
+
+# API说明
+## XquicClient.Builder
+| 参数说明 | 用处 | 备注 |
+|  ----  |----  |----  |
+|  connectTimeOut  | 链接超时，单位秒，默认30s |  |
+|  readTimeout  | 链接超时，单位秒，默认30s |  |
+|  connectTimeOut  | 读超时，单位秒，默认30s | 注意：readTimeout时间包含connectTimeOut |
+|  pingInterval  | ping的时间间隔，单位毫秒，如果大于0，则发送心跳 |  |
+|  ccType  | 拥塞算法：BBR/CUBIC/RENO， 默认CUBIC |  |
+|  protoVersion  | 协议版本号 ，默认XQC_VERSION_V1 | 建议：可以设置XQC_VERSION_MAX，表示都支持，可以避免后面协议升级后新旧版本兼容问题 |
+|  dns  | 自定义dns解析，例如：可以提前将域名解析成ip后再传递到底层 | 目前没有真正用起来 |
+|  reuse  | 长链接复用：默认fase，复用后相同域名的请求会公用已有的连接 |  |
+|  xRttInfoListener  | token跟session返回接口，可以本地化，用于0Rtt，sdk内部是内存缓存，并且跟随xquicClick生命周期 |  |
+|  alpnType  | 应用层协议类型，HQ/H3，默认H3 | HQ（http 0.9 透传） |
+|  setFinishFlag  | 是否结束流，只对HQ，websocket场景有效，每次发送数据后不会关闭stream，下次发送会继续使用已有的steam，以达到stream复用 |  |
+|  addPingListener  | 应用层ping，增加自定义的发送ping内容，只对webSocket 场景有效，长连接情况下，默认已经打开内部心跳，15秒 | 注意：内部心跳跟当前这个心跳不是同一个，内部心跳是xquic内部自己维护 |
+|  pingInterval  | 设置ping的时间间隔，应用层有默认实现，默认发送内容为test，如果设置小于等于0，为不发送应用层ping |  |
+
+## XWebSocket
+| 函数 | 作用 | 备注 |
+|  ----  |----  |----  |
+|  fun send(text: String): Boolean  |发送文本  |  |
+|  fun send(text: String, tag: String): Boolean  |可以携带tag的方式，接受到数据返回,可以用于区分请求,每一个发送会转化成一个请求，跟短链接唯一的区别是共用一个链接  |  |
+|  fun send(byteArray: ByteArray): Boolean |发送byte数组  |  |
+|  fun send(message: XRealWebSocket.Message): Boolean  |发送消息，不管byteArray/string，内部都是统一转成message  |  |
+|  fun cancel()  |跟close的区别是cancel会在onFailed中返回  |  |
+|  fun close(code: Int, reason: String?)  | 跟cancel的区别是close会在onClose，将传递的参数逐一返回，并且底层错误也是在该函数返回  |  |
+|  fun isClose(): Boolean  | 判断是否已经关闭，连接关闭后，需要重新连接才才可以继续发送 |  |
 
 # 其他
 有任何问题，欢迎留言，有兴趣的同学可以一同完善tekixquic！</br>
