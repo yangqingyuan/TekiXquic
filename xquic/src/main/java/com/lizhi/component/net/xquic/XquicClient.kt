@@ -146,8 +146,8 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var maxRecvDataLen = 1024 * 512
 
         internal var pingListener: XPingListener = object : XPingListener {
-            override fun ping(): String {
-                return "ping"
+            override fun ping(): ByteArray {
+                return "ping".toByteArray()
             }
 
             override fun pong(data: ByteArray?) {

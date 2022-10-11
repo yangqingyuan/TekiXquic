@@ -1030,15 +1030,19 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
  * @param ping_content
  * @return
  */
-int client_long_send_ping(xqc_cli_ctx_t *ctx, char *ping_content) {
+int client_long_send_ping(xqc_cli_ctx_t *ctx, const char *ping_content, int len) {
     //DEBUG;
     if (ctx == NULL || ctx->active <= 0) {
         LOGE("client long send ping error:  ctx = %p,active = %d", ctx, ctx->active);
         return -1;
     }
+    if (len > MAX_PING_LEN) {
+        LOGE("client long send ping error:  ping len > max len 256");
+        return -1;
+    }
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_PING;
-    memset(ctx->msg_data.ping_data, 0, 256);
-    strcpy(ctx->msg_data.ping_data, ping_content);
+    memset(ctx->msg_data.ping_data, 0, MAX_PING_LEN);
+    memcpy(ctx->msg_data.ping_data, ping_content, len);
     ev_async_send(ctx->eb, &ctx->ev_task);
     return 0;
 }

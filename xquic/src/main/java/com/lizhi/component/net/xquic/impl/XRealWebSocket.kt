@@ -172,12 +172,13 @@ class XRealWebSocket(
         override fun run() {
             if (!checkClientCtx(xRealWebSocket.clientCtx) || xRealWebSocket.failed || xRealWebSocket.enqueuedClose) return
             var pingBody = xRealWebSocket.pingListener.ping()
-            if (pingBody.length > 256) {
-                pingBody = "ping body ti too lang"
+            if (pingBody.size > 256) {
+                pingBody = "ping body ti too lang".toByteArray()
             }
             xRealWebSocket.xquicLongNative.sendPing(
                 xRealWebSocket.clientCtx,
-                pingBody
+                pingBody,
+                pingBody.size
             )
         }
     }

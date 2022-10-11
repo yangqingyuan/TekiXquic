@@ -31,7 +31,7 @@ class XquicLongNative {
     /**
      * 发送ping数据，发送业务层的ping数据，例如自定义ping内容
      */
-    external fun sendPing(clientCtx: Long, content: String): Int
+    external fun sendPing(clientCtx: Long, content: ByteArray, len: Int): Int
 
     /**
      * 发送byte数据

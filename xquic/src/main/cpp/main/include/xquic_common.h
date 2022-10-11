@@ -269,6 +269,7 @@ typedef struct xqc_cli_env_config_s {
 #define AUTHORITY_LEN       128
 #define URL_LEN             512
 #define MAX_HEADER          100
+#define MAX_PING_LEN        256
 
 #define XQC_INTEROP_TLS_GROUPS  "X25519:P-256:P-384:P-521"
 
@@ -473,7 +474,7 @@ typedef struct xqc_cli_user_data_msg_s {
     CMD_TYPE cmd_type;
 
     /* cache ping data */
-    char ping_data[256];
+    char ping_data[MAX_PING_LEN];
 
     /* queue to cache send data */
     xqc_cli_message_queue_t message_queue;

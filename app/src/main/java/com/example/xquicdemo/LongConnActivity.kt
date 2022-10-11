@@ -80,15 +80,15 @@ class LongConnActivity : AppCompatActivity() {
             .connectTimeOut(SetCache.getConnTimeout(applicationContext))
             .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .ccType(SetCache.getCCType(applicationContext))
-            .pingInterval(0)//
+            .pingInterval(500)//
             //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
             .setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
             .setAlpnType(AlpnType.ALPN_HQ)
             .addPingListener(object : XPingListener {
                 //可选
-                override fun ping(): String {
-                    return "ping data"
+                override fun ping(): ByteArray {
+                    return "ping data".toByteArray()
                 }
 
                 override fun pong(data: ByteArray?) {

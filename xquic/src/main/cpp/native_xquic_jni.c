@@ -383,9 +383,15 @@ static int long_start(JNIEnv *env, jobject this, jlong clientCtx) {
  * @param pingContent
  * @return
  */
-static int long_send_ping(JNIEnv *env, jobject this, jlong clientCtx, jstring pingContent) {
-    return client_long_send_ping(jlong_to_ptr(clientCtx),
-                                 (*env)->GetStringUTFChars(env, pingContent, 0));
+static int long_send_ping(JNIEnv *env, jobject this, jlong clientCtx, jbyteArray ping, jint len) {
+    const char *cPingContent = NULL;
+    if (ping != NULL) {
+        cPingContent = (*env)->GetByteArrayElements(env, ping,0);
+    }
+    if (cPingContent == NULL) {
+        return -1;
+    }
+    return client_long_send_ping(jlong_to_ptr(clientCtx),cPingContent,len);
 }
 
 
@@ -426,7 +432,7 @@ static int long_cancel(JNIEnv *env, jobject this, jlong clientCtx) {
  */
 static JNINativeMethod g_short_methods[] = {
         {"send",   "(Lcom/lizhi/component/net/xquic/quic/SendParams;Lcom/lizhi/component/net/xquic/quic/XquicCallback;)I", (void *) short_send},
-        {"cancel", "(J)I",                                                                                                     (void *) short_cancel},
+        {"cancel", "(J)I",                                                                                                 (void *) short_cancel},
 };
 
 /**
@@ -434,10 +440,10 @@ static JNINativeMethod g_short_methods[] = {
  */
 static JNINativeMethod g_long_methods[] = {
         {"connect",  "(Lcom/lizhi/component/net/xquic/quic/SendParams;Lcom/lizhi/component/net/xquic/quic/XquicCallback;)J", (void *) long_connect},
-        {"start",    "(J)I",                                                                                                     (void *) long_start},
-        {"sendPing", "(JLjava/lang/String;)I",                                                                                   (void *) long_send_ping},
-        {"sendByte", "(JILjava/nio/ByteBuffer;I)I",                                                                              (void *) lang_send_byte},
-        {"cancel",   "(J)I",                                                                                                     (void *) long_cancel},
+        {"start",    "(J)I",                                                                                                 (void *) long_start},
+        {"sendPing", "(J[BI)I",                                                                                              (void *) long_send_ping},
+        {"sendByte", "(JILjava/nio/ByteBuffer;I)I",                                                                          (void *) lang_send_byte},
+        {"cancel",   "(J)I",                                                                                                 (void *) long_cancel},
 };
 
 /**
