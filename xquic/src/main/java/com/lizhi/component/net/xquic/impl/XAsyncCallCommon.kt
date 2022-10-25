@@ -159,8 +159,8 @@ abstract class XAsyncCallCommon(
             }
             originalRequest.body?.let {
                 val body = it
-                headers["content-type"] = body.mediaType.mediaType
-                headers["content-length"] = body.content.length.toString()
+                headers["content-type"] = body.getMediaType()
+                headers["content-length"] = body.getContentLength().toString()
             }
         }
 

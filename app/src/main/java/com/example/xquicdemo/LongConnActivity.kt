@@ -83,8 +83,8 @@ class LongConnActivity : AppCompatActivity() {
             .pingInterval(500)//
             //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
-            .setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
-            .setAlpnType(AlpnType.ALPN_HQ)
+            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
+            //.setAlpnType(AlpnType.ALPN_HQ)
             .addPingListener(object : XPingListener {
                 //可选
                 override fun ping(): ByteArray {

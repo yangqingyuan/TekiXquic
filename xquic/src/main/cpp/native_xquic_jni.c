@@ -256,6 +256,8 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     jint headersSize = getInt(env, param, "headersSize");
     jint cryptoFlag = getInt(env, param, "cryptoFlag");
     jint finishFlag = getInt(env, param, "finishFlag");
+    jint dataType = getInt(env, param, "dataType");
+    jint contentLength = getInt(env, param, "contentLength");
 
     /* build header from params */
     xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
@@ -266,10 +268,10 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
 
     const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
 
-    jstring content = getString(env, param, "content");
+    jstring content = getByteArray(env, param, "content");
     const char *cContent = NULL;
     if (content != NULL) {
-        cContent = (*env)->GetStringUTFChars(env, content, 0);
+        cContent = (*env)->GetByteArrayElements(env, content, 0);
     }
 
     const char *cToken = NULL;
@@ -297,6 +299,8 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     user_cfg->mutex = &g_clazz.mutex;
     user_cfg->no_crypto_flag = cryptoFlag;
     user_cfg->finish_flag = finishFlag;
+    user_cfg->content_length = contentLength;
+    user_cfg->data_type = dataType;
 
     /* headers */
     user_cfg->h3_hdrs.headers = headers;

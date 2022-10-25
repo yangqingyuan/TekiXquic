@@ -25,7 +25,9 @@ class SendParams(val builder: Builder) {
     /**
      * post content
      */
-    var content: String? = builder.content
+    var content: ByteArray? = builder.content
+    var contentLength = builder.contentLength
+    var dataType: Int = builder.dataType
 
     /**
      * optional param
@@ -102,7 +104,9 @@ class SendParams(val builder: Builder) {
         /**
          * post content
          */
-        internal var content: String? = null
+        var content: ByteArray? = null
+        var contentLength = 0
+        var dataType: Int = DataType.JSON
 
         /**
          * optional param
@@ -172,8 +176,16 @@ class SendParams(val builder: Builder) {
             this.session = session
         }
 
-        fun setContent(content: String) = apply {
+        fun setContent(content: ByteArray) = apply {
             this.content = content
+        }
+
+        fun setContentLength(contentLength: Int) = apply {
+            this.contentLength = contentLength
+        }
+
+        fun setDataType(dataType: Int) = apply {
+            this.dataType = dataType
         }
 
         fun setConnectTimeOut(timeOut: Int) = apply {
