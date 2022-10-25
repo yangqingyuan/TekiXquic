@@ -11,6 +11,41 @@ class XRequestBody {
     private var contentLength = 0
 
     companion object {
+
+        /**
+         * create default String body
+         */
+        fun createDefaultBody(content: String): XRequestBody {
+            return createStringBody(XMediaType.MEDIA_TYPE_TEXT, content)
+        }
+
+        /**
+         * create default byteArray body
+         */
+        fun createDefaultBody(content: ByteArray): XRequestBody {
+            return createByteArrayBody(XMediaType.MEDIA_TYPE_MULTIPART, content)
+        }
+
+        /**
+         * create String body
+         */
+        fun createStringBody(@XMediaType.Type mediaType: String, content: String): XRequestBody {
+            return create(XMediaType.parse(mediaType), content)
+        }
+
+        /**
+         * create Byte body
+         */
+        fun createByteArrayBody(
+            @XMediaType.Type mediaType: String,
+            content: ByteArray
+        ): XRequestBody {
+            return create(XMediaType.parse(mediaType), content)
+        }
+
+        /**
+         * create string boy
+         */
         fun create(mediaType: XMediaType, content: String): XRequestBody {
             val xRequestBody = XRequestBody()
             xRequestBody.content = content
@@ -19,6 +54,9 @@ class XRequestBody {
             return xRequestBody
         }
 
+        /**
+         * create Byte body
+         */
         fun create(mediaType: XMediaType, content: ByteArray): XRequestBody {
             val xRequestBody = XRequestBody()
             xRequestBody.content = content

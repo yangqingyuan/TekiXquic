@@ -17,31 +17,27 @@ class Message {
         const val MSG_TYPE_CLOSE = 1
         private val gson = Gson()
 
+        /**
+         * create msg by reqBody
+         */
         fun makeMessageByReqBody(
             dataType: Int,
             xRequestBody: XRequestBody
         ): Message {
             xRequestBody.let {
                 val message: Message = if (dataType == DataType.JSON) {
-                    val data = if (it.content !is String) {
-                        String(it.content as ByteArray)
-                    } else {
-                        it.content as String
-                    }
-                    makeJsonMessage(data, "", null)
+                    makeJsonMessage(it.getContentString(), "", null)
                 } else {
-                    val data = if (it.content is String) {
-                        (it.content as String).toByteArray()
-                    } else {
-                        it.content as ByteArray
-                    }
-                    makeByteMessage(data)
+                    makeByteMessage(it.getContentByteArray())
                 }
                 return message
             }
         }
 
 
+        /**
+         * create json msg
+         */
         fun makeJsonMessage(
             msgContent: String, tag: String? = null, header: HashMap<String, String>? = null
         ): Message {
@@ -58,6 +54,9 @@ class Message {
             return message
         }
 
+        /**
+         * create byte msg
+         */
         fun makeByteMessage(
             byteArray: ByteArray
         ): Message {
@@ -68,6 +67,9 @@ class Message {
             return message
         }
 
+        /**
+         * create close msg
+         */
         fun makeCloseMessage(): Message {
             val message = Message()
             message.dataType = DATA_TYPE_OTHER
