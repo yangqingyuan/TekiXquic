@@ -19,7 +19,7 @@ class DataType {
         const val JSON = 0 //json
         const val BYTE = 1 //byte
 
-        fun getDataTypeByMediaType(mediaType: XMediaType): Int {
+        fun getDataTypeByMediaType(@XMediaType.Type mediaType: XMediaType): Int {
             if (mediaType.mediaType == XMediaType.MEDIA_TYPE_MULTIPART) {
                 return BYTE
             }

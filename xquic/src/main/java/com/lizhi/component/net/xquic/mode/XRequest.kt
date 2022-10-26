@@ -11,7 +11,7 @@ import java.lang.ref.WeakReference
  */
 class XRequest(val builder: Builder) {
 
-    private val key = builder.key
+    val key = builder.key
     var url: XHttpUrl = builder.url
     var body: XRequestBody? = builder.body
 
@@ -32,6 +32,10 @@ class XRequest(val builder: Builder) {
 
     fun tag(key: String): String? {
         return tags[key]
+    }
+
+    fun setUerTag(value: String) {
+        tags[key] = value
     }
 
     fun userTag(): String? {

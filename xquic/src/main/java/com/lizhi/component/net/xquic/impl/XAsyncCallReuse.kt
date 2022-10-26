@@ -19,7 +19,7 @@ class XAsyncCallReuse(
     private var xquicClient: XquicClient,
     private var xRequest: XRequest,
     private var responseCallback: XCallBack? = null,
-) : XAsyncCallCommon(xCall, xquicClient, xRequest, responseCallback) {
+) : XAsyncCallCommon(xCall, xquicClient, xRequest, responseCallback), XCallBack {
 
     companion object {
         const val TAG = "XAsyncCallReuse"
@@ -45,27 +45,22 @@ class XAsyncCallReuse(
             synchronized(TAG) {
                 connection = xquicClient.connectionPool().get(xRequest)
                 if (connection == null || connection?.isDestroy == true) {//create new connection
-                    connection = XConnection(xquicClient, xRequest)
+                    connection = XConnection(
+                        xquicClient,
+                        xRequest,
+                        indexTag.toString(),
+                        this
+                    )//(that is, try 0RTT)
                     xquicClient.connectionPool().put(connection!!) //add to pool
+                    return //Note: The return here is because it supports sending data while connecting (that is, try 0RTT)
                 }
             }
 
             //注意：这里使用index作为tag
             connection!!.send(
                 indexTag.toString(),
-                xRequest.body?.content, parseHttpHeads(),
-                object : XCallBack {
-                    override fun onFailure(call: XCall, exception: Exception) {
-                        responseCallback?.onFailure(xCall, exception)
-                        finish(false)
-                    }
-
-                    override fun onResponse(call: XCall, xResponse: XResponse) {
-                        xResponse.xResponseBody.tag = userTag
-                        responseCallback?.onResponse(xCall, xResponse)
-                        finish(true)
-                    }
-                })
+                xRequest.body!!, parseHttpHeads(), this
+            )
         } catch (e: Exception) {
             e.printStackTrace()
             XLogUtils.error(e)
@@ -96,5 +91,16 @@ class XAsyncCallReuse(
         } catch (e: Exception) {
             XLogUtils.error(e)
         }
+    }
+
+    override fun onFailure(call: XCall, exception: Exception) {
+        responseCallback?.onFailure(xCall, exception)
+        finish(false)
+    }
+
+    override fun onResponse(call: XCall, xResponse: XResponse) {
+        xResponse.xResponseBody.tag = userTag//将用户设置的tag设置回来
+        responseCallback?.onResponse(xCall, xResponse)
+        finish(true)
     }
 }

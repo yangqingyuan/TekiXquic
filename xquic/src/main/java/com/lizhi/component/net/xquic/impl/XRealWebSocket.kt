@@ -216,9 +216,8 @@ class XRealWebSocket(
      */
     private fun setContent(sendParamsBuilder: SendParams.Builder, xRequest: XRequest) {
         xRequest.body?.let {
-            val dataType = DataType.getDataTypeByMediaType(it.mediaType)
-            val message: Message = Message.makeMessageByReqBody(dataType, it)
-            sendParamsBuilder.setDataType(dataType)
+            val message: Message = Message.makeMessageByReqBody(it, null, xRequest.userTag() ?: "")
+            sendParamsBuilder.setDataType(DataType.getDataTypeByMediaType(it.mediaType))
             sendParamsBuilder.setContent(message.getContent())
             sendParamsBuilder.setContentLength(message.getContentLength())
         }

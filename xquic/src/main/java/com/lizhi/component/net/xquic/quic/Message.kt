@@ -21,12 +21,30 @@ class Message {
          * create msg by reqBody
          */
         fun makeMessageByReqBody(
+            xRequestBody: XRequestBody, header: HashMap<String, String>? = null, tag: String
+        ): Message {
+            xRequestBody.let {
+                val message: Message =
+                    if (DataType.getDataTypeByMediaType(xRequestBody.mediaType) == DataType.JSON) {
+                        makeJsonMessage(it.getContentString(), tag, header)
+                    } else {
+                        makeByteMessage(it.getContentByteArray())
+                    }
+                return message
+            }
+        }
+
+
+        /**
+         * create msg by reqBody
+         */
+        fun makeMessageByReqBody(
             dataType: Int,
-            xRequestBody: XRequestBody
+            xRequestBody: XRequestBody, header: HashMap<String, String>? = null, tag: String
         ): Message {
             xRequestBody.let {
                 val message: Message = if (dataType == DataType.JSON) {
-                    makeJsonMessage(it.getContentString(), "", null)
+                    makeJsonMessage(it.getContentString(), tag, header)
                 } else {
                     makeByteMessage(it.getContentByteArray())
                 }
