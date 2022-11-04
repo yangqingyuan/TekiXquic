@@ -6,10 +6,7 @@ import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.listener.XRttInfoListener
 import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
-import com.lizhi.component.net.xquic.mode.XHeaders
-import com.lizhi.component.net.xquic.mode.XRequest
-import com.lizhi.component.net.xquic.mode.XResponse
-import com.lizhi.component.net.xquic.mode.XResponseBody
+import com.lizhi.component.net.xquic.mode.*
 import com.lizhi.component.net.xquic.quic.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import org.json.JSONObject
@@ -212,6 +209,20 @@ class XRealWebSocket(
         return headers
     }
 
+    /**
+     * （1）send content
+     * （2）data type
+     * （3）contentLength
+     */
+    private fun setContent(sendParamsBuilder: SendParams.Builder, xRequest: XRequest) {
+        xRequest.body?.let {
+            val message: Message = Message.makeMessageByReqBody(it, null, xRequest.userTag() ?: "")
+            sendParamsBuilder.setDataType(DataType.getDataTypeByMediaType(it.mediaType))
+            sendParamsBuilder.setContent(message.getContent())
+            sendParamsBuilder.setContentLength(message.getContentLength())
+        }
+    }
+
     fun connect(xquicClient: XquicClient) {
         if (clientCtx > 0) {
             XLogUtils.warn("is connect ")
@@ -246,6 +257,9 @@ class XRealWebSocket(
                     .setAlpnType(alpnType)
 
                 sendParamsBuilder.setHeaders(parseHttpHeads())
+
+                //Content can be set before connection, supporting 0rtt if have session
+                setContent(sendParamsBuilder, xRequest)
 
                 clientCtx = xquicLongNative.connect(sendParamsBuilder.build(), this)
                 if (!checkClientCtx(clientCtx)) {
@@ -326,65 +340,6 @@ class XRealWebSocket(
         return false
     }
 
-    /**
-     * message object
-     */
-    class Message {
-        companion object {
-            private const val DATA_TYPE_OTHER = -1
-            private const val DATA_TYPE_JSON = 0
-            private const val DATA_TYPE_BYTE = 1
-
-            const val MSG_TYPE_SEND = 0
-            const val MSG_TYPE_CLOSE = 1
-            private val gson = Gson()
-
-            fun makeJsonMessage(
-                msgContent: String, tag: String? = null, header: HashMap<String, String>? = null
-            ): Message {
-                val message = Message()
-                message.dataType = DATA_TYPE_JSON
-                message.msgType = MSG_TYPE_SEND
-                val sendBody = SendBody()
-                sendBody.send_body = msgContent
-                sendBody.user_tag = tag
-                header?.forEach(action = {
-                    sendBody.headers.add(SendBody.Header(it.key, it.value))
-                })
-                message.byteArray = gson.toJson(sendBody).toByteArray()
-                return message
-            }
-
-            fun makeByteMessage(
-                byteArray: ByteArray
-            ): Message {
-                val message = Message()
-                message.dataType = DATA_TYPE_BYTE
-                message.msgType = MSG_TYPE_SEND
-                message.byteArray = byteArray
-                return message
-            }
-
-            fun makeCloseMessage(): Message {
-                val message = Message()
-                message.dataType = DATA_TYPE_OTHER
-                message.msgType = MSG_TYPE_CLOSE
-                return message
-            }
-        }
-
-        var dataType: Int = DATA_TYPE_JSON
-        var msgType: Int = MSG_TYPE_SEND
-        lateinit var byteArray: ByteArray
-
-        fun getContent(): ByteArray {
-            return byteArray
-        }
-
-        fun getContentLength(): Int {
-            return byteArray.size
-        }
-    }
 
     /**
      * check

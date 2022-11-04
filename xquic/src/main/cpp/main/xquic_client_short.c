@@ -857,10 +857,10 @@ int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *u
 
     /* stream 配置 */
     if (user_param->content != NULL) {
-        size_t content_len = strlen(user_param->content);
-        args->user_stream.send_body = malloc(content_len);
-        strcpy(args->user_stream.send_body, user_param->content);//拷贝发送的内容
-        args->user_stream.send_body_len = content_len;
+        args->user_stream.send_body = malloc(user_param->content_length);
+        memcpy(args->user_stream.send_body, user_param->content,
+               user_param->content_length);//拷贝发送的内容
+        args->user_stream.send_body_len = user_param->content_length;
     }
     if (user_param->max_recv_data_len > 0) {
         args->user_stream.recv_body_max_len = user_param->max_recv_data_len;

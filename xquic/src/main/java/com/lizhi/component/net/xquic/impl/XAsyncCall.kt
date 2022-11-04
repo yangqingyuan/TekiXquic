@@ -37,6 +37,21 @@ class XAsyncCall(
     private val xRttInfoCache = xquicClient.xRttInfoListener
 
 
+    /**
+     *
+     * （1）send content
+     * （2）data type
+     * （3）contentLength
+     */
+    private fun setContent(sendParamsBuilder: SendParams.Builder, xRequest: XRequest) {
+        xRequest.body?.let {
+            val dataType = DataType.getDataTypeByMediaType(it.mediaType)
+            sendParamsBuilder.setDataType(dataType)
+            sendParamsBuilder.setContent(it.getContentByteArray())
+            sendParamsBuilder.setContentLength(it.getContentLength())
+        }
+    }
+
     override fun execute() {
         val startTime = System.currentTimeMillis()
         delayTime = startTime - createTime
@@ -67,9 +82,8 @@ class XAsyncCall(
 
             sendParamsBuilder.setHeaders(parseHttpHeads())
 
-            originalRequest.body?.let {
-                sendParamsBuilder.setContent(it.content)
-            }
+            //Content can be set before connection, supporting 0rtt if have session
+            setContent(sendParamsBuilder, originalRequest)
 
             /* native to send */
             xquicShortNative.send(

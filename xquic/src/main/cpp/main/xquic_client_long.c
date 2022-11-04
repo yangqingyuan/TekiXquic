@@ -727,6 +727,19 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     if (XQC_OK != client_long_init_connection(user_conn, ctx->args)) {
         return -1;
     }
+
+    /* push to queue ,if have data to support 0-Rtt*/
+    if (ctx->args->user_callback->content_length > 0 &&
+        ctx->args->user_callback->content != NULL) {
+        xqc_cli_msg_queue_put_simple(&ctx->msg_data.message_queue,
+                                     ctx->args->user_callback->data_type,
+                                     (void *) ctx->args->user_callback->content,
+                                     ctx->args->user_callback->content_length);
+
+        client_long_send_requests(user_conn, ctx->args, task->reqs,
+                                  &ctx->msg_data.message_queue,
+                                  ctx->task_ctx.tasks[0].req_cnt);
+    }
     return 0;
 }
 
@@ -918,7 +931,7 @@ int client_long_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params
         if (session_len < MAX_SESSION_TICKET_LEN) {
             strcpy(args->quic_cfg.st, user_param->session);//拷贝session
             args->quic_cfg.st_len = session_len;
-            LOGE("session = %s", args->quic_cfg.st);
+            LOGD("session = %s", args->quic_cfg.st);
         } else {
             LOGE("session set error : to lang > %d", MAX_SESSION_TICKET_LEN);
         }

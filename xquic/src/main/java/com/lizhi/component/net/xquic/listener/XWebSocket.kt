@@ -1,6 +1,6 @@
 package com.lizhi.component.net.xquic.listener
 
-import com.lizhi.component.net.xquic.impl.XRealWebSocket
+import com.lizhi.component.net.xquic.quic.Message
 
 
 /**
@@ -28,7 +28,7 @@ interface XWebSocket {
     /**
      * 发送消息，不管byteArray/string，内部都是统一转成message
      */
-    fun send(message: XRealWebSocket.Message): Boolean
+    fun send(message: Message): Boolean
 
     /**
      * result on : onFailed

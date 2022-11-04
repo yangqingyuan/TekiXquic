@@ -6,7 +6,9 @@ import com.lizhi.component.net.xquic.listener.XCallBack
 import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
+import com.lizhi.component.net.xquic.mode.XRequestBody
 import com.lizhi.component.net.xquic.mode.XResponse
+import com.lizhi.component.net.xquic.quic.Message
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
 import java.util.ArrayDeque
@@ -17,7 +19,12 @@ import java.util.HashMap
  * 作者: yqy
  * 创建日期: 2022/5/26.
  */
-class XConnection(val xquicClient: XquicClient, private val originalRequest: XRequest) {
+class XConnection(
+    private val xquicClient: XquicClient,
+    private val originalRequest: XRequest,
+    var tag: String? = null,
+    var callBack: XCallBack? = null
+) {
 
     companion object {
         private const val TAG = "XConnection"
@@ -62,9 +69,15 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
     /**
      * 存储还未链接的数据
      */
-    private val messageQueue = ArrayDeque<XRealWebSocket.Message>()
+    private val messageQueue = ArrayDeque<Message>()
 
     init {
+        tag?.let {
+            callBack?.let { back ->
+                xCallBackMap[it] = back
+                originalRequest.setUerTag(it)//FIXME 这里是使用临时tag作为区分不同请求的callback，比较混乱
+            }
+        }
         xquicClient.newWebSocket(originalRequest, object : XWebSocketListener {
             override fun onOpen(webSocket: XWebSocket, response: XResponse) {
                 XLogUtils.debug(TAG, "onOpen")
@@ -110,20 +123,20 @@ class XConnection(val xquicClient: XquicClient, private val originalRequest: XRe
 
     @Synchronized
     fun send(
-        tag: String, content: String?, headers: HashMap<String, String>, xCallBack: XCallBack?
+        tag: String, body: XRequestBody, headers: HashMap<String, String>, xCallBack: XCallBack?
     ) {
         if (isDestroy) {
             xCallBack?.onFailure(emptyXCall, Exception("connection is destroy"))
             return
         }
-        xCallBackMap[tag] = xCallBack
-        val message = XRealWebSocket.Message.makeJsonMessage(content ?: "test", tag, headers)
-        if (xWebSocket != null) {
-            xWebSocket?.send(message)
-        } else {//如果没有链接，开始链接,并将参数缓存起来，握手成功后再发送信息
-            messageQueue.add(
-                message
-            )
+        body.let {
+            xCallBackMap[tag] = xCallBack //FIXME 这里是使用临时tag作为区分不同请求的callback，比较混乱
+            val message = Message.makeMessageByReqBody(body, headers, tag)
+            if (xWebSocket != null) {
+                xWebSocket?.send(message)
+            } else {//如果没有链接，开始链接,并将参数缓存起来，握手成功后再发送信息
+                messageQueue.add(message)
+            }
         }
     }
 

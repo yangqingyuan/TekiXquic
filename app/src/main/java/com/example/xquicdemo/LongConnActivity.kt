@@ -10,9 +10,8 @@ import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.listener.XWebSocket
 import com.lizhi.component.net.xquic.listener.XWebSocketListener
 import com.lizhi.component.net.xquic.mode.XRequest
+import com.lizhi.component.net.xquic.mode.XRequestBody
 import com.lizhi.component.net.xquic.mode.XResponse
-import com.lizhi.component.net.xquic.quic.AlpnType
-import com.lizhi.component.net.xquic.quic.ProtoVersion
 import com.lizhi.component.net.xquic.utils.XLogUtils
 import kotlinx.coroutines.*
 import java.text.SimpleDateFormat
@@ -83,8 +82,8 @@ class LongConnActivity : AppCompatActivity() {
             .pingInterval(500)//
             //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
-            .setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
-            .setAlpnType(AlpnType.ALPN_HQ)
+            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
+            //.setAlpnType(AlpnType.ALPN_HQ)
             .addPingListener(object : XPingListener {
                 //可选
                 override fun ping(): ByteArray {
@@ -112,6 +111,7 @@ class LongConnActivity : AppCompatActivity() {
                 .get() //Default
                 .addHeader("tenantId", "soacp")
                 .addHeader("clientId", "portalApp")
+                .body(XRequestBody.createDefaultBody("test".toByteArray()))
                 .build()
         } else {
             XRequest.Builder()
@@ -119,6 +119,7 @@ class LongConnActivity : AppCompatActivity() {
                 .post()
                 .addHeader("tenantId", "soacp")
                 .addHeader("clientId", "portalApp")
+                .body(XRequestBody.createDefaultBody("test"))
                 .build()
         }
 
