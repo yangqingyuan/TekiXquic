@@ -34,5 +34,8 @@ void client_set_event_timer(xqc_msec_t wake_after, void *user_data) {
 
     ctx->ev_engine.repeat = wake_after / 1000000.0;
     //LOGE("client_set_event_timer wake_after:%f", ctx->ev_engine.repeat);
+    if (ctx->ev_engine.repeat > 5) {
+        ctx->ev_engine.repeat = 5;//note: If the time is too long, try to keep it as small as possible to avoid waiting too long for bugs
+    }
     ev_timer_again(ctx->eb, &ctx->ev_engine);
 }

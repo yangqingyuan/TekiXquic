@@ -242,6 +242,7 @@ class XRealWebSocket(
                     .setCCType(xquicClient.ccType)
                     .setCryptoFlag(xquicClient.cryptoFlag)
                     .setFinishFlag(xquicClient.finishFlag)
+                    .setProtoVersion(xquicClient.protoVersion)
                     .setAlpnType(alpnType)
 
                 sendParamsBuilder.setHeaders(parseHttpHeads())
