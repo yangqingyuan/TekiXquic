@@ -89,12 +89,48 @@ int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *c
         goto err;
     }
 
+    //connect can use send（not sendto） to improve performance
+    if (connect(fd, (struct sockaddr *) addr, cfg->addr_len) < 0) {
+        LOGE("connect socket failed, errno: %d\n", errno);
+        goto err;
+    }
+
     return fd;
 
     err:
     close(fd);
     return -1;
 }
+
+
+ssize_t client_write_socket(const unsigned char *buf, size_t size,
+                            const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user) {
+    //DEBUG;
+    xqc_cli_user_conn_t *user_conn = (xqc_cli_user_conn_t *) user;
+    ssize_t res = 0;
+    do {
+        errno = 0;
+        //res = sendto(user_conn->fd, buf, size, 0, peer_addr, peer_addrlen);
+        res = send(user_conn->fd, buf, size, 0);//note：need connect before
+        if (res < 0) {
+            char err_msg[214];
+            sprintf(err_msg, "write socket err %zd %s ,fd:%d, buf:%p, size:%zu, server_add:%s", res,
+                    strerror(errno), user_conn->fd, buf, size,
+                    user_conn->ctx->args->net_cfg.server_addr);
+            LOGE("%s", err_msg);
+            if (errno == EAGAIN) {
+                res = XQC_SOCKET_EAGAIN;
+            }
+            if (res == XQC_SOCKET_ERROR) {
+                callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
+            }
+        }
+        user_conn->last_sock_write_time = xqc_now();
+
+    } while ((res < 0) && (errno == EINTR));
+    return res;
+}
+
 
 /**
  * socket读取数据
@@ -137,9 +173,9 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
                                         addr_len, (xqc_msec_t) recv_time, user_conn);
         if (ret != XQC_OK) {
             char err_msg[214];
-            sprintf(err_msg, "xqc_engine_packet_process error (%d)",ret);
+            sprintf(err_msg, "xqc_engine_packet_process error (%d)", ret);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, ret, err_msg, strlen(err_msg),NULL);
+            callback_data_to_client(user_conn, ret, err_msg, strlen(err_msg), NULL);
             return;
         }
 

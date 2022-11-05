@@ -12,9 +12,6 @@
 extern "C"{
 #endif
 
-ssize_t client_write_socket(const unsigned char *buf, size_t size,
-                            const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user);
-
 void client_save_token(const unsigned char *token, unsigned token_len, void *user_data);
 
 void client_save_session_cb(const char * data, size_t data_len, void *user_data);

@@ -17,6 +17,9 @@ int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
 
 int client_create_socket(xqc_cli_user_conn_t *user_conn, xqc_cli_net_config_t *cfg);
 
+ssize_t client_write_socket(const unsigned char *buf, size_t size,
+                            const struct sockaddr *peer_addr, socklen_t peer_addrlen, void *user);
+
 void client_socket_read_handler(xqc_cli_user_conn_t *user_conn);
 
 void client_socket_write_handler(xqc_cli_user_conn_t *user_conn);
