@@ -254,14 +254,6 @@ void client_long_free_ctx(xqc_cli_ctx_t *ctx) {
             free(ctx->args->user_stream.recv_body);
         }
 
-        if (ctx->args->user_params != NULL) {
-            if (ctx->args->user_params->h3_hdrs.headers != NULL) {
-                free(ctx->args->user_params->h3_hdrs.headers);
-                ctx->args->user_params->h3_hdrs.headers = NULL;
-            }
-            free(ctx->args->user_params);
-        }
-
         free(ctx->args);
         ctx->args = NULL;
     }
@@ -369,16 +361,6 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     if (user_conn->fd > -1) {
         close(user_conn->fd);
         user_conn->fd = -1;
-    }
-
-    /* free user_params */
-    if (ctx->args->user_params != NULL) {
-        if (ctx->args->user_params->h3_hdrs.headers != NULL) {
-            free(ctx->args->user_params->h3_hdrs.headers);
-            ctx->args->user_params->h3_hdrs.headers = NULL;
-        }
-        free(ctx->args->user_params);
-        ctx->args->user_params = NULL;
     }
 
     free(user_conn);
@@ -598,8 +580,8 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         user_stream->user_conn = user_conn;
 
         /*set recv body max len */
-        if (args->user_params->max_recv_data_len > 0) {
-            user_stream->recv_body_max_len = args->user_params->max_recv_data_len;
+        if (args->user_params.max_recv_data_len > 0) {
+            user_stream->recv_body_max_len = args->user_params.max_recv_data_len;
         } else {
             user_stream->recv_body_max_len = MAX_REC_DATA_LEN;
         }
@@ -735,12 +717,12 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     }
 
     /* push to queue ,if have data to support 0-Rtt*/
-    if (ctx->args->user_params->content_length > 0 &&
-        ctx->args->user_params->content != NULL) {
+    if (ctx->args->user_params.content_length > 0 &&
+        ctx->args->user_params.content != NULL) {
         xqc_cli_msg_queue_put_simple(&ctx->msg_data.message_queue,
-                                     ctx->args->user_params->data_type,
-                                     (void *) ctx->args->user_params->content,
-                                     ctx->args->user_params->content_length);
+                                     ctx->args->user_params.data_type,
+                                     (void *) ctx->args->user_params.content,
+                                     ctx->args->user_params.content_length);
 
         client_long_send_requests(user_conn, ctx->args, task->reqs,
                                   &ctx->msg_data.message_queue,
@@ -887,11 +869,12 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
  */
 int client_long_parse_args(xqc_cli_client_args_t *args) {
     /* parse server addr */
-    int ret = client_parse_server_addr(&args->net_cfg, args->user_params->url,
-                                       args->user_params);//根据url解析地址跟port
+    int ret = client_parse_server_addr(&args->net_cfg, args->user_params.url,
+                                       &(args->user_params));//根据url解析地址跟port
     if (ret < 0) {
-        free(args->user_stream.send_body);
-        free(args->user_params);
+        if (args->user_stream.send_body != NULL) {
+            free(args->user_stream.send_body);
+        }
         free(args);
     }
     return ret;
@@ -913,7 +896,7 @@ xqc_cli_ctx_t *client_long_conn(xqc_cli_client_args_t *args) {
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
     client_long_init_ctx(ctx, args);
-    ctx->mutex = args->user_params->mutex;
+    ctx->mutex = args->user_params.mutex;
 
     /* init queue */
     xqc_cli_msg_queue_init(&ctx->msg_data.message_queue);

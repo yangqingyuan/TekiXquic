@@ -71,15 +71,24 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         return -1;
     }
 
-    xqc_cli_user_data_params_t *user_params = user_conn->ctx->args->user_params;
+    xqc_cli_user_data_params_t *user_params = &(user_conn->ctx->args->user_params);
 
-    if (user_params->h3_hdrs.count > 0) {
+    if (user_params->header_count > 0) {
         if (req != NULL && req->count > 0) {
             user_stream->h3_hdrs.headers = req->headers;
             user_stream->h3_hdrs.count = req->count;
         } else {
-            user_stream->h3_hdrs.headers = user_params->h3_hdrs.headers;
-            user_stream->h3_hdrs.count = user_params->h3_hdrs.count;
+            xqc_http_header_t headers[MAX_HEADER];
+            for (int i = 0; i < user_params->header_count; ++i) {
+                xqc_http_header_t header = {
+                        .name = {.iov_base = (void *) user_params->headers[i].name, .iov_len = user_params->headers[i].name_len},
+                        .value = {.iov_base = (void *) user_params->headers[i].value, .iov_len = user_params->headers[i].value_len},
+                        .flags = user_params->headers[i].flags,
+                };
+                headers[i] = header;
+            }
+            user_stream->h3_hdrs.headers = headers;
+            user_stream->h3_hdrs.count = user_params->header_count;
         }
 
         xqc_http_header_t *headers = user_stream->h3_hdrs.headers;

@@ -170,7 +170,7 @@ static jbyteArray getByteArray(JNIEnv *env, jobject param, const char *field) {
 
 
 static int build_headers_from_params(JNIEnv *env, jobject param, const char *field,
-                                     xqc_http_header_t *heards) {
+                                     xqc_cli_http_header_t headers[]) {
     jclass sendParamsClass = (*env)->GetObjectClass(env, param);
     jfieldID jfieldId = (*env)->GetFieldID(env, sendParamsClass, field, "Ljava/util/HashMap;");
     if (!jfieldId) {
@@ -201,20 +201,38 @@ static int build_headers_from_params(JNIEnv *env, jobject param, const char *fie
 
     int i = 0;
     while ((*env)->CallBooleanMethod(env, iteratorObj, hashNextMID)) {
+        if (i > MAX_HEADER) {
+            LOGW("set headers error: Exceeding the maximum value of %d ", MAX_HEADER);
+            break;
+        }
         jobject entryObj = (*env)->CallObjectMethod(env, iteratorObj, nextMID);
 
         jstring keyString = (*env)->CallObjectMethod(env, entryObj, getKeyMID);
         const char *keyChar = (*env)->GetStringUTFChars(env, keyString, 0);
+        int name_len = strlen(keyChar);
+        memset(headers[i].name, 0, MAX_HEADER_DATA_LEN);
+        if (name_len < MAX_HEADER_DATA_LEN) {
+            memcpy(headers[i].name, keyChar, name_len);
+            headers[i].name_len = name_len;
+        } else {
+            LOGW("set header error: Exceeding the maximum value of %d", MAX_HEADER_DATA_LEN);
+        }
+        (*env)->ReleaseStringUTFChars(env, keyString, keyChar);//release jstring
 
         jstring valueString = (*env)->CallObjectMethod(env, entryObj, getValueMID);
         const char *valueChar = (*env)->GetStringUTFChars(env, valueString, 0);
+        int value_len = strlen(valueChar);
+        memset(headers[i].value, 0, MAX_HEADER_DATA_LEN);
+        if (value_len < MAX_HEADER_DATA_LEN) {
+            memcpy(headers[i].value, valueChar, value_len);
+            headers[i].value_len = value_len;
+        } else {
+            LOGW("set header error: Exceeding the maximum value of %d", MAX_HEADER_DATA_LEN);
+        }
+        (*env)->ReleaseStringUTFChars(env, valueString, valueChar);//release jstring
 
-        xqc_http_header_t header = {
-                .name = {.iov_base = (void *) keyChar, .iov_len = strlen(keyChar)},
-                .value = {.iov_base = (void *) valueChar, .iov_len = strlen(valueChar)},
-                .flags = 0,
-        };
-        heards[i] = header;
+        headers[i].flags = 0;
+
         i++;
         (*env)->DeleteLocalRef(env, entryObj);
     }
@@ -314,7 +332,7 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     }
 
     /* init user config */
-    xqc_cli_user_data_params_t *user_params = malloc(sizeof(xqc_cli_user_data_params_t));
+    xqc_cli_user_data_params_t *user_params = &args->user_params;
 
     /* key param */
     user_params->url = cUrl;
@@ -327,24 +345,17 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     /* if hq,no header,no need to create header*/
     if (alpnType > 0) {
         /* build header from params */
-        xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
-        if (build_headers_from_params(env, param, "headers", headers) >= 0) {
-            user_params->h3_hdrs.headers = headers;
-            user_params->h3_hdrs.count = headersSize;
+        if (build_headers_from_params(env, param, "headers", user_params->headers) >= 0) {
+            user_params->header_count = headersSize;
         } else {
             LOGE("build_headers_from_params error");
         }
-    } else {
-        user_params->h3_hdrs.headers = NULL;
     }
 
     /* callback */
     user_params->user_data_callback.object_android = gl_callback;
     user_params->user_data_callback.callback_data = callback_data_to_java;
     user_params->user_data_callback.callback_msg = callback_msg_to_java;
-
-    /* set user params */
-    args->user_params = user_params;
 
     return args;
 }

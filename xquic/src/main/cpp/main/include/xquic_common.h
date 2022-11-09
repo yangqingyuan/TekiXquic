@@ -268,7 +268,8 @@ typedef struct xqc_cli_env_config_s {
 #define RESOURCE_LEN        256
 #define AUTHORITY_LEN       128
 #define URL_LEN             512
-#define MAX_HEADER          100
+#define MAX_HEADER          30
+#define MAX_HEADER_DATA_LEN 100
 #define MAX_PING_LEN        256
 
 #define XQC_INTEROP_TLS_GROUPS  "X25519:P-256:P-384:P-521"
@@ -333,6 +334,19 @@ typedef struct xqc_cli_user_data_callback_s {
     //FIXME
 } xqc_cli_user_data_callback_t;
 
+typedef struct xqc_cli_http_header_s {
+    /* name of http header */
+    char name[MAX_HEADER_DATA_LEN];
+    size_t name_len;
+
+    /* value of http header */
+    char value[MAX_HEADER_DATA_LEN];
+    size_t value_len;
+
+    uint8_t flags;
+
+} xqc_cli_http_header_t;
+
 /**
  * user custom （要增加更多的回调给到jni层，可以再这里增加）
  */
@@ -350,7 +364,8 @@ typedef struct xqc_cli_user_data_params_s {
     pthread_mutex_t *mutex;
 
     /* headers */
-    xqc_http_headers_t h3_hdrs;
+    xqc_cli_http_header_t headers[MAX_HEADER];
+    int header_count;
 
     /* proto version */
     xqc_proto_version_t version;
@@ -387,7 +402,7 @@ typedef struct xqc_cli_client_args_s {
     xqc_cli_user_stream_t user_stream;
 
     /* user config*/
-    xqc_cli_user_data_params_t *user_params;
+    xqc_cli_user_data_params_t user_params;
 } xqc_cli_client_args_t;
 
 /**
@@ -538,7 +553,7 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
                                    const char *data,
                                    unsigned data_len) {
 
-    xqc_cli_user_data_params_t *user_params = args->user_params;
+    xqc_cli_user_data_params_t *user_params = &(args->user_params);
 
     /* callback to client */
     if (user_params) {
@@ -558,7 +573,7 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
 inline void
 callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data, size_t len,
                         void *user_data) {
-    xqc_cli_user_data_params_t *user_params = user_conn->ctx->args->user_params;
+    xqc_cli_user_data_params_t *user_params = &(user_conn->ctx->args->user_params);
     if (user_params) {
         user_params->user_data_callback.callback_data(
                 user_params->user_data_callback.object_android, core,

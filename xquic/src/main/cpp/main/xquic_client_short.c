@@ -253,14 +253,6 @@ void client_free_ctx(xqc_cli_ctx_t *ctx) {
             free(ctx->args->user_stream.recv_body);
         }
 
-        if (ctx->args->user_params != NULL) {
-            if (ctx->args->user_params->h3_hdrs.headers != NULL) {
-                free(ctx->args->user_params->h3_hdrs.headers);
-                ctx->args->user_params->h3_hdrs.headers = NULL;
-            }
-            free(ctx->args->user_params);
-        }
-
         free(ctx->args);
         ctx->args = NULL;
     }
@@ -377,16 +369,6 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     if (ctx->args->user_stream.recv_body != NULL) {
         free(ctx->args->user_stream.recv_body);
         ctx->args->user_stream.recv_body = NULL;
-    }
-
-    /* free user_params */
-    if (ctx->args->user_params != NULL) {
-        if (ctx->args->user_params->h3_hdrs.headers != NULL) {
-            free(ctx->args->user_params->h3_hdrs.headers);
-            ctx->args->user_params->h3_hdrs.headers = NULL;
-        }
-        free(ctx->args->user_params);
-        ctx->args->user_params = NULL;
     }
 
     free(user_conn);
@@ -793,7 +775,7 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
 int client_parse_args(xqc_cli_client_args_t *args) {
 
     /* stream 配置 */
-    xqc_cli_user_data_params_t *user_param = args->user_params;
+    xqc_cli_user_data_params_t *user_param = &(args->user_params);
     if (user_param->content != NULL) {
         args->user_stream.send_body = malloc(user_param->content_length);
         memcpy(args->user_stream.send_body, user_param->content,
@@ -807,11 +789,10 @@ int client_parse_args(xqc_cli_client_args_t *args) {
     }
 
     /* parse server addr */
-    int ret = client_parse_server_addr(&args->net_cfg, args->user_params->url,
-                                       args->user_params);//根据url解析地址跟port
+    int ret = client_parse_server_addr(&args->net_cfg, args->user_params.url,
+                                       &(args->user_params));//根据url解析地址跟port
     if (ret < 0) {
         free(args->user_stream.send_body);
-        free(args->user_params);
         free(args);
     }
     return ret;
@@ -838,7 +819,7 @@ int client_short_send(xqc_cli_client_args_t *args) {
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
     client_init_ctx(ctx, args);
-    ctx->mutex = args->user_params->mutex;
+    ctx->mutex = args->user_params.mutex;
 
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
