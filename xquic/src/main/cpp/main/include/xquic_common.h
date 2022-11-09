@@ -354,12 +354,8 @@ typedef struct xqc_cli_user_data_params_s {
 
     xqc_cli_user_data_callback_t user_data_callback;
 
-    int max_recv_data_len;
-
     const char *url;
-    const char *content;
     int data_type;
-    int content_length;
 
     pthread_mutex_t *mutex;
 

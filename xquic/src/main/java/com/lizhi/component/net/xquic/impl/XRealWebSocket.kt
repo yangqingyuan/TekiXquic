@@ -1,6 +1,5 @@
 package com.lizhi.component.net.xquic.impl
 
-import com.google.gson.Gson
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.listener.XRttInfoListener

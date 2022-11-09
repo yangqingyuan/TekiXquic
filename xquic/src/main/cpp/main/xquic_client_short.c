@@ -773,21 +773,6 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
  * @param content
  */
 int client_parse_args(xqc_cli_client_args_t *args) {
-
-    /* stream 配置 */
-    xqc_cli_user_data_params_t *user_param = &(args->user_params);
-    if (user_param->content != NULL) {
-        args->user_stream.send_body = malloc(user_param->content_length);
-        memcpy(args->user_stream.send_body, user_param->content,
-               user_param->content_length);//拷贝发送的内容
-        args->user_stream.send_body_len = user_param->content_length;
-    }
-    if (user_param->max_recv_data_len > 0) {
-        args->user_stream.recv_body_max_len = user_param->max_recv_data_len;
-    } else {
-        args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
-    }
-
     /* parse server addr */
     int ret = client_parse_server_addr(&args->net_cfg, args->user_params.url,
                                        &(args->user_params));//根据url解析地址跟port

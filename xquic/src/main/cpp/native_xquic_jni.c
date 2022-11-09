@@ -257,6 +257,7 @@ static xqc_cli_client_args_t *
 get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
+    jbyteArray content = getByteArray(env, param, "content");
     jbyteArray token = getByteArray(env, param, "token");
     jint tokenLen = getInt(env, param, "tokenLen");
     jbyteArray session = getByteArray(env, param, "session");
@@ -281,12 +282,6 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jstring url = getString(env, param, "url");
     if (url != NULL) {
         cUrl = (*env)->GetStringUTFChars(env, url, 0);
-    }
-
-    jstring content = getByteArray(env, param, "content");
-    const char *cContent = NULL;
-    if (content != NULL) {
-        cContent = (*env)->GetByteArrayElements(env, content, 0);
     }
 
     /* init network config */
@@ -331,15 +326,25 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
         }
     }
 
+    /* init stream config */
+    if (content != NULL) {
+        args->user_stream.send_body = malloc(contentLength);
+        (*env)->GetByteArrayRegion(env, content, 0, contentLength,
+                                   (jbyte *) args->user_stream.send_body);
+        args->user_stream.send_body_len = contentLength;
+    }
+    if (maxRecvDataLen > 0) {
+        args->user_stream.recv_body_max_len = maxRecvDataLen;
+    } else {
+        args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
+    }
+
     /* init user config */
     xqc_cli_user_data_params_t *user_params = &args->user_params;
 
     /* key param */
     user_params->url = cUrl;
-    user_params->content = cContent;
-    user_params->max_recv_data_len = maxRecvDataLen;
     user_params->mutex = &g_clazz.mutex;
-    user_params->content_length = contentLength;
     user_params->data_type = dataType;
 
     /* if hq,no header,no need to create header*/

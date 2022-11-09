@@ -573,17 +573,20 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         if (args->req_cfg.finish_flag || args->quic_cfg.alpn_type == ALPN_H3) {
             /* new a stream */
             user_stream = calloc(1, sizeof(xqc_cli_user_stream_t));
+            /*set recv body max len */
+            if (args->user_stream.recv_body_max_len > 0) {
+                user_stream->recv_body_max_len = args->user_stream.recv_body_max_len;
+            } else {
+                user_stream->recv_body_max_len = MAX_REC_DATA_LEN;
+            }
         } else {
             /* if reuse stream use the specific stream */
             user_stream = &args->user_stream;
         }
         user_stream->user_conn = user_conn;
 
-        /*set recv body max len */
-        if (args->user_params.max_recv_data_len > 0) {
-            user_stream->recv_body_max_len = args->user_params.max_recv_data_len;
-        } else {
-            user_stream->recv_body_max_len = MAX_REC_DATA_LEN;
+        if (user_stream->send_body) {
+            free(user_stream->send_body);
         }
 
         /* loop user request */
@@ -717,13 +720,12 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     }
 
     /* push to queue ,if have data to support 0-Rtt*/
-    if (ctx->args->user_params.content_length > 0 &&
-        ctx->args->user_params.content != NULL) {
+    if (ctx->args->user_stream.send_body_len > 0 &&
+        ctx->args->user_stream.send_body != NULL) {
         xqc_cli_msg_queue_put_simple(&ctx->msg_data.message_queue,
                                      ctx->args->user_params.data_type,
-                                     (void *) ctx->args->user_params.content,
-                                     ctx->args->user_params.content_length);
-
+                                     (void *) ctx->args->user_stream.send_body,
+                                     ctx->args->user_stream.send_body_len);
         client_long_send_requests(user_conn, ctx->args, task->reqs,
                                   &ctx->msg_data.message_queue,
                                   ctx->task_ctx.tasks[0].req_cnt);
@@ -857,7 +859,6 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
         ev_timer_start(ctx->eb, &ctx->ev_kill);
     }
 }
-
 
 
 /**
