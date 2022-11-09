@@ -308,6 +308,8 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
         } else {
             LOGE("build_headers_from_params error");
         }
+    } else {
+        user_cfg->h3_hdrs.headers = NULL;
     }
 
     user_cfg->cc = cc_type;
@@ -408,7 +410,8 @@ static int long_send_ping(JNIEnv *env, jobject this, jlong clientCtx, jbyteArray
  * @param content
  * @return
  */
-static int lang_send_byte(JNIEnv *env, jobject this, jlong clientCtx, jint data_type, jobject buffer,
+static int
+lang_send_byte(JNIEnv *env, jobject this, jlong clientCtx, jint data_type, jobject buffer,
                jint len) {
     const char *cContent = NULL;
     if (buffer != NULL) {
