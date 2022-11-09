@@ -255,7 +255,10 @@ void client_long_free_ctx(xqc_cli_ctx_t *ctx) {
         }
 
         if (ctx->args->user_callback != NULL) {
-            free(ctx->args->user_callback->h3_hdrs.headers);
+            if (ctx->args->user_callback->h3_hdrs.headers != NULL) {
+                free(ctx->args->user_callback->h3_hdrs.headers);
+                ctx->args->user_callback->h3_hdrs.headers = NULL;
+            }
             free(ctx->args->user_callback);
         }
 
@@ -370,7 +373,10 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 
     /* free user_callback */
     if (ctx->args->user_callback != NULL) {
-        free(ctx->args->user_callback->h3_hdrs.headers);
+        if (ctx->args->user_callback->h3_hdrs.headers != NULL) {
+            free(ctx->args->user_callback->h3_hdrs.headers);
+            ctx->args->user_callback->h3_hdrs.headers = NULL;
+        }
         free(ctx->args->user_callback);
         ctx->args->user_callback = NULL;
     }
@@ -1054,8 +1060,15 @@ int client_long_send_ping(xqc_cli_ctx_t *ctx, const char *ping_content, int len)
         return -1;
     }
     ctx->msg_data.cmd_type = CMD_TYPE_SEND_PING;
-    memset(ctx->msg_data.ping_data, 0, MAX_PING_LEN);
-    memcpy(ctx->msg_data.ping_data, ping_content, len);
+    if (ctx->msg_data.ping_len != len) {
+        memset(ctx->msg_data.ping_data, 0, MAX_PING_LEN);
+        memcpy(ctx->msg_data.ping_data, ping_content, len);
+    } else {
+        if (!strstr(ctx->msg_data.ping_data, ping_content)) {//Decreasing the times of data copy;
+            memcpy(ctx->msg_data.ping_data, ping_content, len);
+        }
+    }
+    ctx->msg_data.ping_len = len;
     ev_async_send(ctx->eb, &ctx->ev_task);
     return 0;
 }

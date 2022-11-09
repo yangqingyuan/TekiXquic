@@ -477,6 +477,7 @@ typedef struct xqc_cli_user_data_msg_s {
 
     /* cache ping data */
     char ping_data[MAX_PING_LEN];
+    int ping_len;
 
     /* queue to cache send data */
     xqc_cli_message_queue_t message_queue;

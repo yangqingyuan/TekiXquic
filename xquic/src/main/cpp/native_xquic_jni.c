@@ -259,14 +259,10 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     jint dataType = getInt(env, param, "dataType");
     jint contentLength = getInt(env, param, "contentLength");
 
-    /* build header from params */
-    xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
-    if (build_headers_from_params(env, param, "headers", headers) < 0) {
-        LOGE("build_headers_from_params error");
-        return NULL;
+    const char *cUrl = NULL;
+    if (url != NULL) {
+        cUrl = (*env)->GetStringUTFChars(env, url, 0);
     }
-
-    const char *cUrl = (*env)->GetStringUTFChars(env, url, 0);
 
     jstring content = getByteArray(env, param, "content");
     const char *cContent = NULL;
@@ -303,8 +299,16 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     user_cfg->data_type = dataType;
 
     /* headers */
-    user_cfg->h3_hdrs.headers = headers;
-    user_cfg->h3_hdrs.count = headersSize;
+    if (alpn_type > 0) { //if hq,no header,no need to create header
+        /* build header from params */
+        xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
+        if (build_headers_from_params(env, param, "headers", headers) >= 0) {
+            user_cfg->h3_hdrs.headers = headers;
+            user_cfg->h3_hdrs.count = headersSize;
+        } else {
+            LOGE("build_headers_from_params error");
+        }
+    }
 
     user_cfg->cc = cc_type;
     user_cfg->version = protoVersion;
@@ -388,14 +392,11 @@ static int long_start(JNIEnv *env, jobject this, jlong clientCtx) {
  * @return
  */
 static int long_send_ping(JNIEnv *env, jobject this, jlong clientCtx, jbyteArray ping, jint len) {
-    const char *cPingContent = NULL;
+    const char *cPingContent[MAX_PING_LEN] = {0};
     if (ping != NULL) {
-        cPingContent = (*env)->GetByteArrayElements(env, ping,0);
+        (*env)->GetByteArrayRegion(env, ping, 0, len, cPingContent);
     }
-    if (cPingContent == NULL) {
-        return -1;
-    }
-    return client_long_send_ping(jlong_to_ptr(clientCtx),cPingContent,len);
+    return client_long_send_ping(jlong_to_ptr(clientCtx), cPingContent, len);
 }
 
 

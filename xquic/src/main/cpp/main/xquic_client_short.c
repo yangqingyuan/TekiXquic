@@ -254,7 +254,10 @@ void client_free_ctx(xqc_cli_ctx_t *ctx) {
         }
 
         if (ctx->args->user_callback != NULL) {
-            free(ctx->args->user_callback->h3_hdrs.headers);
+            if (ctx->args->user_callback->h3_hdrs.headers != NULL) {
+                free(ctx->args->user_callback->h3_hdrs.headers);
+                ctx->args->user_callback->h3_hdrs.headers = NULL;
+            }
             free(ctx->args->user_callback);
         }
 
@@ -378,7 +381,10 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 
     /* free user_callback */
     if (ctx->args->user_callback != NULL) {
-        free(ctx->args->user_callback->h3_hdrs.headers);
+        if (ctx->args->user_callback->h3_hdrs.headers != NULL) {
+            free(ctx->args->user_callback->h3_hdrs.headers);
+            ctx->args->user_callback->h3_hdrs.headers = NULL;
+        }
         free(ctx->args->user_callback);
         ctx->args->user_callback = NULL;
     }
