@@ -216,6 +216,7 @@ static int build_headers_from_params(JNIEnv *env, jobject param, const char *fie
         };
         heards[i] = header;
         i++;
+        (*env)->DeleteLocalRef(env, entryObj);
     }
 
     (*env)->DeleteLocalRef(env, sendParamsClass);
@@ -234,7 +235,8 @@ static int build_headers_from_params(JNIEnv *env, jobject param, const char *fie
 /*
  * get params
  */
-static xqc_cli_client_args_t *get_args_params(JNIEnv *env, jobject param, jobject callback) {
+static xqc_cli_client_args_t *
+get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
     jbyteArray token = getByteArray(env, param, "token");
@@ -255,6 +257,7 @@ static xqc_cli_client_args_t *get_args_params(JNIEnv *env, jobject param, jobjec
 
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
     memset(args, 0, sizeof(xqc_cli_client_args_t));
+    args->net_cfg.conn_type = connType;
 
     const char *cUrl = NULL;
     jstring url = getString(env, param, "url");
@@ -356,10 +359,8 @@ static xqc_cli_client_args_t *get_args_params(JNIEnv *env, jobject param, jobjec
  * @return
  */
 static int short_send(JNIEnv *env, jobject this, jobject param, jobject callback) {
-    xqc_cli_client_args_t *args = get_args_params(env, param, callback);
-    args->net_cfg.conn_type = CONN_TYPE_SHORT;
     /* start to send data */
-    return client_short_send(args);
+    return client_short_send(get_args_params(env, param, callback, CONN_TYPE_SHORT));
 }
 
 /**
@@ -383,8 +384,7 @@ static int short_cancel(JNIEnv *env, jobject this, jlong clientCtx) {
  */
 static long long_connect(JNIEnv *env, jobject this, jobject param, jobject callback) {
     DEBUG;
-    xqc_cli_client_args_t *args = get_args_params(env, param, callback);
-    args->net_cfg.conn_type = CONN_TYPE_LONG;
+    xqc_cli_client_args_t *args = get_args_params(env, param, callback, CONN_TYPE_LONG);
     xqc_cli_ctx_t *ctx = client_long_conn(args);
     if (ctx == NULL) {
         return -1;
