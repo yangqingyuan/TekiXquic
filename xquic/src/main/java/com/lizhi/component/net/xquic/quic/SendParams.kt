@@ -16,11 +16,13 @@ class SendParams(val builder: Builder) {
      * optional param
      */
     var token: ByteArray? = builder.token
+    var tokenLen: Int = builder.token?.size ?: 0
 
     /**
      * optional param
      */
     var session: ByteArray? = builder.session
+    var sessionLen: Int = builder.session?.size ?: 0
 
     /**
      * post content

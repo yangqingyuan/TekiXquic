@@ -71,7 +71,7 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         return -1;
     }
 
-    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_params;
 
     if (user_callback->h3_hdrs.count > 0) {
         if (req != NULL && req->count > 0) {

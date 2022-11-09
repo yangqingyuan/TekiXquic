@@ -213,11 +213,11 @@ typedef struct xqc_cli_quic_config_s {
 
     /* 0-rtt config */
     size_t st_len;                        /* session ticket len */
-    char st[MAX_SESSION_TICKET_LEN];    /* session ticket buf */
+    const unsigned char session[MAX_SESSION_TICKET_LEN];    /* session ticket buf */
     int tp_len;                        /* transport params len */
     char tp[MAX_TRANSPORT_PARAMS_LEN];  /* transport params buf */
     size_t token_len;                     /* token len */
-    char token[XQC_MAX_TOKEN_LEN];      /* token buf */
+    const unsigned char token[XQC_MAX_TOKEN_LEN];      /* token buf */
 
     char *cipher_suites;                /* cipher suites */
 
@@ -340,28 +340,14 @@ typedef struct xqc_cli_user_data_params_s {
 
     xqc_cli_user_data_callback_t user_data_callback;
 
-    /* idle persist timeout unit second*/
-    int conn_timeout;
-    int read_timeout;
-
     int max_recv_data_len;
 
-    int no_crypto_flag;/* 1:without crypto */
-
-    int finish_flag;    /* request finish flag, 1 for finish. */
-
-    const char *token;
-    char *tp;
-    const char *session;
     const char *url;
     const char *content;
     int data_type;
     int content_length;
 
     pthread_mutex_t *mutex;
-
-    /* congestion control algorithm */
-    CC_TYPE cc;
 
     /* headers */
     xqc_http_headers_t h3_hdrs;
@@ -400,8 +386,8 @@ typedef struct xqc_cli_client_args_s {
     /* user stream*/
     xqc_cli_user_stream_t user_stream;
 
-    /* user callback*/
-    xqc_cli_user_data_params_t *user_callback;
+    /* user config*/
+    xqc_cli_user_data_params_t *user_params;
 } xqc_cli_client_args_t;
 
 /**
@@ -552,7 +538,7 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
                                    const char *data,
                                    unsigned data_len) {
 
-    xqc_cli_user_data_params_t *user_callback = args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = args->user_params;
 
     /* callback to client */
     if (user_callback) {
@@ -572,7 +558,7 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
 inline void
 callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data, size_t len,
                         void *user_data) {
-    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_callback;
+    xqc_cli_user_data_params_t *user_callback = user_conn->ctx->args->user_params;
     if (user_callback) {
         user_callback->user_data_callback.callback_data(
                 user_callback->user_data_callback.object_android, core,

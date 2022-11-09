@@ -1,7 +1,11 @@
 package com.example.xquicdemo
 
 import android.content.Context
+import com.lizhi.component.net.xquic.XquicClient
+import com.lizhi.component.net.xquic.listener.XPingListener
 import com.lizhi.component.net.xquic.quic.CCType
+import com.lizhi.component.net.xquic.quic.FinishFlag
+import com.lizhi.component.net.xquic.utils.XLogUtils
 
 object SetCache {
 
@@ -130,5 +134,33 @@ object SetCache {
 
     fun setTestSpace(context: Context, count: Int) {
         context.getSharedPreferences(key, 0).edit().putInt(KEY_TEST_SPACE, count).apply()
+    }
+
+    var xquicClient: XquicClient? = null
+    fun getClient(context: Context): XquicClient {
+        if (xquicClient == null) {
+            xquicClient = XquicClient.Builder()
+                .connectTimeOut(getConnTimeout(context))
+                .setReadTimeOut(getConnTimeout(context))
+                .ccType(getCCType(context))
+                .pingInterval(1000)//
+                .setFinishFlag(FinishFlag.FINISH)
+                //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
+                //.dns(XDns.SYSTEM)
+                //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
+                //.setMultiPath(MultiPathType.SUPPORT_BOTH)
+                //.setAlpnType(AlpnType.ALPN_HQ)
+                .addPingListener(object : XPingListener {
+                    override fun ping(): ByteArray {
+                        return "ping data".toByteArray()
+                    }
+
+                    override fun pong(data: ByteArray?) {
+                        XLogUtils.info("data=${String(data!!)}")
+                    }
+                })
+                .build()
+        }
+        return xquicClient!!
     }
 }

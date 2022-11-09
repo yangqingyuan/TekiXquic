@@ -17,7 +17,7 @@ extern "C"{
  * @param user_cfg
  * @return
  */
-xqc_cli_ctx_t *client_long_conn(xqc_cli_user_data_params_t *user_cfg);
+xqc_cli_ctx_t *client_long_conn(xqc_cli_client_args_t *args);
 
 /**
  * 开始

@@ -16,14 +16,14 @@ void client_write_log(xqc_log_level_t lvl, const void *buf, size_t count, void *
             LOGE("log:%s\n", buf);
             break;
         case XQC_LOG_WARN:
-            //LOGW("log:%s\n", buf);
+            LOGW("log:%s\n", buf);
             break;
         case XQC_LOG_INFO:
         case XQC_LOG_STATS:
-            //LOGI("log:%s\n", buf);
+            LOGI("log:%s\n", buf);
             break;
         case XQC_LOG_DEBUG:
-            //LOGD("log:%s\n", buf);
+            LOGD("log:%s\n", buf);
             break;
     }
 }

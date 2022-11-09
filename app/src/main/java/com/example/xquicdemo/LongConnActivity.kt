@@ -75,27 +75,7 @@ class LongConnActivity : AppCompatActivity() {
     }
 
     private fun initWebSocket() {
-        val xquicClient = XquicClient.Builder()
-            .connectTimeOut(SetCache.getConnTimeout(applicationContext))
-            .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
-            .ccType(SetCache.getCCType(applicationContext))
-            .pingInterval(500)//
-            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
-            //.dns(XDns.SYSTEM)
-            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
-            //.setAlpnType(AlpnType.ALPN_HQ)
-            .addPingListener(object : XPingListener {
-                //可选
-                override fun ping(): ByteArray {
-                    return "ping data".toByteArray()
-                }
-
-                override fun pong(data: ByteArray?) {
-                    XLogUtils.info("data=${String(data!!)}")
-                }
-
-            })
-            .build()
+        val xquicClient = SetCache.getClient(applicationContext)
 
         val url = SetCache.getSelectUrl(applicationContext)
         if (url.isNullOrEmpty()) {
@@ -111,7 +91,7 @@ class LongConnActivity : AppCompatActivity() {
                 .get() //Default
                 .addHeader("tenantId", "soacp")
                 .addHeader("clientId", "portalApp")
-                .body(XRequestBody.createDefaultBody("test".toByteArray()))
+                //.body(XRequestBody.createDefaultBody("test".toByteArray()))
                 .build()
         } else {
             XRequest.Builder()
@@ -119,7 +99,7 @@ class LongConnActivity : AppCompatActivity() {
                 .post()
                 .addHeader("tenantId", "soacp")
                 .addHeader("clientId", "portalApp")
-                .body(XRequestBody.createDefaultBody("test"))
+                //.body(XRequestBody.createDefaultBody("test"))
                 .build()
         }
 

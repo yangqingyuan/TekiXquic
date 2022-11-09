@@ -253,12 +253,12 @@ void client_free_ctx(xqc_cli_ctx_t *ctx) {
             free(ctx->args->user_stream.recv_body);
         }
 
-        if (ctx->args->user_callback != NULL) {
-            if (ctx->args->user_callback->h3_hdrs.headers != NULL) {
-                free(ctx->args->user_callback->h3_hdrs.headers);
-                ctx->args->user_callback->h3_hdrs.headers = NULL;
+        if (ctx->args->user_params != NULL) {
+            if (ctx->args->user_params->h3_hdrs.headers != NULL) {
+                free(ctx->args->user_params->h3_hdrs.headers);
+                ctx->args->user_params->h3_hdrs.headers = NULL;
             }
-            free(ctx->args->user_callback);
+            free(ctx->args->user_params);
         }
 
         free(ctx->args);
@@ -379,14 +379,14 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
         ctx->args->user_stream.recv_body = NULL;
     }
 
-    /* free user_callback */
-    if (ctx->args->user_callback != NULL) {
-        if (ctx->args->user_callback->h3_hdrs.headers != NULL) {
-            free(ctx->args->user_callback->h3_hdrs.headers);
-            ctx->args->user_callback->h3_hdrs.headers = NULL;
+    /* free user_params */
+    if (ctx->args->user_params != NULL) {
+        if (ctx->args->user_params->h3_hdrs.headers != NULL) {
+            free(ctx->args->user_params->h3_hdrs.headers);
+            ctx->args->user_params->h3_hdrs.headers = NULL;
         }
-        free(ctx->args->user_callback);
-        ctx->args->user_callback = NULL;
+        free(ctx->args->user_params);
+        ctx->args->user_params = NULL;
     }
 
     free(user_conn);
@@ -517,7 +517,7 @@ void client_init_connection_ssl_config(xqc_conn_ssl_config_t *conn_ssl_config,
     if (args->quic_cfg.st_len <= 0) {
         conn_ssl_config->session_ticket_data = NULL;
     } else {
-        conn_ssl_config->session_ticket_data = args->quic_cfg.st;
+        conn_ssl_config->session_ticket_data = args->quic_cfg.session;
         conn_ssl_config->session_ticket_len = args->quic_cfg.st_len;
     }
 
@@ -782,51 +782,6 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
 }
 
 
-/**
- * 初始化参数
- * （1）网络配置
- * （2）环境配置
- * （3）quic配置
- */
-int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *user_param) {
-    DEBUG;
-    memset(args, 0, sizeof(xqc_cli_client_args_t));
-
-    /*网络配置*/
-    if (user_param->conn_timeout > 0) {
-        args->net_cfg.conn_timeout = user_param->conn_timeout;
-    } else {
-        args->net_cfg.conn_timeout = 30;
-    }
-
-    if (user_param->conn_timeout > 0) {
-        args->net_cfg.read_timeout = user_param->read_timeout;
-    } else {
-        args->net_cfg.read_timeout = 30;
-    }
-
-    args->net_cfg.mode = MODE_SCMR;
-    args->net_cfg.cc = user_param->cc;
-    args->net_cfg.conn_type = CONN_TYPE_SHORT;
-    args->net_cfg.version = user_param->version;
-
-    /* 短链接只有一个url请求*/
-    args->req_cfg.request_cnt = 1;
-    /* 发送完毕标识*/
-    args->req_cfg.finish_flag = user_param->finish_flag;
-
-    /*环境配置 */
-    args->env_cfg.log_level = XQC_LOG_DEBUG;
-    //strncpy(args->env_cfg.log_path,"xxxx",sizeof (args->env_cfg.log_path));
-    //strncpy(args->env_cfg.out_file_dir,"xxxx",sizeof (args->env_cfg.out_file_dir));
-
-    /*quic配置 */
-    args->quic_cfg.alpn_type = user_param->alpn_type;
-    strncpy(args->quic_cfg.alpn, "hq-interop", sizeof(args->quic_cfg.alpn));
-    args->quic_cfg.keyupdate_pkt_threshold = UINT16_MAX;
-
-    return 0;
-}
 
 /**
  * 解析参数
@@ -835,33 +790,10 @@ int client_init_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *us
  * @param session
  * @param content
  */
-int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *user_param) {
-    if (user_param->token != NULL) {
-        size_t token_len = strlen(user_param->token);
-
-        if (token_len < XQC_MAX_TOKEN_LEN) {
-            strcpy(args->quic_cfg.token, user_param->token);//拷贝token
-            args->quic_cfg.token_len = token_len;
-        } else {
-            LOGE("token set error : to lang > %d", XQC_MAX_TOKEN_LEN);
-        }
-    }
-
-    if (user_param->session != NULL) {
-        size_t session_len = strlen(user_param->session);
-        if (session_len < MAX_SESSION_TICKET_LEN) {
-            strcpy(args->quic_cfg.st, user_param->session);//拷贝session
-            args->quic_cfg.st_len = session_len;
-        } else {
-            LOGE("session set error : to lang > %d", MAX_SESSION_TICKET_LEN);
-        }
-    }
-
-    /*set crypto 1:without crypto*/
-    args->quic_cfg.no_crypto_flag = user_param->no_crypto_flag;
-
+int client_parse_args(xqc_cli_client_args_t *args) {
 
     /* stream 配置 */
+    xqc_cli_user_data_params_t *user_param = args->user_params;
     if (user_param->content != NULL) {
         args->user_stream.send_body = malloc(user_param->content_length);
         memcpy(args->user_stream.send_body, user_param->content,
@@ -874,15 +806,12 @@ int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *u
         args->user_stream.recv_body_max_len = MAX_REC_DATA_LEN;
     }
 
-    /* set callback */
-    args->user_callback = user_param;
-
     /* parse server addr */
-    int ret = client_parse_server_addr(&args->net_cfg, user_param->url,
-                                       args->user_callback);//根据url解析地址跟port
+    int ret = client_parse_server_addr(&args->net_cfg, args->user_params->url,
+                                       args->user_params);//根据url解析地址跟port
     if (ret < 0) {
         free(args->user_stream.send_body);
-        free(args->user_callback);
+        free(args->user_params);
         free(args);
     }
     return ret;
@@ -897,21 +826,19 @@ int client_parse_args(xqc_cli_client_args_t *args, xqc_cli_user_data_params_t *u
  * @param content
  * @return
  */
-int client_short_send(xqc_cli_user_data_params_t *user_param) {
+int client_short_send(xqc_cli_client_args_t *args) {
 
     uint64_t start_time = xqc_now();
 
     /*get input client args */
-    xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
-    client_init_args(args, user_param);
-    if (client_parse_args(args, user_param) < 0) {
+    if (client_parse_args(args) < 0) {
         goto end;
     }
 
     /*init client ctx*/
     xqc_cli_ctx_t *ctx = calloc(1, sizeof(xqc_cli_ctx_t));
     client_init_ctx(ctx, args);
-    ctx->mutex = user_param->mutex;
+    ctx->mutex = args->user_params->mutex;
 
     /*engine event*/
     ctx->eb = ev_loop_new(EVFLAG_AUTO);
@@ -946,14 +873,6 @@ int client_short_send(xqc_cli_user_data_params_t *user_param) {
     ev_loop_destroy(ctx->eb);
 
     /* free ctx */
-#if 0 //FIXME 开启后并发请求下会有异常
-    xqc_cli_alpn_type_t alpn_type = ctx->args->quic_cfg.alpn_type;
-    if (alpn_type == ALPN_H3) {
-        xqc_h3_ctx_destroy(ctx->engine);
-    } else {
-        xqc_engine_unregister_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9);
-    }
-#endif
     xqc_engine_destroy(ctx->engine);
     client_free_ctx(ctx);
 

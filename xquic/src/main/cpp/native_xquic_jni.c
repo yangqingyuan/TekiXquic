@@ -234,24 +234,18 @@ static int build_headers_from_params(JNIEnv *env, jobject param, const char *fie
 /*
  * get params
  */
-static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, jobject callback) {
-
-    jstring url = getString(env, param, "url");
-
-    if (url == NULL) {
-        LOGE("xquicConnect error url == NULL");
-        return NULL;
-    }
-
+static xqc_cli_client_args_t *get_args_params(JNIEnv *env, jobject param, jobject callback) {
     jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
     jbyteArray token = getByteArray(env, param, "token");
+    jint tokenLen = getInt(env, param, "tokenLen");
     jbyteArray session = getByteArray(env, param, "session");
-    jint connect_time_out = getInt(env, param, "connectTimeOut");
-    jint read_time_out = getInt(env, param, "readTimeOut");
-    jint max_recv_data_len = getInt(env, param, "maxRecvDataLen");
-    jint cc_type = getInt(env, param, "ccType");
-    jint alpn_type = getInt(env, param, "alpnType");
+    jint sessionLen = getInt(env, param, "sessionLen");
+    jint connectTimeOut = getInt(env, param, "connectTimeOut");
+    jint readTimeOut = getInt(env, param, "readTimeOut");
+    jint maxRecvDataLen = getInt(env, param, "maxRecvDataLen");
+    jint ccType = getInt(env, param, "ccType");
+    jint alpnType = getInt(env, param, "alpnType");
     jint protoVersion = getInt(env, param, "protoVersion");
     jint headersSize = getInt(env, param, "headersSize");
     jint cryptoFlag = getInt(env, param, "cryptoFlag");
@@ -259,7 +253,11 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
     jint dataType = getInt(env, param, "dataType");
     jint contentLength = getInt(env, param, "contentLength");
 
+    xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
+    memset(args, 0, sizeof(xqc_cli_client_args_t));
+
     const char *cUrl = NULL;
+    jstring url = getString(env, param, "url");
     if (url != NULL) {
         cUrl = (*env)->GetStringUTFChars(env, url, 0);
     }
@@ -270,57 +268,82 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
         cContent = (*env)->GetByteArrayElements(env, content, 0);
     }
 
-    const char *cToken = NULL;
-    if (token != NULL) {
-        cToken = (*env)->GetByteArrayElements(env, token, 0);
+    /* init network config */
+    if (connectTimeOut > 0) {
+        args->net_cfg.conn_timeout = connectTimeOut;
+    } else {
+        args->net_cfg.conn_timeout = 30;
+        args->net_cfg.read_timeout = readTimeOut;
     }
-    const char *cSession = NULL;
-    if (session != NULL) {
-        cSession = (*env)->GetByteArrayElements(env, session, 0);
+    args->net_cfg.mode = MODE_SCMR;
+    args->net_cfg.cc = ccType;
+    args->net_cfg.version = protoVersion;
+
+    /* init req config*/
+    args->req_cfg.request_cnt = 1;
+    args->req_cfg.finish_flag = finishFlag;/* stream is finish */
+
+    /* init env config */
+    args->env_cfg.log_level = XQC_LOG_DEBUG;
+
+    /* init quic config */
+    args->quic_cfg.alpn_type = alpnType;
+    strncpy(args->quic_cfg.alpn, "hq-interop", sizeof(args->quic_cfg.alpn));
+    args->quic_cfg.keyupdate_pkt_threshold = UINT16_MAX;
+    args->quic_cfg.no_crypto_flag = cryptoFlag;/*set crypto 1:without crypto*/
+    if (token != NULL && tokenLen > 0) {
+        if (tokenLen < XQC_MAX_TOKEN_LEN) {
+            (*env)->GetByteArrayRegion(env, token, 0, tokenLen, (jbyte *) args->quic_cfg.token);
+            args->quic_cfg.token_len = tokenLen;
+        } else {
+            LOGE("token set error : to lang > %d", XQC_MAX_TOKEN_LEN);
+        }
+    }
+    if (session != NULL && sessionLen > 0) {
+        if (sessionLen < MAX_SESSION_TICKET_LEN) {
+            (*env)->GetByteArrayRegion(env, session, 0, sessionLen,
+                                       (jbyte *) args->quic_cfg.session);
+            args->quic_cfg.st_len = sessionLen;
+            LOGD("session = %s", args->quic_cfg.session);
+        } else {
+            LOGE("session set error : to lang > %d", MAX_SESSION_TICKET_LEN);
+        }
     }
 
-    /* user custom callback */
-    xqc_cli_user_data_params_t *user_cfg = malloc(sizeof(xqc_cli_user_data_params_t));
+    /* init user config */
+    xqc_cli_user_data_params_t *user_params = malloc(sizeof(xqc_cli_user_data_params_t));
 
     /* key param */
-    user_cfg->url = cUrl;
-    user_cfg->content = cContent;
+    user_params->url = cUrl;
+    user_params->content = cContent;
+    user_params->max_recv_data_len = maxRecvDataLen;
+    user_params->mutex = &g_clazz.mutex;
+    user_params->content_length = contentLength;
+    user_params->data_type = dataType;
 
-    /* optional param */
-    user_cfg->token = cToken;
-    user_cfg->session = cSession;
-    user_cfg->conn_timeout = connect_time_out;
-    user_cfg->read_timeout = read_time_out;
-    user_cfg->max_recv_data_len = max_recv_data_len;
-    user_cfg->mutex = &g_clazz.mutex;
-    user_cfg->no_crypto_flag = cryptoFlag;
-    user_cfg->finish_flag = finishFlag;
-    user_cfg->content_length = contentLength;
-    user_cfg->data_type = dataType;
-
-    /* headers */
-    if (alpn_type > 0) { //if hq,no header,no need to create header
+    /* if hq,no header,no need to create header*/
+    if (alpnType > 0) {
         /* build header from params */
         xqc_http_header_t *headers = malloc(sizeof(xqc_http_header_t) * headersSize);
         if (build_headers_from_params(env, param, "headers", headers) >= 0) {
-            user_cfg->h3_hdrs.headers = headers;
-            user_cfg->h3_hdrs.count = headersSize;
+            user_params->h3_hdrs.headers = headers;
+            user_params->h3_hdrs.count = headersSize;
         } else {
             LOGE("build_headers_from_params error");
         }
     } else {
-        user_cfg->h3_hdrs.headers = NULL;
+        user_params->h3_hdrs.headers = NULL;
     }
 
-    user_cfg->cc = cc_type;
-    user_cfg->version = protoVersion;
-    user_cfg->alpn_type = alpn_type;
-
     /* callback */
-    user_cfg->user_data_callback.object_android = gl_callback;
-    user_cfg->user_data_callback.callback_data = callback_data_to_java;
-    user_cfg->user_data_callback.callback_msg = callback_msg_to_java;
-    return user_cfg;
+    user_params->user_data_callback.object_android = gl_callback;
+    user_params->user_data_callback.callback_data = callback_data_to_java;
+    user_params->user_data_callback.callback_msg = callback_msg_to_java;
+
+    /* set user params */
+    args->user_params = user_params;
+
+    return args;
 }
 
 
@@ -333,13 +356,10 @@ static xqc_cli_user_data_params_t *get_data_params(JNIEnv *env, jobject param, j
  * @return
  */
 static int short_send(JNIEnv *env, jobject this, jobject param, jobject callback) {
-    xqc_cli_user_data_params_t *user_param = get_data_params(env, param, callback);
-    if (user_param == NULL) {
-        return -1;
-    }
-
+    xqc_cli_client_args_t *args = get_args_params(env, param, callback);
+    args->net_cfg.conn_type = CONN_TYPE_SHORT;
     /* start to send data */
-    return client_short_send(user_param);
+    return client_short_send(args);
 }
 
 /**
@@ -362,12 +382,10 @@ static int short_cancel(JNIEnv *env, jobject this, jlong clientCtx) {
  * @return
  */
 static long long_connect(JNIEnv *env, jobject this, jobject param, jobject callback) {
-    xqc_cli_user_data_params_t *user_param = get_data_params(env, param, callback);
-    if (user_param == NULL) {
-        return -1;
-    }
-
-    xqc_cli_ctx_t *ctx = client_long_conn(user_param);
+    DEBUG;
+    xqc_cli_client_args_t *args = get_args_params(env, param, callback);
+    args->net_cfg.conn_type = CONN_TYPE_LONG;
+    xqc_cli_ctx_t *ctx = client_long_conn(args);
     if (ctx == NULL) {
         return -1;
     }
