@@ -51,9 +51,10 @@ class ShortConnActivity : AppCompatActivity() {
             .writeTimeout(15)//TODO 未实现
             //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
             //.dns(XDns.SYSTEM)
-            .reuse(SetCache.getReuse(applicationContext) == 1)//默认值false
-            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
-            //.setAlpnType(AlpnType.ALPN_HQ)
+            .reuse(SetCache.getReuse(applicationContext) == 1)//是否长链接复用，注意要看后端是否支持，能复用，强烈建议复用，在性能上会有非常大的提升，例如：阿里云这些是支持的，默认false
+            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//是否加密，默认加密
+            //.setAlpnType(AlpnType.ALPN_HQ) //支持协议切换，默认H3
+            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//支持协议版本号设置 ，默认XQC_VERSION_V1
             .build()
 
         textView = findViewById(R.id.tv_result)
