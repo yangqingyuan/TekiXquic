@@ -19,9 +19,11 @@ ssize_t client_send_hq_content(xqc_cli_user_stream_t *user_stream, int finish_fl
                                   user_stream->send_body_len -
                                   user_stream->send_offset,
                                   finish_flag);
-            if (ret < 0) {
-                LOGE("client send hq body error ret=%zd,finish_flag=%d", ret, finish_flag);
-                return ret;
+            if (ret == -XQC_EAGAIN) {
+                return 0;
+            } else if (ret < 0) {
+                LOGW("client send hq body error ret=%zd,finish_flag=%d", ret, finish_flag);
+                return 0;
             } else {
                 user_stream->send_offset += ret;
                 LOGD("client send hq body success size=%zd,finish_flag=%d", ret, finish_flag);

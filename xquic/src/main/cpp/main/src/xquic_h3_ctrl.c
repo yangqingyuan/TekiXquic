@@ -37,9 +37,11 @@ ssize_t client_send_h3_content(xqc_cli_user_stream_t *user_stream) {
                                            user_stream->send_body_len -
                                            user_stream->send_offset,
                                            1);
-            if (ret < 0) {
-                LOGE("client send h3 body error size=%zd", ret);
-                return ret;
+            if (ret == -XQC_EAGAIN) {
+                return 0;
+            } else if (ret < 0) {
+                LOGW("client send h3 body error size=%zd", ret);
+                return 0;
             } else {
                 user_stream->send_offset += ret;
                 LOGD("client send h3 body success size=%zd", ret);
