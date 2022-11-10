@@ -1,7 +1,12 @@
 package com.lizhi.component.net.xquic
 
+import android.content.Context
+import android.net.ConnectivityManager
+import android.net.NetworkRequest
+import android.os.Build
 import android.os.Handler
 import android.os.Looper
+import androidx.annotation.RequiresApi
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
 import com.lizhi.component.net.xquic.impl.*
@@ -9,6 +14,7 @@ import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.XRequest
 import com.lizhi.component.net.xquic.quic.*
 import com.lizhi.component.net.xquic.quic.CCType
+import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.util.*
 
 /**
@@ -87,6 +93,11 @@ open class XquicClient internal constructor(val builder: Builder) {
     var maxRecvDataLen = builder.maxRecvDataLen
 
     /**
+     * If the timeout setting of ping return times indicates that the callback will fail
+     */
+    internal var pingTimeOutCount: Int = 0
+
+    /**
      * 调度器
      */
     private val dispatcher = builder.dispatcher
@@ -110,6 +121,8 @@ open class XquicClient internal constructor(val builder: Builder) {
      * ping listener
      */
     private var pingListener = builder.pingListener
+
+    private var context: Context? = builder.context
 
     private var handler = Handler(Looper.getMainLooper())
 
@@ -144,6 +157,8 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var cryptoFlag = CryptoFlag.CRYPTO
         internal var finishFlag = FinishFlag.FINISH
         internal var maxRecvDataLen = 1024 * 512
+        internal var pingTimeOutCount: Int = 0
+        internal var context: Context? = null
 
         internal var pingListener: XPingListener = object : XPingListener {
             override fun ping(): ByteArray {
@@ -172,6 +187,7 @@ open class XquicClient internal constructor(val builder: Builder) {
             cryptoFlag = xquicClient.cryptoFlag
             cryptoFlag = xquicClient.finishFlag
             maxRecvDataLen = xquicClient.maxRecvDataLen
+            context = xquicClient.context
         }
 
         fun build(): XquicClient {
@@ -198,8 +214,12 @@ open class XquicClient internal constructor(val builder: Builder) {
             this.protoVersion = version
         }
 
-        fun pingInterval(pingInterval: Long) = apply {
+        /**
+         * if pingInterval>0 send ping
+         */
+        fun pingInterval(pingInterval: Long, pingTimeOutCount: Int = 0) = apply {
             this.pingInterval = pingInterval
+            this.pingTimeOutCount = pingTimeOutCount
         }
 
         fun setCryptoFlag(@CryptoFlag.Type flag: Int) = apply {
@@ -241,6 +261,10 @@ open class XquicClient internal constructor(val builder: Builder) {
         fun addNetworkInterceptor(xInterceptor: XInterceptor) = apply {
             this.networkInterceptors.add(xInterceptor)
         }
+
+        fun setContext(context: Context) = apply {
+            this.context = context.applicationContext
+        }
     }
 
     fun newCall(xRequest: XRequest): XCall {
@@ -281,10 +305,40 @@ open class XquicClient internal constructor(val builder: Builder) {
                 xRttInfoListener,
                 Random(),
                 pingInterval,
-                pingListener
+                pingListener,
+                pingTimeOutCount
             )
         xRealWebSocket.connect(this)
+        this.context?.let {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                registerNetwork(it)
+            }
+        }
         return xRealWebSocket
+    }
+
+    /**
+     * register network change callback
+     */
+    @RequiresApi(Build.VERSION_CODES.LOLLIPOP)
+    private fun registerNetwork(context: Context) {
+        XLogUtils.debug("registerNetwork")
+        synchronized(XNetStatusCallBack.isRegister) {
+            if (!XNetStatusCallBack.isRegister) {
+                XNetStatusCallBack.isRegister = true
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
+                    val connMgr =
+                        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                    connMgr.registerDefaultNetworkCallback(XNetStatusCallBack.xNetStatusManager)
+                } else if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                    val request = NetworkRequest.Builder()
+                        .build()
+                    val connMgr =
+                        context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+                    connMgr.registerNetworkCallback(request, XNetStatusCallBack.xNetStatusManager)
+                }
+            }
+        }
     }
 
     /**

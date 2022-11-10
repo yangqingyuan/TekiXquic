@@ -150,6 +150,7 @@ object SetCache {
                 //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
                 //.setMultiPath(MultiPathType.SUPPORT_BOTH)
                 //.setAlpnType(AlpnType.ALPN_HQ)
+                .setContext(context)
                 .addPingListener(object : XPingListener {
                     override fun ping(): ByteArray {
                         return "ping data".toByteArray()

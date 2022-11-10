@@ -1,10 +1,8 @@
 package com.lizhi.component.net.xquic.impl
 
+import android.os.Build
 import com.lizhi.component.net.xquic.XquicClient
-import com.lizhi.component.net.xquic.listener.XPingListener
-import com.lizhi.component.net.xquic.listener.XRttInfoListener
-import com.lizhi.component.net.xquic.listener.XWebSocket
-import com.lizhi.component.net.xquic.listener.XWebSocketListener
+import com.lizhi.component.net.xquic.listener.*
 import com.lizhi.component.net.xquic.mode.*
 import com.lizhi.component.net.xquic.quic.*
 import com.lizhi.component.net.xquic.utils.XLogUtils
@@ -27,9 +25,10 @@ class XRealWebSocket(
     private val xRequest: XRequest,
     private val listener: XWebSocketListener,
     private val xRttInfoCache: XRttInfoListener,
-    random: Random,
-    pingInterval: Long,
-    private val pingListener: XPingListener
+    private val random: Random,
+    private val pingInterval: Long,
+    private val pingListener: XPingListener,
+    private val pingTimeOutCount: Int
 ) : XWebSocket, XquicCallback {
 
     companion object {
@@ -114,6 +113,17 @@ class XRealWebSocket(
      */
     private var byteBuffer = ByteBuffer.allocateDirect(MAX_BUFF_SIZE)
 
+    /**
+     * Whether the sign network is changed
+     */
+    private var netHashCode: Int = -1
+
+    /**
+     * current ping time out count
+     */
+    @Volatile
+    private var currentPingTimeOutCount = 0
+
     private fun threadFactory(): ThreadFactory {
         return ThreadFactory { runnable ->
             val result = Thread(runnable, "OkHttp WebSocket " + xRequest.url)
@@ -167,6 +177,38 @@ class XRealWebSocket(
     class PingRunnable(private val xRealWebSocket: XRealWebSocket) : Runnable {
         override fun run() {
             if (!checkClientCtx(xRealWebSocket.clientCtx) || xRealWebSocket.failed || xRealWebSocket.enqueuedClose) return
+
+            //if ping time out
+            if (xRealWebSocket.pingTimeOutCount > 0) {
+                if (xRealWebSocket.currentPingTimeOutCount >= xRealWebSocket.pingTimeOutCount) {
+                    xRealWebSocket.close(
+                        -1,
+                        "ping time out count:${xRealWebSocket.pingTimeOutCount}"
+                    )
+                    return
+                }
+            }
+
+            //if network change
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                if (xRealWebSocket.netHashCode != -1 && (xRealWebSocket.netHashCode != XNetStatusCallBack.netHashCode)) {
+                    if (xRealWebSocket.isCallback) {
+                        return
+                    }
+                    synchronized(xRealWebSocket.isCallback) {
+                        if (!xRealWebSocket.isCallback) {
+                            xRealWebSocket.close(
+                                -1,
+                                "network is changed, Connection migration is not supported"
+                            )
+                            xRealWebSocket.isCallback = true
+                        }
+                    }
+                    return
+                }
+                xRealWebSocket.netHashCode = XNetStatusCallBack.netHashCode
+            }
+
             var pingBody = xRealWebSocket.pingListener.ping()
             if (pingBody.size > 256) {
                 pingBody = "ping body ti too lang".toByteArray()
