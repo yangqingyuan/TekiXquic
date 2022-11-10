@@ -92,13 +92,17 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
         }
 
         xqc_http_header_t *headers = user_stream->h3_hdrs.headers;
-        LOGD("=========== request head start =================");
-        for (int i = 0; i < user_stream->h3_hdrs.count; i++) {
-            xqc_http_header_t header = headers[i];
-            LOGD("--> %s, %s", (char *) header.name.iov_base,
-                 (char *) header.value.iov_base);
+        if (headers != NULL) {
+            LOGD("=========== request head start =================");
+            for (int i = 0; i < user_stream->h3_hdrs.count; i++) {
+                xqc_http_header_t header = headers[i];
+                if (!(&header)) {
+                    LOGD("--> %s, %s", (char *) header.name.iov_base,
+                         (char *) header.value.iov_base);
+                }
+            }
+            LOGD("============ request head end ================");
         }
-        LOGD("============ request head end ================");
         //发送h3内容
         return client_send_h3_content(user_stream);
     }

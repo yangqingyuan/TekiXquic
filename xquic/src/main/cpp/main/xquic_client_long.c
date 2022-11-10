@@ -587,6 +587,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
 
         if (user_stream->send_body) {
             free(user_stream->send_body);
+            user_stream->send_body = NULL;
         }
 
         /* loop user request */
@@ -870,7 +871,7 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
  */
 int client_long_parse_args(xqc_cli_client_args_t *args) {
     /* parse server addr */
-    int ret = client_parse_server_addr(&args->net_cfg, (const char *)args->req_cfg.urls,
+    int ret = client_parse_server_addr(&args->net_cfg, (const char *) args->req_cfg.urls,
                                        &(args->user_params));//根据url解析地址跟port
     if (ret < 0) {
         if (args->user_stream.send_body != NULL) {
