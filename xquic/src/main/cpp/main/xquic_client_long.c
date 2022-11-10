@@ -870,7 +870,7 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
  */
 int client_long_parse_args(xqc_cli_client_args_t *args) {
     /* parse server addr */
-    int ret = client_parse_server_addr(&args->net_cfg, args->user_params.url,
+    int ret = client_parse_server_addr(&args->net_cfg, (const char *)args->req_cfg.urls,
                                        &(args->user_params));//根据url解析地址跟port
     if (ret < 0) {
         if (args->user_stream.send_body != NULL) {
@@ -943,14 +943,6 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
     ev_loop_destroy(ctx->eb);
 
     /* engine destroy */
-#if 0 //FIXME 开启后并发请求下会有异常
-    xqc_cli_alpn_type_t alpn_type = ctx->args->quic_cfg.alpn_type;
-    if (alpn_type == ALPN_H3) {
-        xqc_h3_ctx_destroy(ctx->engine);
-    } else {
-        xqc_engine_unregister_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9);
-    }
-#endif
     xqc_engine_destroy(ctx->engine);
 
     /* destroy queue */

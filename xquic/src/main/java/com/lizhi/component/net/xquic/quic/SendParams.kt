@@ -11,6 +11,7 @@ class SendParams(val builder: Builder) {
      * key param
      */
     var url: String? = builder.url
+    var urlLen: Int = builder.url?.length ?: 0
 
     /**
      * optional param

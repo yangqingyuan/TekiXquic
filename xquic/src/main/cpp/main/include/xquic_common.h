@@ -90,7 +90,7 @@ typedef struct xqc_cli_user_stream_s {
     xqc_cli_user_conn_t *user_conn;
 
     /* stat for IO */
-    char *send_body;//发送内容
+    unsigned char *send_body;//发送内容
     size_t send_body_len;//发送的长度
     uint64_t send_offset;//已经发送的内容坐标
 
@@ -267,7 +267,7 @@ typedef struct xqc_cli_env_config_s {
 #define PATH_LEN            512
 #define RESOURCE_LEN        256
 #define AUTHORITY_LEN       128
-#define URL_LEN             512
+#define URL_LEN             256
 #define MAX_HEADER          30
 #define MAX_HEADER_DATA_LEN 100
 #define MAX_PING_LEN        256
@@ -300,7 +300,7 @@ typedef struct xqc_cli_request_s {
  */
 typedef struct xqc_cli_requests_s {
     /* requests */
-    //char urls[MAX_REQUEST_CNT * MAX_REQUEST_LEN];
+    char urls[URL_LEN];
     int request_cnt;    /* requests cnt in urls */
     int finish_flag;     /* request finish flag, 1 for finish. */
     xqc_cli_request_t reqs[MAX_REQUEST_CNT];
@@ -354,7 +354,6 @@ typedef struct xqc_cli_user_data_params_s {
 
     xqc_cli_user_data_callback_t user_data_callback;
 
-    const char *url;
     int data_type;
 
     pthread_mutex_t *mutex;

@@ -143,7 +143,7 @@ object SetCache {
                 .connectTimeOut(getConnTimeout(context))
                 .setReadTimeOut(getConnTimeout(context))
                 .ccType(getCCType(context))
-                .pingInterval(1000)//
+                .pingInterval(5000)//
                 .setFinishFlag(FinishFlag.FINISH)
                 //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
                 //.dns(XDns.SYSTEM)

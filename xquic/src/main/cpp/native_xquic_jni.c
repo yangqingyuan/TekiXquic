@@ -257,11 +257,18 @@ static xqc_cli_client_args_t *
 get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
+    jstring url = getString(env, param, "url");
+    jint urlLen = getInt(env, param, "urlLen");
+
     jbyteArray content = getByteArray(env, param, "content");
+    jint contentLength = getInt(env, param, "contentLength");
+
     jbyteArray token = getByteArray(env, param, "token");
     jint tokenLen = getInt(env, param, "tokenLen");
+
     jbyteArray session = getByteArray(env, param, "session");
     jint sessionLen = getInt(env, param, "sessionLen");
+
     jint connectTimeOut = getInt(env, param, "connectTimeOut");
     jint readTimeOut = getInt(env, param, "readTimeOut");
     jint maxRecvDataLen = getInt(env, param, "maxRecvDataLen");
@@ -272,17 +279,9 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jint cryptoFlag = getInt(env, param, "cryptoFlag");
     jint finishFlag = getInt(env, param, "finishFlag");
     jint dataType = getInt(env, param, "dataType");
-    jint contentLength = getInt(env, param, "contentLength");
 
     xqc_cli_client_args_t *args = calloc(1, sizeof(xqc_cli_client_args_t));
     memset(args, 0, sizeof(xqc_cli_client_args_t));
-    args->net_cfg.conn_type = connType;
-
-    const char *cUrl = NULL;
-    jstring url = getString(env, param, "url");
-    if (url != NULL) {
-        cUrl = (*env)->GetStringUTFChars(env, url, 0);
-    }
 
     /* init network config */
     if (connectTimeOut > 0) {
@@ -291,13 +290,22 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
         args->net_cfg.conn_timeout = 30;
         args->net_cfg.read_timeout = readTimeOut;
     }
+    args->net_cfg.conn_type = connType;
     args->net_cfg.mode = MODE_SCMR;
     args->net_cfg.cc = ccType;
     args->net_cfg.version = protoVersion;
+    args->net_cfg.pacing = 0;
 
     /* init req config*/
     args->req_cfg.request_cnt = 1;
     args->req_cfg.finish_flag = finishFlag;/* stream is finish */
+    if (url != NULL && urlLen > 0) {
+        const char *cUrl = NULL;
+        cUrl = (*env)->GetStringUTFChars(env, url, 0);
+        memset(args->req_cfg.urls, 0, URL_LEN);
+        memcpy(args->req_cfg.urls, cUrl, urlLen);
+        (*env)->ReleaseStringUTFChars(env, url, cUrl);
+    }
 
     /* init env config */
     args->env_cfg.log_level = XQC_LOG_DEBUG;
@@ -343,7 +351,6 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     xqc_cli_user_data_params_t *user_params = &args->user_params;
 
     /* key param */
-    user_params->url = cUrl;
     user_params->mutex = &g_clazz.mutex;
     user_params->data_type = dataType;
 
