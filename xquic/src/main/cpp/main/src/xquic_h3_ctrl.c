@@ -98,7 +98,7 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
             LOGD("=========== request head start =================");
             for (int i = 0; i < user_stream->h3_hdrs.count; i++) {
                 xqc_http_header_t header = headers[i];
-                if (!(&header)) {
+                if ((&header) != 0xf) {
                     LOGD("--> %s, %s", (char *) header.name.iov_base,
                          (char *) header.value.iov_base);
                 }

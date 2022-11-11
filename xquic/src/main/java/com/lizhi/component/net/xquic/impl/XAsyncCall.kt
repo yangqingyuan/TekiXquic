@@ -92,6 +92,13 @@ class XAsyncCall(
             )
             clientCtx = 0L
             handle.removeMessages(indexTag)
+            if (!isCallback) {
+                responseCallback?.onFailure(
+                    xCall,
+                    Exception("unKnow error,maybe connect socket failed,please check network!!")
+                )
+                isCallback = true
+            }
         } catch (e: Exception) {
             e.printStackTrace()
             XLogUtils.error(e)
@@ -134,6 +141,7 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.DESTROY -> {
+                    XLogUtils.debug("======A===")
                     clientCtx = 0L
                 }
 

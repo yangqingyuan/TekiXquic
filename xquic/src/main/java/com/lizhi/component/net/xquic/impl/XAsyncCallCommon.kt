@@ -74,6 +74,7 @@ abstract class XAsyncCallCommon(
     /**
      * isCallback
      */
+    @Volatile
     var isCallback = false
 
     /**
