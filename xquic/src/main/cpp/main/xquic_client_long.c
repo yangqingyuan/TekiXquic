@@ -373,17 +373,6 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     /* to free jni object */
     callback_msg_to_client(ctx->args, MSG_TYPE_DESTROY, NULL, 0);
 
-    /* free stream */
-    if (ctx->args->user_stream.send_body != NULL) {
-        free(ctx->args->user_stream.send_body);
-        ctx->args->user_stream.send_body = NULL;
-    }
-
-    if (ctx->args->user_stream.recv_body != NULL) {
-        free(ctx->args->user_stream.recv_body);
-        ctx->args->user_stream.recv_body = NULL;
-    }
-
     LOGI(">>>>>>>> free data success <<<<<<<<<");
     return 0;
 }
@@ -585,6 +574,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
         xqc_cli_message_t message;
         int ret = xqc_cli_msg_queue_get(queue, &message);
         if (!ret) {
+            LOGE("xqc_cli_msg_queue_get");
             continue;
         }
 

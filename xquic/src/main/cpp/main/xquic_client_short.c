@@ -370,17 +370,6 @@ int client_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     /* to free jni object */
     callback_msg_to_client(ctx->args, MSG_TYPE_DESTROY, NULL, 0);
 
-    /* free stream */
-    if (ctx->args->user_stream.send_body != NULL) {
-        free(ctx->args->user_stream.send_body);
-        ctx->args->user_stream.send_body = NULL;
-    }
-
-    if (ctx->args->user_stream.recv_body != NULL) {
-        free(ctx->args->user_stream.recv_body);
-        ctx->args->user_stream.recv_body = NULL;
-    }
-
     LOGD(">>>>>>>> free data success <<<<<<<<<");
     return 0;
 }
