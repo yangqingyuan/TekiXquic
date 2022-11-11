@@ -352,12 +352,9 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     xqc_cli_user_conn_t *user_conn = task->user_conn;
 
     if (!user_conn) {
-        LOGW("is closed task,no need to close again!");
-        return -1;
+        LOGW("close task warn: user_conn is NULL");
+        goto fail;
     }
-
-    /* to free jni object */
-    callback_msg_to_client(ctx->args, MSG_TYPE_DESTROY, NULL, 0);
 
     /* remove task event handle */
     ev_io_stop(ctx->eb, &user_conn->ev_socket);
@@ -371,6 +368,21 @@ int client_long_close_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
 
     free(user_conn);
     user_conn = NULL;
+
+    fail:
+    /* to free jni object */
+    callback_msg_to_client(ctx->args, MSG_TYPE_DESTROY, NULL, 0);
+
+    /* free stream */
+    if (ctx->args->user_stream.send_body != NULL) {
+        free(ctx->args->user_stream.send_body);
+        ctx->args->user_stream.send_body = NULL;
+    }
+
+    if (ctx->args->user_stream.recv_body != NULL) {
+        free(ctx->args->user_stream.recv_body);
+        ctx->args->user_stream.recv_body = NULL;
+    }
 
     LOGI(">>>>>>>> free data success <<<<<<<<<");
     return 0;
@@ -741,16 +753,27 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
     return 0;
 }
 
+void client_long_task_destroy(struct ev_loop *main_loop, xqc_cli_ctx_t *ctx) {
+    for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
+        xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
+        client_long_close_task(ctx, task);
+        ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
+    }
+    LOGW("all tasks are finished,will break loop and exit!!");
+    ev_break(main_loop, EVBREAK_ALL);
+}
+
 /**
  * 任务调度回调
  * @param main_loop
  * @param io_w
  * @param what
  */
-void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
+int client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w, int what) {
     //DEBUG;
     xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
     pthread_mutex_lock(ctx->mutex);
+    int ret = XQC_OK;
     switch (ctx->msg_data.cmd_type) {
         case CMD_TYPE_NONE:
             break;
@@ -769,11 +792,13 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             /* if dle and got a waiting task, run the task */
             if (idle_flag && idle_waiting_task_id >= 0) {
                 /* handle task and set status to RUNNING */
-                int ret = client_long_handle_task(ctx, ctx->task_ctx.tasks + idle_waiting_task_id);
+                ret = client_long_handle_task(ctx, ctx->task_ctx.tasks + idle_waiting_task_id);
                 if (0 == ret) {
                     ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_RUNNING;
                 } else {
                     ctx->task_ctx.schedule.schedule_info[idle_waiting_task_id].status = TASK_STATUS_FAILED;
+                    /* It means that the socket creation fails, and it should be destroyed immediately */
+                    client_long_task_destroy(main_loop, ctx);
                 }
             }
         }
@@ -812,22 +837,38 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
             /* when timeout, close which not fin */
             for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
                 xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
-                LOGW("auto close h3 conn,and wait to destroy");
-                xqc_h3_conn_close(task->user_conn->ctx->engine, &task->user_conn->cid);
+                if (task->user_conn == NULL) {
+                    LOGW("auto close H3 conn error,user_conn is NULL");
+                    ret = XQC_ERROR;
+                } else {
+                    if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
+                        LOGW("auto close H3 conn,and wait to destroy");
+                        xqc_h3_conn_close(task->user_conn->ctx->engine, &task->user_conn->cid);
+                    } else {
+                        LOGW("auto close HQ conn,and wait to destroy");
+                        xqc_conn_close(task->user_conn->ctx->engine, &task->user_conn->cid);
+                    }
+                }
             }
             break;
         case CMD_TYPE_DESTROY:
-            for (int i = 0; i < ctx->task_ctx.task_cnt; i++) {
-                xqc_cli_task_t *task = ctx->task_ctx.tasks + i;
-                client_long_close_task(ctx, task);
-                ctx->task_ctx.schedule.schedule_info[i].fin_flag = 0;
-            }
-            LOGW("all tasks are finished,will break loop and exit!!");
-            ev_break(main_loop, EVBREAK_ALL);
+            client_long_task_destroy(main_loop, ctx);
             break;
     }
     ctx->msg_data.cmd_type = CMD_TYPE_NONE;
     pthread_mutex_unlock(ctx->mutex);
+    return ret;
+}
+
+/**
+ * 专门给ev_async_init用
+ * 为啥不跟client_long_task_schedule_callbackk共用，是因为ev只支持void返回值
+ * @param main_loop
+ * @param io_w
+ * @param what
+ */
+void client_long_task_schedule_callback2(struct ev_loop *main_loop, ev_async *io_w, int what) {
+    client_long_task_schedule_callback(main_loop, io_w, what);
 }
 
 /**
@@ -838,26 +879,27 @@ void client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_
  */
 void client_long_kill_it_any_way_callback(struct ev_loop *main_loop, ev_timer *io_w, int what) {
     DEBUG;
-    ev_break(main_loop, EVBREAK_ALL);
+    xqc_cli_ctx_t *ctx = (xqc_cli_ctx_t *) io_w->data;
+    client_long_task_destroy(main_loop, ctx);
 }
 
 /**
  * 开始任务管理器
  * @param ctx
  */
-void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
+int client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
     DEBUG;
     /*init tasks */
     client_long_init_tasks(ctx);
 
     /*init add arm task timer 这里轮询检查是否任务状态*/
     ctx->ev_task.data = ctx;
-    ev_async_init(&ctx->ev_task, client_long_task_schedule_callback);
+    ev_async_init(&ctx->ev_task, client_long_task_schedule_callback2);
     ev_async_start(ctx->eb, &ctx->ev_task);
 
     /*init task */
     ctx->msg_data.cmd_type = CMD_TYPE_INIT_TASK;
-    ev_async_send(ctx->eb, &ctx->ev_task);
+    int ret = client_long_task_schedule_callback(ctx->eb, &ctx->ev_task, 0);
 
     /* kill it anyway, to protect from endless task (如果设置了生命时长，并超时了生命时长，直接kill掉)*/
     if (ctx->args->env_cfg.life > 0) {
@@ -866,6 +908,7 @@ void client_long_start_task_manager(xqc_cli_ctx_t *ctx) {
                       0);
         ev_timer_start(ctx->eb, &ctx->ev_kill);
     }
+    return ret;
 }
 
 
@@ -941,8 +984,9 @@ int client_long_start(xqc_cli_ctx_t *ctx) {
     }
 
     /* start task scheduler */
-    client_long_start_task_manager(ctx);
-    ev_run(ctx->eb, 0);
+    if (client_long_start_task_manager(ctx) == XQC_OK) {
+        ev_run(ctx->eb, 0);
+    }
 
     fail:
     /* stop timer */

@@ -141,7 +141,6 @@ class XAsyncCall(
                 }
 
                 XquicMsgType.DESTROY -> {
-                    XLogUtils.debug("======A===")
                     clientCtx = 0L
                 }
 
