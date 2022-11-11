@@ -257,7 +257,7 @@ static xqc_cli_client_args_t *
 get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jobject gl_callback = (*env)->NewGlobalRef(env, callback);
 
-    jstring url = getString(env, param, "url");
+    jbyteArray url = getByteArray(env, param, "url");
     jint urlLen = getInt(env, param, "urlLen");
 
     jbyteArray content = getByteArray(env, param, "content");
@@ -269,11 +269,14 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     jbyteArray session = getByteArray(env, param, "session");
     jint sessionLen = getInt(env, param, "sessionLen");
 
+    jint alpnType = getInt(env, param, "alpnType");
+    jbyteArray alpnName = getByteArray(env, param, "alpnName");
+    jint alpnLen = getInt(env, param, "alpnLen");
+
     jint connectTimeOut = getInt(env, param, "connectTimeOut");
     jint readTimeOut = getInt(env, param, "readTimeOut");
     jint maxRecvDataLen = getInt(env, param, "maxRecvDataLen");
     jint ccType = getInt(env, param, "ccType");
-    jint alpnType = getInt(env, param, "alpnType");
     jint protoVersion = getInt(env, param, "protoVersion");
     jint headersSize = getInt(env, param, "headersSize");
     jint cryptoFlag = getInt(env, param, "cryptoFlag");
@@ -300,11 +303,8 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     args->req_cfg.request_cnt = 1;
     args->req_cfg.finish_flag = finishFlag;/* stream is finish */
     if (url != NULL && urlLen > 0) {
-        const char *cUrl = NULL;
-        cUrl = (*env)->GetStringUTFChars(env, url, 0);
         memset(args->req_cfg.urls, 0, URL_LEN);
-        memcpy(args->req_cfg.urls, cUrl, urlLen);
-        (*env)->ReleaseStringUTFChars(env, url, cUrl);
+        (*env)->GetByteArrayRegion(env, url, 0, urlLen, (jbyte *) args->req_cfg.urls);
     }
 
     /* init env config */
@@ -312,7 +312,10 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
 
     /* init quic config */
     args->quic_cfg.alpn_type = alpnType;
-    strncpy(args->quic_cfg.alpn, "hq-interop", sizeof(args->quic_cfg.alpn));
+    if (alpnType == ALPN_HQ) {
+        (*env)->GetByteArrayRegion(env, alpnName, 0, alpnLen, (jbyte *) args->quic_cfg.alpn);
+        args->quic_cfg.alpn_len = alpnLen;
+    }
     args->quic_cfg.keyupdate_pkt_threshold = UINT16_MAX;
     args->quic_cfg.no_crypto_flag = cryptoFlag;/*set crypto 1:without crypto*/
     if (token != NULL && tokenLen > 0) {

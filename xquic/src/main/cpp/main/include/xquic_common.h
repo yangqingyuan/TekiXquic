@@ -26,7 +26,6 @@
 #include <pthread.h>
 #include <xquic_msg_queue.h>
 
-#define XQC_ALPN_TRANSPORT "transport"
 
 typedef struct xqc_cli_user_conn_s xqc_cli_user_conn_t;
 
@@ -202,7 +201,6 @@ typedef enum h3_hdr_type {
     H3_HDR_CNT
 } H3_HDR_TYPE;
 
-
 /**
  *
  */
@@ -210,6 +208,7 @@ typedef struct xqc_cli_quic_config_s {
     /*协议类型 */
     xqc_cli_alpn_type_t alpn_type;
     char alpn[16];
+    int alpn_len;
 
     /* 0-rtt config */
     size_t st_len;                        /* session ticket len */

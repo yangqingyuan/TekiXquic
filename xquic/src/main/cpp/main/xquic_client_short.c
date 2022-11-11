@@ -147,7 +147,7 @@ client_init_engine_callback(xqc_engine_callback_t *cb, xqc_transport_callbacks_t
  * @param ctx
  * @return
  */
-int client_init_alpn(xqc_cli_ctx_t *ctx) {
+int client_init_alpn(xqc_cli_ctx_t *ctx, xqc_cli_client_args_t *args) {
     int ret;
     if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
         xqc_h3_callbacks_t h3_cbs = {
@@ -184,8 +184,15 @@ int client_init_alpn(xqc_cli_ctx_t *ctx) {
                         .stream_close_notify = xqc_client_stream_close_notify,
                 }
         };
-        ret = xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
+
+        ret = xqc_engine_register_alpn(ctx->engine, args->quic_cfg.alpn,
+                                       args->quic_cfg.alpn_len, &ap_cbs);
+        LOGD("engine register alpn:%s,alpn_len:%d,ret:%d", args->quic_cfg.alpn,
+             args->quic_cfg.alpn_len, ret);
+
         if (ret != XQC_OK) {
+            xqc_engine_unregister_alpn(ctx->engine, args->quic_cfg.alpn,
+                                       args->quic_cfg.alpn_len);
             LOGE("engine register alpn error, ret:%d", ret);
             return XQC_ERROR;
         }
@@ -228,7 +235,7 @@ int client_init_engine(xqc_cli_ctx_t *ctx, xqc_cli_client_args_t *args) {
     }
 
     /* init alpn (初始化协议)*/
-    if (client_init_alpn(ctx) < 0) {
+    if (client_init_alpn(ctx, args) < 0) {
         LOGE("init alpn error");
         return XQC_ERROR;
     }
@@ -541,7 +548,7 @@ int client_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t
                           args->net_cfg.host, args->quic_cfg.no_crypto_flag,
                           &conn_ssl_config,
                           (struct sockaddr *) &args->net_cfg.addr, args->net_cfg.addr_len,
-                          XQC_ALPN_TRANSPORT,
+                          args->quic_cfg.alpn,
                           user_conn);
     }
 
@@ -764,7 +771,6 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
 }
 
 
-
 /**
  * 解析参数
  * @param args
@@ -774,7 +780,7 @@ void client_start_task_manager(xqc_cli_ctx_t *ctx) {
  */
 int client_parse_args(xqc_cli_client_args_t *args) {
     /* parse server addr */
-    int ret = client_parse_server_addr(&args->net_cfg,  (const char *)args->req_cfg.urls,
+    int ret = client_parse_server_addr(&args->net_cfg, (const char *) args->req_cfg.urls,
                                        &(args->user_params));//根据url解析地址跟port
     if (ret < 0) {
         free(args->user_stream.send_body);

@@ -73,6 +73,7 @@ open class XquicClient internal constructor(val builder: Builder) {
      * 协议类型（应用层协议协商（Application-Layer Protocol Negotiation，简称ALPN））
      */
     var alpnType = builder.alpnType
+    var alpnName = builder.alpnName
 
     /**
      * 0: crypto
@@ -154,6 +155,7 @@ open class XquicClient internal constructor(val builder: Builder) {
         internal var xRttInfoListener: XRttInfoListener = XRttInfoCache()
         internal var protoVersion: Int = ProtoVersion.XQC_VERSION_V1
         internal var alpnType = AlpnType.ALPN_H3
+        internal var alpnName = "transport"
         internal var cryptoFlag = CryptoFlag.CRYPTO
         internal var finishFlag = FinishFlag.FINISH
         internal var maxRecvDataLen = 1024 * 512
@@ -185,9 +187,10 @@ open class XquicClient internal constructor(val builder: Builder) {
             pingListener = xquicClient.pingListener
             xRttInfoListener = xquicClient.xRttInfoListener
             cryptoFlag = xquicClient.cryptoFlag
-            cryptoFlag = xquicClient.finishFlag
+            finishFlag = xquicClient.finishFlag
             maxRecvDataLen = xquicClient.maxRecvDataLen
             context = xquicClient.context
+            alpnName = xquicClient.alpnName
         }
 
         fun build(): XquicClient {
@@ -252,6 +255,10 @@ open class XquicClient internal constructor(val builder: Builder) {
 
         fun setAlpnType(@AlpnType.Type type: Int) = apply {
             this.alpnType = type
+        }
+
+        fun setAlpnName(alpnName: String) = apply {
+            this.alpnName = alpnName
         }
 
         fun setMaxRecvDataLen(MaxRecvDataLen: Int) = apply {

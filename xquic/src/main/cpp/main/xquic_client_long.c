@@ -147,7 +147,7 @@ void client_long_init_engine_callback(xqc_engine_callback_t *cb,
  * @param ctx
  * @return
  */
-int client_long_init_alpn(xqc_cli_ctx_t *ctx) {
+int client_long_init_alpn(xqc_cli_ctx_t *ctx, xqc_cli_client_args_t *args) {
 
     int ret = 0;
     if (ctx->args->quic_cfg.alpn_type == ALPN_H3) {
@@ -185,8 +185,14 @@ int client_long_init_alpn(xqc_cli_ctx_t *ctx) {
                         .stream_close_notify = xqc_client_stream_close_notify,
                 }
         };
-        ret = xqc_engine_register_alpn(ctx->engine, XQC_ALPN_TRANSPORT, 9, &ap_cbs);
+        ret = xqc_engine_register_alpn(ctx->engine, args->quic_cfg.alpn,
+                                       args->quic_cfg.alpn_len, &ap_cbs);
+        LOGD("engine register alpn:%s,alpn_len:%d,ret:%d", args->quic_cfg.alpn,
+             args->quic_cfg.alpn_len, ret);
+
         if (ret != XQC_OK) {
+            xqc_engine_unregister_alpn(ctx->engine, args->quic_cfg.alpn,
+                                       args->quic_cfg.alpn_len);
             LOGE("engine register alpn error, ret:%d", ret);
             return XQC_ERROR;
         }
@@ -229,7 +235,7 @@ int client_long_init_engine(xqc_cli_ctx_t *ctx, xqc_cli_client_args_t *args) {
     }
 
     /* init alpn (初始化协议)*/
-    if (client_long_init_alpn(ctx) < 0) {
+    if (client_long_init_alpn(ctx, args) < 0) {
         LOGE("init alpn error");
         return XQC_ERROR;
     }
@@ -530,16 +536,17 @@ int client_long_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_a
                              (struct sockaddr *) &args->net_cfg.addr,
                              args->net_cfg.addr_len, user_conn);
     } else {
+        LOGD("engine register alpn:%s,alpn_len:%d", args->quic_cfg.alpn, args->quic_cfg.alpn_len);
         cid = xqc_connect(user_conn->ctx->engine, &conn_settings,
                           (const unsigned char *) args->quic_cfg.token, args->quic_cfg.token_len,
                           args->net_cfg.host, args->quic_cfg.no_crypto_flag,
                           &conn_ssl_config,
                           (struct sockaddr *) &args->net_cfg.addr, args->net_cfg.addr_len,
-                          XQC_ALPN_TRANSPORT,
+                          args->quic_cfg.alpn,
                           user_conn);
     }
     if (cid == NULL) {
-        LOGE("xqc h3 connect error");
+        LOGE("xqc connect error alpn type=%d", args->quic_cfg.alpn_type);
         return -1;
     }
 

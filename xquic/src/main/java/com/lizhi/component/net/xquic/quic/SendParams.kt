@@ -10,8 +10,8 @@ class SendParams(val builder: Builder) {
     /**
      * key param
      */
-    var url: String? = builder.url
-    var urlLen: Int = builder.url?.length ?: 0
+    var url: ByteArray = builder.url.toByteArray()
+    var urlLen: Int = url.size
 
     /**
      * optional param
@@ -75,6 +75,8 @@ class SendParams(val builder: Builder) {
      * alpn type
      */
     var alpnType = builder.alpnType
+    var alpnName: ByteArray = builder.alpnName.toByteArray()
+    var alpnLen = alpnName.size
 
     /**
      * 0: crypto
@@ -90,9 +92,9 @@ class SendParams(val builder: Builder) {
     class Builder {
 
         /**
-         * key param
+         * key param,must not null
          */
-        internal var url: String? = null
+        lateinit var url: String
 
         /**
          * optional param
@@ -154,6 +156,7 @@ class SendParams(val builder: Builder) {
          * alpn type
          */
         internal var alpnType = AlpnType.ALPN_H3
+        internal var alpnName: String = "transport"
 
         /**
          * 0: crypto
@@ -227,6 +230,10 @@ class SendParams(val builder: Builder) {
 
         fun setCryptoFlag(@CryptoFlag.Type type: Int) = apply {
             this.alpnType = type
+        }
+
+        fun setAlpnName(alpnName: String) = apply {
+            this.alpnName = alpnName
         }
 
         fun build(): SendParams {

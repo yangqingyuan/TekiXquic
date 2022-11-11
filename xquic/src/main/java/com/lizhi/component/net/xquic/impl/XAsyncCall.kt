@@ -76,6 +76,7 @@ class XAsyncCall(
                 .setMaxRecvLenght(xquicClient.maxRecvDataLen)
                 .setCCType(xquicClient.ccType)
                 .setCryptoFlag(xquicClient.cryptoFlag)
+                .setAlpnName(xquicClient.alpnName)
                 .setProtoVersion(xquicClient.protoVersion)
                 .setFinishFlag(xquicClient.finishFlag)
                 .setAlpnType(xquicClient.alpnType)
