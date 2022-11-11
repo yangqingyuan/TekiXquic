@@ -201,6 +201,7 @@ val xquicClient = XquicClient.Builder()
 |  reuse  | 长链接复用：默认false，复用后相同域名的请求会共用已有的连接 |  |
 |  xRttInfoListener  | token跟session返回接口，可以本地化，用于0Rtt，sdk内部是内存缓存，并且跟随xquicClick生命周期 |  |
 |  alpnType  | 应用层协议类型，HQ/H3，默认H3 | HQ（http 0.9 透传） |
+|  setAlpnName  | 设置协议名称，只对HQ有效 | 注意：要跟服务端对应，避免链接失败的问题 |
 |  setFinishFlag  | 是否结束流，只对HQ，webSocket场景有效，每次发送数据后不会关闭stream，下次发送会继续使用已有的stream，以达到stream复用 | 跟H3不同，H3每次请求都会创建新的stream |
 |  addPingListener  | 应用层ping，增加自定义的发送ping内容，只对webSocket 场景有效，长连接情况下，默认已经打开内部心跳，15秒 | 注意：内部心跳跟当前这个心跳不是同一个，内部心跳是xquic内部自己维护 |
 |  pingInterval  | 设置ping的时间间隔，应用层有默认实现，默认发送内容为test，如果设置小于等于0，为不发送应用层ping |  |

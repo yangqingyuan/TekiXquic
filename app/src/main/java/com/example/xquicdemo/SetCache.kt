@@ -3,6 +3,7 @@ package com.example.xquicdemo
 import android.content.Context
 import com.lizhi.component.net.xquic.XquicClient
 import com.lizhi.component.net.xquic.listener.XPingListener
+import com.lizhi.component.net.xquic.quic.AlpnType
 import com.lizhi.component.net.xquic.quic.CCType
 import com.lizhi.component.net.xquic.quic.FinishFlag
 import com.lizhi.component.net.xquic.utils.XLogUtils
@@ -142,16 +143,16 @@ object SetCache {
             xquicClient = XquicClient.Builder()
                 .connectTimeOut(getConnTimeout(context))
                 .setReadTimeOut(getConnTimeout(context))
-                .ccType(getCCType(context))
-                .pingInterval(5000)//
-                //.setFinishFlag(FinishFlag.FINISH)
-                //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
-                //.dns(XDns.SYSTEM)
-                //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)
-                //.setMultiPath(MultiPathType.SUPPORT_BOTH)
-                //.setAlpnType(AlpnType.ALPN_HQ)
-                .setContext(context)
-                .addPingListener(object : XPingListener {
+                .ccType(getCCType(context))//可选：拥塞算法，默认CUBIC
+                .pingInterval(5000,10)//可选：ping的时间间隔和超时次数，单位毫秒，如果大于0，则发送心跳，默认不发生
+                //.setFinishFlag(FinishFlag.FINISH)//是否结束流，只对HQ，webSocket场景有效，每次发送数据后不会关闭stream，下次发送会继续使用已有的stream，以达到stream复用
+                //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//可选：是否加密，默认加密
+                //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//根据服务端端支持协议切换，默认H3
+                //.setAlpnType(AlpnType.ALPN_HQ)//支持协议切换，默认H3
+                //.setAlpnName("hq-interop")//自定义协议名字，注意：针对ALPN_HQ生效，要跟服务端对应，避免链接不上的问题
+                .setContext(context) //可选：如果设置了，会内部会进行网络切换监听
+                //更多参数可以看详细的文档或者代码
+                .addPingListener(object : XPingListener {//可选，可以自定义ping内容，或者使用sdk内部默认值"ping"
                     override fun ping(): ByteArray {
                         return "ping data".toByteArray()
                     }

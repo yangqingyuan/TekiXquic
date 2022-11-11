@@ -49,12 +49,13 @@ class ShortConnActivity : AppCompatActivity() {
             .ccType(SetCache.getCCType(applicationContext))
             .setReadTimeOut(SetCache.getConnTimeout(applicationContext))
             .writeTimeout(15)//TODO 未实现
-            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)
-            //.dns(XDns.SYSTEM)
+            //.setFinishFlag(FinishFlag.FINISH)//
+            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//可选：是否加密，默认加密
+            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//根据服务端端支持协议切换，默认H3
+            //.setAlpnType(AlpnType.ALPN_HQ)//支持协议切换，默认H3
+            //.setAlpnName("hq-interop")//自定义协议名字，注意：针对ALPN_HQ生效，要跟服务端对应，避免链接不上的问题
             .reuse(SetCache.getReuse(applicationContext) == 1)//是否长链接复用，注意要看后端是否支持，能复用，强烈建议复用，在性能上会有非常大的提升，例如：阿里云这些是支持的，默认false
-            //.setCryptoFlag(CryptoFlag.WITHOUT_CRYPTO)//是否加密，默认加密
-            //.setAlpnType(AlpnType.ALPN_HQ) //支持协议切换，默认H3
-            //.setProtoVersion(ProtoVersion.XQC_IDRAFT_VER_29)//支持协议版本号设置 ，默认XQC_VERSION_V1
+            //更多参数可以看详细的文档或者代码
             .build()
 
         textView = findViewById(R.id.tv_result)
