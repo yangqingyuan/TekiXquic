@@ -80,7 +80,7 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
             user_stream->h3_hdrs.headers = req->headers;
             user_stream->h3_hdrs.count = req->count;
         } else {
-            LOGD("=========== request head start =========A========");
+            LOGD("=========== request head start =================");
             for (int i = 0; i < user_params->header_count; ++i) {
                 req->headers[i].name.iov_base = (void *) user_params->headers[i].name;
                 req->headers[i].name.iov_len = user_params->headers[i].name_len;
@@ -91,10 +91,10 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
                 LOGD("--> %s, %s", (char *) req->headers[i].name.iov_base,
                      (char *) req->headers[i].value.iov_base);
             }
-            LOGD("============ request head end =======A=========");
+            LOGD("============ request head end ================");
+            user_stream->h3_hdrs.headers = req->headers;
+            user_stream->h3_hdrs.count = user_params->header_count;
         }
-        user_stream->h3_hdrs.headers = req->headers;
-        user_stream->h3_hdrs.count = user_params->header_count;
 
         //发送h3内容
         return client_send_h3_content(user_stream);

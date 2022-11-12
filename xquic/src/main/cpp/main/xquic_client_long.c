@@ -629,6 +629,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                     int size = cJSON_GetArraySize(headers_json);
                     request->count = size;
 
+                    LOGD("=========== request head start =================");
                     for (int i = 0; i < size; i++) {
                         cJSON *item = cJSON_GetArrayItem(headers_json, i);
 
@@ -636,13 +637,17 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
                         char *value = cJSON_GetObjectItem(item, "value")->valuestring;
                         int flags = cJSON_GetObjectItem(item, "flags")->valueint;
 
-                        xqc_http_header_t header = {
-                                .name = {.iov_base = name, .iov_len = strlen(name)},
-                                .value = {.iov_base = value, .iov_len = strlen(value)},
-                                .flags = flags,
-                        };
-                        request->headers[i] = header;
+                        request->headers[i].name.iov_base = (void *) name;
+                        request->headers[i].name.iov_len = strlen(name);
+
+                        request->headers[i].value.iov_base = (void *) value;
+                        request->headers[i].value.iov_len = strlen(value);
+                        request->headers[i].flags = flags;
+
+                        LOGD("--> %s, %s", (char *) request->headers[i].name.iov_base,
+                             (char *) request->headers[i].value.iov_base);
                     }
+                    LOGD("============ request head end ================");
                 }
             }
                 break;
