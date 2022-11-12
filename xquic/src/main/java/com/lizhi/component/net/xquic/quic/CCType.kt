@@ -13,8 +13,7 @@ class CCType {
     @MustBeDocumented
     @IntDef(BBR, CUBIC, RENO)
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    annotation
-    class Type
+    annotation class Type
 
     companion object {
         const val BBR = 0

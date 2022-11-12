@@ -11,8 +11,7 @@ class DataType {
     @MustBeDocumented
     @IntDef(OTHER, JSON, BYTE)
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    annotation
-    class Type
+    annotation class Type
 
     companion object {
         const val OTHER = -1

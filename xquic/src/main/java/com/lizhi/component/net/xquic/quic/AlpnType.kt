@@ -11,8 +11,7 @@ class AlpnType {
     @MustBeDocumented
     @IntDef(ALPN_HQ, ALPN_H3)
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    annotation
-    class Type
+    annotation class Type
 
     companion object {
         const val ALPN_HQ = 0

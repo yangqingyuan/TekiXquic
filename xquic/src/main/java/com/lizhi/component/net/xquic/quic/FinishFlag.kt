@@ -11,8 +11,7 @@ class FinishFlag {
     @MustBeDocumented
     @IntDef(FINISH, WITHOUT_FINISH)
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    annotation
-    class Type
+    annotation class Type
 
     companion object {
         const val WITHOUT_FINISH = 0 //不关闭

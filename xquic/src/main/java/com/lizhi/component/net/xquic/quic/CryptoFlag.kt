@@ -10,8 +10,7 @@ class CryptoFlag {
     @MustBeDocumented
     @IntDef(CRYPTO, WITHOUT_CRYPTO)
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    annotation
-    class Type
+    annotation class Type
 
     companion object {
         const val CRYPTO = 0 //加密

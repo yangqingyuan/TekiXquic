@@ -18,8 +18,7 @@ class ProtoVersion {
         XQC_VERSION_MAX
     )
     @kotlin.annotation.Retention(AnnotationRetention.SOURCE)
-    annotation
-    class Version
+    annotation class Version
 
     companion object {
         /* placeholder */
