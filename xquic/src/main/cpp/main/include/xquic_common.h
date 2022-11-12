@@ -261,7 +261,7 @@ typedef struct xqc_cli_env_config_s {
 * all configuration on request should be put under this section
 * ============================================================================
 */
-#define MAX_REQUEST_CNT 1024    /* client might deal MAX_REQUEST_CNT requests once */
+#define MAX_REQUEST_CNT 10    /* client might deal MAX_REQUEST_CNT requests once */
 #define MAX_REQUEST_LEN 256     /* the max length of a request */
 #define PATH_LEN            512
 #define RESOURCE_LEN        256

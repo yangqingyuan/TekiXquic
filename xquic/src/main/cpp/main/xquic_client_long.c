@@ -564,8 +564,7 @@ int client_long_init_connection(xqc_cli_user_conn_t *user_conn, xqc_cli_client_a
  * @param req_cnt
  */
 void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t *args,
-                               xqc_cli_request_t *reqs, xqc_cli_message_queue_t *queue,
-                               int req_cut) {
+                               xqc_cli_request_t *reqs, xqc_cli_message_queue_t *queue) {
     DEBUG;
 
     /* get data from queue to create one or more request */
@@ -599,13 +598,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             user_stream->send_body = NULL;
         }
 
-        /* loop user request */
-        xqc_cli_request_t *request = NULL;
-        if (req_cut > MAX_REQUEST_CNT) {
-            req_cut = 0;
-        }
-        req_cut++;
-        request = reqs + req_cut;
+        xqc_cli_request_t *request = reqs;
 
         cJSON *json_data = NULL;
         char *content;
@@ -742,8 +735,7 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
         ctx->args->user_stream.send_body_len = 0;
 
         client_long_send_requests(user_conn, ctx->args, task->reqs,
-                                  &ctx->msg_data.message_queue,
-                                  ctx->task_ctx.tasks[0].req_cnt);
+                                  &ctx->msg_data.message_queue);
     }
     return 0;
 }
@@ -823,8 +815,7 @@ int client_long_task_schedule_callback(struct ev_loop *main_loop, ev_async *io_w
                 ctx->task_ctx.schedule.schedule_info[task_idx].fin_flag = 0;
 
                 client_long_send_requests(task->user_conn, ctx->args, task->reqs,
-                                          &ctx->msg_data.message_queue,
-                                          ctx->task_ctx.tasks[task_idx].req_cnt);
+                                          &ctx->msg_data.message_queue);
 
             }
             break;

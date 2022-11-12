@@ -75,36 +75,27 @@ ssize_t client_send_h3_requests(xqc_cli_user_conn_t *user_conn,
 
     xqc_cli_user_data_params_t *user_params = &(user_conn->ctx->args->user_params);
 
-    if (user_params->header_count > 0) {
-        if (req != NULL && req->count > 0) {
+    if (user_params->header_count > 0 && req != NULL) {
+        if (req->count > 0) {
             user_stream->h3_hdrs.headers = req->headers;
             user_stream->h3_hdrs.count = req->count;
         } else {
-            xqc_http_header_t headers[MAX_HEADER];
+            LOGD("=========== request head start =========A========");
             for (int i = 0; i < user_params->header_count; ++i) {
-                xqc_http_header_t header = {
-                        .name = {.iov_base = (void *) user_params->headers[i].name, .iov_len = user_params->headers[i].name_len},
-                        .value = {.iov_base = (void *) user_params->headers[i].value, .iov_len = user_params->headers[i].value_len},
-                        .flags = user_params->headers[i].flags,
-                };
-                headers[i] = header;
-            }
-            user_stream->h3_hdrs.headers = headers;
-            user_stream->h3_hdrs.count = user_params->header_count;
-        }
+                req->headers[i].name.iov_base = (void *) user_params->headers[i].name;
+                req->headers[i].name.iov_len = user_params->headers[i].name_len;
 
-        xqc_http_header_t *headers = user_stream->h3_hdrs.headers;
-        if (headers != NULL) {
-            LOGD("=========== request head start =================");
-            for (int i = 0; i < user_stream->h3_hdrs.count; i++) {
-                xqc_http_header_t header = headers[i];
-                if ((&header) != 0xf) {
-                    LOGD("--> %s, %s", (char *) header.name.iov_base,
-                         (char *) header.value.iov_base);
-                }
+                req->headers[i].value.iov_base = (void *) user_params->headers[i].value;
+                req->headers[i].value.iov_len = user_params->headers[i].value_len;
+                req->headers[i].flags = user_params->headers[i].flags;
+                LOGD("--> %s, %s", (char *) req->headers[i].name.iov_base,
+                     (char *) req->headers[i].value.iov_base);
             }
-            LOGD("============ request head end ================");
+            LOGD("============ request head end =======A=========");
         }
+        user_stream->h3_hdrs.headers = req->headers;
+        user_stream->h3_hdrs.count = user_params->header_count;
+
         //发送h3内容
         return client_send_h3_content(user_stream);
     }
