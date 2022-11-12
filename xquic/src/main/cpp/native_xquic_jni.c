@@ -338,7 +338,7 @@ get_args_params(JNIEnv *env, jobject param, jobject callback, int connType) {
     }
 
     /* init stream config */
-    if (content != NULL) {
+    if (content != NULL && contentLength > 0) {
         args->user_stream.send_body = malloc(contentLength);
         (*env)->GetByteArrayRegion(env, content, 0, contentLength,
                                    (jbyte *) args->user_stream.send_body);

@@ -35,6 +35,7 @@ class XRealWebSocket(
 
         private const val STATUS_CLOSE = 2
         private const val STATUS_CANCEL = 1
+        private const val STATUS_OTHER = 0
 
         private const val MAX_BUFF_SIZE = 1024 * 1024
 
@@ -101,7 +102,7 @@ class XRealWebSocket(
     private var alpnType = AlpnType.ALPN_H3
 
     @Volatile
-    private var cancelOrClose = 0// 2 cancel 1:close
+    private var cancelOrClose = STATUS_OTHER// 1 cancel 2:close 0：other
 
     /**
      * isCallback
@@ -316,10 +317,20 @@ class XRealWebSocket(
                     executor.shutdownNow()
                 }
 
-                if (cancelOrClose == STATUS_CLOSE) {
-                    listener.onClosed(this, code, reason)
-                } else if (cancelOrClose <= STATUS_CANCEL) {
-                    listener.onFailure(this, Throwable("cancel or exception"), xResponse)
+                when (cancelOrClose) {
+                    STATUS_CLOSE -> {
+                        listener.onClosed(this, code, reason)
+                    }
+                    STATUS_CANCEL -> {
+                        listener.onFailure(this, Throwable("cancel or exception"), xResponse)
+                    }
+                    else -> {
+                        listener.onFailure(
+                            this,
+                            Throwable("unKnow error,maybe connect socket failed,please check network!!"),
+                            xResponse
+                        )
+                    }
                 }
 
             } catch (e: Exception) {

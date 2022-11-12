@@ -736,6 +736,11 @@ int client_long_handle_task(xqc_cli_ctx_t *ctx, xqc_cli_task_t *task) {
                                      ctx->args->user_params.data_type,
                                      (void *) ctx->args->user_stream.send_body,
                                      ctx->args->user_stream.send_body_len);
+
+        free(ctx->args->user_stream.send_body);
+        ctx->args->user_stream.send_body = NULL;
+        ctx->args->user_stream.send_body_len = 0;
+
         client_long_send_requests(user_conn, ctx->args, task->reqs,
                                   &ctx->msg_data.message_queue,
                                   ctx->task_ctx.tasks[0].req_cnt);
