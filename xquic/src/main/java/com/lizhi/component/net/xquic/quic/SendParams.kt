@@ -229,7 +229,7 @@ class SendParams(val builder: Builder) {
         }
 
         fun setCryptoFlag(@CryptoFlag.Type type: Int) = apply {
-            this.alpnType = type
+            this.cryptoFlag = type
         }
 
         fun setAlpnName(alpnName: String) = apply {
