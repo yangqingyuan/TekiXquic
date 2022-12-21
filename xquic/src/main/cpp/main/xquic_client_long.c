@@ -577,6 +577,11 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             continue;
         }
 
+        if (user_conn->ctx == NULL || user_conn->ctx->active < 0) {
+            LOGE("send requests error");
+            return;
+        }
+
         xqc_cli_user_stream_t *user_stream = NULL;
         if (args->req_cfg.finish_flag || args->quic_cfg.alpn_type == ALPN_H3) {
             /* new a stream */
@@ -671,6 +676,7 @@ void client_long_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_ar
             ret_send = client_send_hq_requests(user_conn, user_stream, request);
         }
         if (ret_send < 0) {
+            user_conn->ctx->active = -1;
             char err_msg[214];
             sprintf(err_msg,
                     "xqc send (alpn_type=%d) error,please check network or retry,host=%s",
