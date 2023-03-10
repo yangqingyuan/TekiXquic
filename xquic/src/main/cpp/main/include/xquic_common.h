@@ -590,5 +590,12 @@ callback_data_to_client_2(xqc_cli_user_data_params_t *user_params, int core, cha
     }
 }
 
+inline uint64_t xqc_now() {
+    /* get microsecond unit time */
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    uint64_t ul = tv.tv_sec * (uint64_t) 1000000 + tv.tv_usec;
+    return ul;
+}
 
 #endif //XQUICDEMO_XQUIC_COMMON_H
