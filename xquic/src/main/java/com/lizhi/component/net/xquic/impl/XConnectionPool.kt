@@ -1,6 +1,7 @@
 package com.lizhi.component.net.xquic.impl
 
 import com.lizhi.component.net.xquic.mode.XRequest
+import java.util.concurrent.CopyOnWriteArrayList
 import java.util.concurrent.TimeUnit
 
 /**
@@ -21,7 +22,7 @@ class XConnectionPool(
         require(keepAliveDuration > 0) { "keepAliveDuration <= 0: $keepAliveDuration" }
     }
 
-    private val connections: MutableList<XConnection> = mutableListOf()
+    private val connections: MutableList<XConnection> = CopyOnWriteArrayList()
 
     private fun cleanUp(now: Long): Long {
         var idleConnectionCount = 0

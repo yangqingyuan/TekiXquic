@@ -13,6 +13,7 @@ import com.lizhi.component.net.xquic.utils.XLogUtils
 import java.lang.Exception
 import java.util.ArrayDeque
 import java.util.HashMap
+import java.util.concurrent.ConcurrentHashMap
 
 /**
  * 作用: 链接
@@ -33,7 +34,7 @@ class XConnection(
     private val authority = originalRequest.url.authority
     private var xWebSocket: XWebSocket? = null
 
-    private var xCallBackMap: MutableMap<String, XCallBack?> = mutableMapOf()
+    private var xCallBackMap: MutableMap<String, XCallBack?> = ConcurrentHashMap()
 
     @Volatile
     var idleAtNanos = Long.MAX_VALUE
@@ -114,9 +115,11 @@ class XConnection(
             idleAtNanos = 0
             xquicClient.connectionPool().remove(this@XConnection)//clean conn
             XLogUtils.debug(TAG, "onFailure")
-            xCallBackMap.forEach(action = {
-                it.value?.onFailure(emptyXCall, Exception(t))
-            })
+            val iterator = xCallBackMap.iterator()
+            while (iterator.hasNext()){
+                val callBack = iterator.next()
+                callBack.value?.onFailure(emptyXCall, Exception(t))
+            }
             xCallBackMap.clear()//to free Reference
         }
     }
