@@ -216,6 +216,12 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         LOGI("xqc h3 request recv body size %lu, fin:%d", user_stream->recv_body_len, fin);
     }
 
+    /* if recv body size > max body size drop data*/
+    if (user_stream->recv_body_len > user_stream->recv_body_max_len) {
+        LOGW("xqc h3 request recv body size %lu > max body size %lu ,return data will be drop", user_stream->recv_body_len,user_stream->recv_body_max_len);
+        user_stream->recv_body_len = user_stream->recv_body_max_len;
+    }
+
     finish:
     if (fin) {  /* finish */
         user_stream->recv_fin = 1;

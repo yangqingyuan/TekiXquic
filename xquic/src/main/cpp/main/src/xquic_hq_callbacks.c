@@ -121,6 +121,11 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
 
     } while (read > 0 && !fin);
 
+    /* if recv body size > max body size drop data*/
+    if (user_stream->recv_body_len > user_stream->recv_body_max_len) {
+        LOGW("xqc h3 request recv body size %lu > max body size %lu ,return data will be drop", user_stream->recv_body_len,user_stream->recv_body_max_len);
+        user_stream->recv_body_len = user_stream->recv_body_max_len;
+    }
 
     if (fin) {  /* finish */
         user_stream->recv_fin = 1;
