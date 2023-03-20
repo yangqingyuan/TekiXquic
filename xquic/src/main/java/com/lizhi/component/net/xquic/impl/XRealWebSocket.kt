@@ -33,6 +33,8 @@ class XRealWebSocket(
 
     companion object {
 
+        private const val TAG = "XRealWebSocket"
+
         private const val STATUS_CLOSE = 2
         private const val STATUS_CANCEL = 1
         private const val STATUS_OTHER = 0
@@ -196,7 +198,7 @@ class XRealWebSocket(
                     if (xRealWebSocket.isCallback) {
                         return
                     }
-                    synchronized(xRealWebSocket.isCallback) {
+                    synchronized(TAG) {
                         if (!xRealWebSocket.isCallback) {
                             xRealWebSocket.close(
                                 -1,
@@ -508,10 +510,10 @@ class XRealWebSocket(
      * callback data
      */
     @Synchronized
-    override fun callBackData(ret: Int, tag: String?, data: ByteArray) {
+    override fun callBackData(ret: Int, tag: String?, data: ByteArray, isFinish: Int) {
         if (ret == XquicCallback.XQC_OK) {
             xResponse.xResponseBody = XResponseBody(data, tag)
-            listener.onMessage(this, xResponse)
+            listener.onMessage(this, xResponse, isFinish == 1)
         } else {
             if (isCallback) {
                 XLogUtils.warn(
@@ -519,7 +521,7 @@ class XRealWebSocket(
                 )
                 return
             }
-            synchronized(isCallback) {
+            synchronized(TAG) {
                 if (!isCallback) {
                     close(ret, String(data))
                     isCallback = true

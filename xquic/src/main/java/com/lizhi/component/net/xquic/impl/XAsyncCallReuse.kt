@@ -98,9 +98,9 @@ class XAsyncCallReuse(
         finish(false)
     }
 
-    override fun onResponse(call: XCall, xResponse: XResponse) {
+    override fun onResponse(call: XCall, xResponse: XResponse, isFinish: Boolean) {
         xResponse.xResponseBody.tag = userTag//将用户设置的tag设置回来
-        responseCallback?.onResponse(xCall, xResponse)
+        responseCallback?.onResponse(xCall, xResponse, isFinish)
         finish(true)
     }
 }

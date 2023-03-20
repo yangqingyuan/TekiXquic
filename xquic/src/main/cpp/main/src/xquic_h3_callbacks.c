@@ -184,7 +184,6 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
     }
     ssize_t read = 0;
-    ssize_t read_sum = 0;
     do {
         /* read body */
         read = xqc_h3_request_recv_body(h3_request, buff, buff_size, &fin);
@@ -196,16 +195,23 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         }
 
         /* copy body to memory */
-        if (user_stream->recv_body_len + read <= user_stream->recv_body_max_len) {
+        if (user_stream->recv_body_len + read < user_stream->recv_body_max_len) {
             memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
+            user_stream->recv_body_len += read;
         } else {
-            LOGW("revc data size > recv body max len %lu throw away",
-                 user_stream->recv_body_max_len);
+            /* if body > max len,call back to client */
+            callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                    user_stream->recv_body_len,
+                                    user_stream->user_tag, 0);
+
+            LOGD("call back part data,recv body %lu",user_stream->recv_body_len);
+
+            /* reset memory data and copy body to memory */
+            memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
+            user_stream->recv_body_len = 0;
+            memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
+            user_stream->recv_body_len += read;
         }
-
-        read_sum += read;
-        user_stream->recv_body_len += read;
-
     } while (read > 0 && !fin);
 
     if (flag & XQC_REQ_NOTIFY_READ_EMPTY_FIN) {
@@ -214,12 +220,6 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
 
     if (read > 0) {
         LOGI("xqc h3 request recv body size %lu, fin:%d", user_stream->recv_body_len, fin);
-    }
-
-    /* if recv body size > max body size drop data*/
-    if (user_stream->recv_body_len > user_stream->recv_body_max_len) {
-        LOGW("xqc h3 request recv body size %lu > max body size %lu ,return data will be drop", user_stream->recv_body_len,user_stream->recv_body_max_len);
-        user_stream->recv_body_len = user_stream->recv_body_max_len;
     }
 
     finish:
@@ -238,7 +238,7 @@ int client_h3_request_read_notify(xqc_h3_request_t *h3_request, xqc_request_noti
         /* call back to client */
         callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
                                 user_stream->recv_body_len,
-                                user_stream->user_tag);
+                                user_stream->user_tag, fin);
 
         /* auto to close request */
         ssize_t ret = xqc_h3_request_finish(h3_request);

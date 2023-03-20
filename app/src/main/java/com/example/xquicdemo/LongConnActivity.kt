@@ -111,8 +111,8 @@ class LongConnActivity : AppCompatActivity() {
                 XLogUtils.error("onOpen")
             }
 
-            override fun onMessage(webSocket: XWebSocket, response: XResponse) {
-                parseResponse(response)
+            override fun onMessage(webSocket: XWebSocket, response: XResponse, isFinish: Boolean) {
+                parseResponse(response, isFinish)
             }
 
             override fun onClosed(webSocket: XWebSocket, code: Int, reason: String?) {
@@ -154,7 +154,9 @@ class LongConnActivity : AppCompatActivity() {
         }
     }
 
-    private fun parseResponse(response: XResponse) {
+    private var totalSize = 0
+
+    private fun parseResponse(response: XResponse, isFinish: Boolean) {
         var content = response.xResponseBody.body()
         val tag = response.xResponseBody.tag
         index++
@@ -165,12 +167,13 @@ class LongConnActivity : AppCompatActivity() {
             } catch (e: Exception) {
             }
         }
+        totalSize += content.length;
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }
 
         XLogUtils.error(
-            " java index = $index,size=${content.length},content=${content}"
+            " java index = $index,size=${content.length},isFinish=${isFinish},totalSize=$totalSize,content=${content}"
         )
 
         appendText(

@@ -89,11 +89,11 @@ class XConnection(
                 }
             }
 
-            override fun onMessage(webSocket: XWebSocket, response: XResponse) {
+            override fun onMessage(webSocket: XWebSocket, response: XResponse, isFinish: Boolean) {
                 synchronized(this) {
                     idleAtNanos = System.nanoTime()
                     val tag = response.xResponseBody.tag
-                    xCallBackMap[tag]?.onResponse(emptyXCall, response)
+                    xCallBackMap[tag]?.onResponse(emptyXCall, response, isFinish)
                     xCallBackMap.remove(tag)//to free Reference
                 }
             }
@@ -116,7 +116,7 @@ class XConnection(
             xquicClient.connectionPool().remove(this@XConnection)//clean conn
             XLogUtils.debug(TAG, "onFailure")
             val iterator = xCallBackMap.iterator()
-            while (iterator.hasNext()){
+            while (iterator.hasNext()) {
                 val callBack = iterator.next()
                 callBack.value?.onFailure(emptyXCall, Exception(t))
             }

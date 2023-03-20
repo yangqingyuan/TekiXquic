@@ -97,7 +97,6 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
     memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
 
     ssize_t read = 0;
-    ssize_t read_sum = 0;
     do {
         /* read body */
         read = xqc_stream_recv(stream, buff, buff_size, &fin);
@@ -109,23 +108,25 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
         }
 
         /* copy body to memory */
-        if (user_stream->recv_body_len + read <= user_stream->recv_body_max_len) {
+        if (user_stream->recv_body_len + read < user_stream->recv_body_max_len) {
             memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
+            user_stream->recv_body_len += read;
         } else {
-            LOGW("revc data size > recv body max len %lu throw away",
-                 user_stream->recv_body_max_len);
+            /* if body > max len,call back to client */
+            callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                    user_stream->recv_body_len,
+                                    user_stream->user_tag, 0);
+
+            LOGE("call back part data,recv body %lu",user_stream->recv_body_len);
+
+            /* reset memory data and copy body to memory */
+            memset(user_stream->recv_body, 0, user_stream->recv_body_max_len);
+            user_stream->recv_body_len = 0;
+            memcpy(user_stream->recv_body + user_stream->recv_body_len, buff, read);
+            user_stream->recv_body_len += read;
         }
-
-        read_sum += read;
-        user_stream->recv_body_len += read;
-
     } while (read > 0 && !fin);
 
-    /* if recv body size > max body size drop data*/
-    if (user_stream->recv_body_len > user_stream->recv_body_max_len) {
-        LOGW("xqc h3 request recv body size %lu > max body size %lu ,return data will be drop", user_stream->recv_body_len,user_stream->recv_body_max_len);
-        user_stream->recv_body_len = user_stream->recv_body_max_len;
-    }
 
     if (fin) {  /* finish */
         user_stream->recv_fin = 1;
@@ -133,7 +134,7 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
         /* call back to client */
         callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
                                 user_stream->recv_body_len,
-                                user_stream->user_tag);
+                                user_stream->user_tag,fin);
 
         /* auto to close request */
         int ret = xqc_stream_close(stream);
@@ -146,14 +147,15 @@ int xqc_client_stream_read_notify(xqc_stream_t *stream, void *user_data) {
             LOGD("auto to call xqc_conn_close ret=%d", ret);
         }
     } else {
+        callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
+                                user_stream->recv_body_len,
+                                user_stream->user_tag,0);
+
         /* call back to client */
-        if (!user_stream->user_conn->ctx->args->req_cfg.finish_flag) {
-            callback_data_to_client(user_stream->user_conn, XQC_OK, user_stream->recv_body,
-                                    user_stream->recv_body_len,
-                                    user_stream->user_tag);
+        /*if (!user_stream->user_conn->ctx->args->req_cfg.finish_flag) {
         } else {
-            LOGW("stream read notify,but not finish");
-        }
+            LOGW("stream read notify,but not finish %lu",user_stream->recv_body_len);
+        }*/
     }
     user_stream->recv_body_len = 0;
     return 0;

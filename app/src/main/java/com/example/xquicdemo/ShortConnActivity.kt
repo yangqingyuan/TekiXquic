@@ -198,8 +198,8 @@ class ShortConnActivity : AppCompatActivity() {
                 }
             }
 
-            override fun onResponse(call: XCall, xResponse: XResponse) {
-                parseResponse(startTime, index, xResponse)
+            override fun onResponse(call: XCall, xResponse: XResponse, isFinish: Boolean) {
+                parseResponse(startTime, index, xResponse, isFinish)
                 synchronized(this@ShortConnActivity) {
                     successCount++
                 }
@@ -217,16 +217,20 @@ class ShortConnActivity : AppCompatActivity() {
         })
     }
 
-    private fun parseResponse(startTime: Long, index: Int, xResponse: XResponse) {
+    private fun parseResponse(
+        startTime: Long,
+        index: Int,
+        xResponse: XResponse,
+        isFinish: Boolean
+    ) {
         var content: String = xResponse.xResponseBody.body()
         if (content.length > 512 * 1024) {
             content = "数据太大，无法打印和显示，数据长度为:" + content.length
         }
-
         val now = System.currentTimeMillis()
 
         XLogUtils.error(
-            "index=$index, java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},tag=${xResponse.xResponseBody.tag},content=${content}"
+            "index=$index, java 总花费时长： ${(now - startTime)} ms,队列等待时长：${xResponse.delayTime} ms,isFinish=${isFinish},请求响应时长：${now - startTime - xResponse.delayTime} ms,size=${content.length},tag=${xResponse.xResponseBody.tag},content=${content}"
         )
 
         //appendText("$content ,index=$index, time=${now - startTime - xResponse.delayTime}ms ,status=" + xResponse.getStatus())

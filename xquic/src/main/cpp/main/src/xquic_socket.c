@@ -33,7 +33,7 @@ int client_parse_server_addr(xqc_cli_net_config_t *cfg, const char *url,
         char err_msg[1024];
         sprintf(err_msg, "get addr info from hostname:%s, url:%s", gai_strerror(rv), url);
         LOGE("%s\n", err_msg);
-        callback_data_to_client_2(user_params, XQC_ERROR, err_msg);
+        callback_data_to_client_2(user_params, XQC_ERROR, err_msg,1);
         return -1;
     }
     memcpy(&cfg->addr, result->ai_addr, result->ai_addrlen);
@@ -122,7 +122,7 @@ ssize_t client_write_socket(const unsigned char *buf, size_t size,
                 res = XQC_SOCKET_EAGAIN;
             }
             if (res == XQC_SOCKET_ERROR) {
-                callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
+                callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL,1);
             }
         }
         user_conn->last_sock_write_time = xqc_now();
@@ -175,7 +175,7 @@ void client_socket_read_handler(xqc_cli_user_conn_t *user_conn) {
             char err_msg[214];
             sprintf(err_msg, "xqc_engine_packet_process error (%d)", ret);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, ret, err_msg, strlen(err_msg), NULL);
+            callback_data_to_client(user_conn, ret, err_msg, strlen(err_msg), NULL,1);
             return;
         }
 

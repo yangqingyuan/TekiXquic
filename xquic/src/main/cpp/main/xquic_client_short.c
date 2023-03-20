@@ -430,7 +430,7 @@ void client_idle_callback(struct ev_loop *main_loop, ev_timer *io_t, int what) {
         /* call back to client */
         char err_msg[214];
         sprintf(err_msg, "connect timeout(%ds)", user_conn->ctx->args->net_cfg.conn_timeout);
-        callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
+        callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL,1);
     }
 }
 
@@ -576,7 +576,7 @@ void client_send_requests(xqc_cli_user_conn_t *user_conn, xqc_cli_client_args_t 
                     args->quic_cfg.alpn_type,
                     user_conn->ctx->args->net_cfg.host);
             LOGE("%s", err_msg);
-            callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL);
+            callback_data_to_client(user_conn, XQC_ERROR, err_msg, strlen(err_msg), NULL,1);
             return;
         }
         user_conn->ctx->task_ctx.schedule.schedule_info[user_conn->task->task_idx].req_create_cnt++;

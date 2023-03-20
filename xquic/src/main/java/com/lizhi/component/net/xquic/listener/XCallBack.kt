@@ -10,5 +10,5 @@ import java.lang.Exception
  */
 interface XCallBack {
     fun onFailure(call: XCall, exception: Exception)
-    fun onResponse(call: XCall, xResponse: XResponse)
+    fun onResponse(call: XCall, xResponse: XResponse, isFinish: Boolean)
 }

@@ -310,7 +310,7 @@ typedef struct xqc_cli_requests_s {
  * android
  */
 typedef int (*xqc_cli_callback_data)(void *jclass, int core, const char *data,
-                                     ssize_t len, void *user_data);
+                                     ssize_t len, void *user_data, int finish);
 
 typedef void (*xcc_cli_callback_msg)(void *jclass, MSG_TYPE msg_type, const char *data,
                                      uint32_t data_len, void *user_data);
@@ -566,12 +566,12 @@ inline void callback_msg_to_client(xqc_cli_client_args_t *args, MSG_TYPE msg_typ
  */
 inline void
 callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data, size_t len,
-                        void *user_data) {
+                        void *user_data, int isFinish) {
     xqc_cli_user_data_params_t *user_params = &(user_conn->ctx->args->user_params);
     if (user_params) {
         user_params->user_data_callback.callback_data(
                 user_params->user_data_callback.object_android, core,
-                data, len, user_data);
+                data, len, user_data, isFinish);
     }
 }
 
@@ -582,11 +582,11 @@ callback_data_to_client(xqc_cli_user_conn_t *user_conn, int core, char *data, si
  * @param err_msg
  */
 inline void
-callback_data_to_client_2(xqc_cli_user_data_params_t *user_params, int core, char *data) {
+callback_data_to_client_2(xqc_cli_user_data_params_t *user_params, int core, char *data, int isFinish) {
     if (user_params && data != NULL) {
         user_params->user_data_callback.callback_data(
                 user_params->user_data_callback.object_android, core,
-                data, strlen(data), NULL);
+                data, strlen(data), NULL,isFinish);
     }
 }
 

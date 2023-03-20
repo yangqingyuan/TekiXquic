@@ -100,7 +100,7 @@ static void callback_msg_to_java(void *object_android, MSG_TYPE msg_type, const 
  * @return callback data to java
  */
 static int callback_data_to_java(void *object_android, int core, const char *data, ssize_t len,
-                                 void *user_data) {
+                                 void *user_data,int finish) {
 
     JNIEnv *env;
     (*g_clazz.g_jvm)->AttachCurrentThread(g_clazz.g_jvm, &env, NULL);
@@ -109,7 +109,7 @@ static int callback_data_to_java(void *object_android, int core, const char *dat
     jclass callbackClass = (*env)->GetObjectClass(env, object_android);
     jobject j_obj = (*env)->NewGlobalRef(env, object_android);//关键，要不会崩溃
     jmethodID jm_id = (*env)->GetMethodID(env, callbackClass, "callBackData",
-                                          "(ILjava/lang/String;[B)V");
+                                          "(ILjava/lang/String;[BI)V");
     if (!jm_id) {
         LOGE("call back error,can not find methodId callBackReadData");
         return -1;
@@ -124,7 +124,7 @@ static int callback_data_to_java(void *object_android, int core, const char *dat
     }
 
     /* call back */
-    (*env)->CallVoidMethod(env, j_obj, jm_id, core, tag, recv_body);
+    (*env)->CallVoidMethod(env, j_obj, jm_id, core, tag, recv_body,finish);
 
     /* free */
     (*env)->DeleteGlobalRef(env, j_obj);
