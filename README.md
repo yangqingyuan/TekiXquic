@@ -20,8 +20,8 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 **注意：tekixquic跟其他开源 server 互通测试**
 |  server   | 互通结果  | 备注  |
-|  ----  | ----  |----  |
-| quic-go  | https://zhuanlan.zhihu.com/p/502352169 |升级sdk到1.0.2版本或者关闭accpetToken可以正常通讯 |
+|  ----  | ---- |---- |
+| quic-go  | https://zhuanlan.zhihu.com/p/502352169 | 正常通讯 |
 | 阿里云  | 正常通讯 | |
 | cloudflare  | 正常通讯 | |
 | 其他服务  | 注意服务端支持的alpn版本跟Proto版本号然后调用对应的api设置 | |
@@ -39,20 +39,21 @@ tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方�
 
 第二步：导入sdk</br>
 ```
-implementation 'io.github.yangqingyuan:teki-quic:1.0.7'
+implementation 'io.github.yangqingyuan:teki-quic:1.0.8'
 ```
 
 # 版本更新
-|  version   | 更新内容  | 时间  |
-|  ----  | ----  |----  |
-| 1.0.7   | 1.代码调整和优化 </br> 2.完善场景使用 </br> 3.增加超时机制和网络监听 </br> 4.修复其他问题 </br> |2022/11/12|
-| 1.0.6（正式使用）  | 1.支持stream复用 </br> 2.完善webSocket使用 </br> 3.修复其他问题 </br> |2022/10/17|
-| 1.0.5  | 1.升级xquic到1.2.0 </br> 2.修复复用断网重连问题 |2022/09/17|
-| 1.0.4-SNAPSHOT  | 1.hq 支持0Rtt </br> 2.支持x86 </br> 3.升级xquic到xquic-1.1.0-stable |2022/08/23|
-| 1.0.3-SNAPSHOT  | 1.支持Hq协议，支持设置alpn</br> 2.优化java->jni 传输性能，支持传输byte </br> 3.其他优化 |2022/06/30|
-| 1.0.2-SNAPSHOT  | 1.支持链接复用</br> 2.升级xquic到v1.1.0-beta.2 </br> 3.修复若干问题</br> 4. 优化逻辑 </br> 5. 支持DNS替换 </br> | 2022/06/15 |
-| 1.0.1  | 1.支持长链接</br> 2.支持生命周期感知</br> 3.支持取消</br> 4. 其他优化等 </br>| 2022/05/07 |
-| 1.0.0  | 支持短链接 |2022/04/21|
+| version        | 更新内容                                                                                     | 时间         |
+|----------------|------------------------------------------------------------------------------------------|------------|
+| 1.0.8          | 1.升级xquic到1.4.0 </br> 2.代码优化  </br> 3.支持接收大文件 </br>                                      | 2023/03/20 |
+| 1.0.7          | 1.代码调整和优化 </br> 2.完善场景使用 </br> 3.增加超时机制和网络监听 </br> 4.修复其他问题 </br>                        | 2022/11/12 |
+| 1.0.6（正式使用）    | 1.支持stream复用 </br> 2.完善webSocket使用 </br> 3.修复其他问题 </br>                                  | 2022/10/17 |
+| 1.0.5          | 1.升级xquic到1.2.0 </br> 2.修复复用断网重连问题                                                       | 2022/09/17 |
+| 1.0.4-SNAPSHOT | 1.hq 支持0Rtt </br> 2.支持x86 </br> 3.升级xquic到xquic-1.1.0-stable                             | 2022/08/23 |
+| 1.0.3-SNAPSHOT | 1.支持Hq协议，支持设置alpn</br> 2.优化java->jni 传输性能，支持传输byte </br> 3.其他优化                          | 2022/06/30 |
+| 1.0.2-SNAPSHOT | 1.支持链接复用</br> 2.升级xquic到v1.1.0-beta.2 </br> 3.修复若干问题</br> 4. 优化逻辑 </br> 5. 支持DNS替换 </br> | 2022/06/15 |
+| 1.0.1          | 1.支持长链接</br> 2.支持生命周期感知</br> 3.支持取消</br> 4. 其他优化等 </br>                                  | 2022/05/07 |
+| 1.0.0          | 支持短链接                                                                                    | 2022/04/21 |
 
 # 使用方式
 ## 短链接
@@ -82,7 +83,7 @@ implementation 'io.github.yangqingyuan:teki-quic:1.0.7'
             XLogUtils.error(exception.message)
         }
 
-        override fun onResponse(call: XCall, xResponse: XResponse) {
+        override fun onResponse(call: XCall, xResponse: XResponse,isFinish:Boolean) {//isFinish代表接收内容完毕
             XLogUtils.info(
                 " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody.body()}"
             )
@@ -117,7 +118,7 @@ xquicClient.newCall(xRequest).enqueue(object : XCallBack {
         XLogUtils.error(exception.message)
     }
 
-    override fun onResponse(call: XCall, xResponse: XResponse) {
+    override fun onResponse(call: XCall, xResponse: XResponse,isFinish:Boolean) {//isFinish代表接收内容完毕
         XLogUtils.info(
             " java 花费时间 ${(System.currentTimeMillis() - startTime)} ms,content=${xResponse.xResponseBody.body()}"
         )
@@ -153,7 +154,7 @@ val xquicClient = XquicClient.Builder()
                 //握手成功后进行回调
             }
 
-            override fun onMessage(webSocket: XWebSocket, response: XResponse) {
+            override fun onMessage(webSocket: XWebSocket, response: XResponse,isFinish:Boolean) {//isFinish代表接收内容完毕
                 //接收到消息后进行回调
                 //var body = response.xResponseBody.body() or
                 var bodyByteArray = response.xResponseBody.byteBody()
