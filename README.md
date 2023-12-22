@@ -4,6 +4,7 @@
 tekixquic 是基于 Xquic+libev 进行二次封装的Android sdk库，为了方便理解和使用，沿用了okhttp的封装方式，同时沿用了短链接和长链接的思维。
 通过tekixquic 你可以在客户端快速的验证和使用xquic基于udp传输，整个sdk，大小在1M左右，轻量便捷,并且部分支持cdn厂商中转
 
+
 # 环境
 工具
 
@@ -220,5 +221,4 @@ val xquicClient = XquicClient.Builder()
 |  fun isClose(): Boolean  | 判断是否已经关闭，连接关闭后，需要重新连接才才可以继续发送 |  |
 
 # 其他
-有任何问题，欢迎留言，有兴趣的同学可以一同完善tekixquic！，加微请备注：tekiXquic</br>
-<img src="https://user-images.githubusercontent.com/6867757/162711742-7cfd5e4b-54d8-4c4f-b80e-4d9c9af34ba5.png" width="150px" height="150px" />
+备注：（目前作者没有时间维护升级，谢谢！！）
